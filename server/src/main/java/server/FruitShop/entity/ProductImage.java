@@ -19,7 +19,7 @@ public class ProductImage {
     private Integer imageOrder;
 
     @Column(name = "is_main")
-    private Boolean isMain = false;
+    private Boolean isMain;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
