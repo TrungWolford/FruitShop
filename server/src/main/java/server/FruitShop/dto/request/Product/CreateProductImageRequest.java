@@ -6,4 +6,5 @@ import lombok.Data;
 public class CreateProductImageRequest {
     private String imageUrl;
     private Integer imageOrder;
+    private Boolean isMain;
 }

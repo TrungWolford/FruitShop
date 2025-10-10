@@ -18,6 +18,9 @@ public class ProductImage {
     @Column(name = "image_order")
     private Integer imageOrder;
 
+    @Column(name = "is_main")
+    private Boolean isMain;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     private Product product;
