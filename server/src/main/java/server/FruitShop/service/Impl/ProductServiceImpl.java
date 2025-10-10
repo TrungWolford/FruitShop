@@ -122,6 +122,7 @@ public class ProductServiceImpl implements ProductService {
                         ProductImage image = new ProductImage();
                         image.setImageUrl(imageRequest.getImageUrl());
                         image.setImageOrder(imageRequest.getImageOrder());
+                        image.setIsMain(imageRequest.getIsMain());
                         image.setProduct(product);
                         return image;
                     })
@@ -204,6 +205,7 @@ public class ProductServiceImpl implements ProductService {
                                     ProductImage image = new ProductImage();
                                     image.setImageUrl(imageRequest.getImageUrl());
                                     image.setImageOrder(imageRequest.getImageOrder());
+                                    image.setIsMain(imageRequest.getIsMain());
                                     image.setProduct(product);
                                     return image;
                                 })
