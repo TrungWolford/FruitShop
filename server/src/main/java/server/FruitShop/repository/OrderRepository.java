@@ -13,5 +13,5 @@ import java.util.List;
 public interface OrderRepository extends JpaRepository<Order, String> {
     List<Order> findByAccountAccountId(String accountId);
     Page<Order> findByStatus(int status, Pageable pageable);
-    Page<Order> findByOrderDateBetween(Date startDate, Date endDate, Pageable pageable);
+    Page<Order> findByCreatedAtBetween(Date startDate, Date endDate, Pageable pageable);
 }

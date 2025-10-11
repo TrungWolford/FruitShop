@@ -252,7 +252,7 @@ public class OrderServiceImpl implements OrderService {
             Date start = dateFormat.parse(startDate);
             Date end = dateFormat.parse(endDate);
 
-            Page<Order> ordersPage = orderRepository.findByOrderDateBetween(start, end, pageable);
+            Page<Order> ordersPage = orderRepository.findByCreatedAtBetween(start, end, pageable);
             List<OrderResponse> responses = ordersPage.getContent().stream()
                     .map(OrderResponse::fromEntity)
                     .collect(Collectors.toList());
