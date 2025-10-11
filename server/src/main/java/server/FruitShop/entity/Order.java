@@ -26,7 +26,7 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderItem> orderItems = new ArrayList<>();
 
-    private Date createdAt  ;
+    private Date createdAt;
 
     private int status; //0: Huy, 1: Dang van chuyen, 2: Da hoan thanh
 
