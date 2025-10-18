@@ -8,7 +8,6 @@ public class CreateAccountRequest {
     private String accountName;
     private String accountPhone;
     private String password;
-    private int status;
     private Set<String> roleIds;
 }
 
