@@ -5,46 +5,46 @@ const Footer: React.FC = () => {
   return (
     <footer className="bg-slate-800 text-white">
       {/* Services Section */}
-      <div className="bg-slate-700 py-8">
+      <div className="bg-orange-300 py-8">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="flex items-center space-x-3">
               <div className="bg-amber-400 p-3 rounded-full">
-                <Truck className="h-6 w-6 text-slate-800" />
+                <Truck className="h-6 w-6 text-white-800" />
               </div>
               <div>
                 <h4 className="font-semibold">Miễn phí vận chuyển</h4>
-                <p className="text-sm text-gray-300">Đơn hàng từ 200.000đ</p>
+                <p className="text-sm text-white">Đơn hàng từ 200.000đ</p>
               </div>
             </div>
             
             <div className="flex items-center space-x-3">
               <div className="bg-amber-400 p-3 rounded-full">
-                <Shield className="h-6 w-6 text-slate-800" />
+                <Shield className="h-6 w-6 text-white" />
               </div>
               <div>
                 <h4 className="font-semibold">Thanh toán an toàn</h4>
-                <p className="text-sm text-gray-300">Bảo mật 100%</p>
+                <p className="text-sm text-white">Bảo mật 100%</p>
               </div>
             </div>
             
             <div className="flex items-center space-x-3">
               <div className="bg-amber-400 p-3 rounded-full">
-                <RotateCcw className="h-6 w-6 text-slate-800" />
+                <RotateCcw className="h-6 w-6 text-white" />
               </div>
               <div>
                 <h4 className="font-semibold">Đổi trả dễ dàng</h4>
-                <p className="text-sm text-gray-300">Trong vòng 30 ngày</p>
+                <p className="text-sm text-white">Trong vòng 30 ngày</p>
               </div>
             </div>
             
             <div className="flex items-center space-x-3">
               <div className="bg-amber-400 p-3 rounded-full">
-                <Phone className="h-6 w-6 text-slate-800" />
+                <Phone className="h-6 w-6 text-white" />
               </div>
               <div>
                 <h4 className="font-semibold">Hỗ trợ 24/7</h4>
-                <p className="text-sm text-gray-300">Luôn sẵn sàng phục vụ</p>
+                <p className="text-sm text-white">Luôn sẵn sàng phục vụ</p>
               </div>
             </div>
           </div>
@@ -52,18 +52,18 @@ const Footer: React.FC = () => {
       </div>
 
       {/* Main Footer Content */}
-      <div className="py-12">
+      <div className="py-12 bg-orange-400">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Company Info */}
             <div className="space-y-4">
               <div className="flex items-center space-x-2">
-                <div className="bg-amber-400 text-slate-800 font-bold px-3 py-2 rounded">
-                  BC
+                <div className="bg-amber-400 text-white font-bold px-3 py-2 rounded">
+                  FS
                 </div>
-                <span className="text-xl font-bold">BOOKCITY.VN</span>
+                <span className="text-xl font-bold">VuaTraiCay.com</span>
               </div>
-              <p className="text-gray-300 text-sm leading-relaxed">
+              <p className="text-white text-sm leading-relaxed">
                 Hệ thống nhà sách trực tuyến hàng đầu Việt Nam với hàng triệu đầu sách đa dạng, 
                 phục vụ nhu cầu đọc sách của mọi lứa tuổi.
               </p>
@@ -86,10 +86,10 @@ const Footer: React.FC = () => {
             {/* Quick Links */}
             <div>
               <h3 className="font-semibold text-lg mb-4">Liên kết nhanh</h3>
-              <ul className="space-y-2 text-gray-300">
+              <ul className="space-y-2 text-white">
                 <li><a href="#" className="hover:text-amber-400 transition-colors">Trang chủ</a></li>
-                <li><a href="#" className="hover:text-amber-400 transition-colors">Sách mới</a></li>
-                <li><a href="#" className="hover:text-amber-400 transition-colors">Sách bán chạy</a></li>
+                <li><a href="#" className="hover:text-amber-400 transition-colors">Sản phẩm mới</a></li>
+                <li><a href="#" className="hover:text-amber-400 transition-colors">Sản phẩm bán chạy</a></li>
                 <li><a href="#" className="hover:text-amber-400 transition-colors">Khuyến mãi</a></li>
                 <li><a href="#" className="hover:text-amber-400 transition-colors">Tin tức</a></li>
                 <li><a href="#" className="hover:text-amber-400 transition-colors">Liên hệ</a></li>
@@ -98,21 +98,17 @@ const Footer: React.FC = () => {
 
             {/* Categories */}
             <div>
-              <h3 className="font-semibold text-lg mb-4">Danh mục sách</h3>
-              <ul className="space-y-2 text-gray-300">
-                <li><a href="#" className="hover:text-amber-400 transition-colors">Văn học</a></li>
-                <li><a href="#" className="hover:text-amber-400 transition-colors">Kinh tế</a></li>
-                <li><a href="#" className="hover:text-amber-400 transition-colors">Kỹ năng sống</a></li>
-                <li><a href="#" className="hover:text-amber-400 transition-colors">Thiếu nhi</a></li>
-                <li><a href="#" className="hover:text-amber-400 transition-colors">Giáo dục</a></li>
-                <li><a href="#" className="hover:text-amber-400 transition-colors">Công nghệ</a></li>
+              <h3 className="font-semibold text-lg mb-4">Danh mục sản phẩm</h3>
+              <ul className="space-y-2 text-white">
+                <li><a href="#" className="hover:text-amber-400 transition-colors">Trái cây nhiệt đới</a></li>
+                <li><a href="#" className="hover:text-amber-400 transition-colors">Trái cây nhập khẩu</a></li>
               </ul>
             </div>
 
             {/* Contact Info */}
             <div>
               <h3 className="font-semibold text-lg mb-4">Thông tin liên hệ</h3>
-              <div className="space-y-3 text-gray-300">
+              <div className="space-y-3 text-white">
                 <div className="flex items-center space-x-3">
                   <MapPin className="h-4 w-4 text-amber-400 flex-shrink-0" />
                   <span className="text-sm">123 Đường ABC, Quận XYZ, TP. Hồ Chí Minh</span>
@@ -123,7 +119,7 @@ const Footer: React.FC = () => {
                 </div>
                 <div className="flex items-center space-x-3">
                   <Mail className="h-4 w-4 text-amber-400 flex-shrink-0" />
-                  <span className="text-sm">info@bookcity.vn</span>
+                  <span className="text-sm">info@vuatraicay.vn</span>
                 </div>
               </div>
               
@@ -150,31 +146,13 @@ const Footer: React.FC = () => {
         </div>
       </div>
 
-      {/* Newsletter Section */}
-      <div className="bg-slate-900 py-8">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <h3 className="text-xl font-semibold mb-2">Đăng ký nhận tin khuyến mãi</h3>
-            <p className="text-gray-400 mb-4">Nhận thông tin về sách mới và các chương trình ưu đãi hấp dẫn</p>
-            <div className="flex max-w-md mx-auto">
-              <input 
-                type="email" 
-                placeholder="Nhập email của bạn"
-                className="flex-1 px-4 py-2 rounded-l-lg text-slate-800 focus:outline-none"
-              />
-              <button className="bg-amber-400 text-slate-800 font-semibold px-6 py-2 rounded-r-lg hover:bg-amber-500 transition-colors">
-                Đăng ký
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      
 
       {/* Copyright */}
-      <div className="bg-slate-900 border-t border-slate-700 py-4">
+      <div className="bg-orange-500 border-t  py-4">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
-            <p>&copy; 2025 BookCity.VN. Tất cả quyền được bảo lưu.</p>
+          <div className="flex flex-col md:flex-row justify-between items-center text-sm text-white">
+            <p><span>&copy; 2025 VuaTraiCay.Com</span> Tất cả quyền được bảo lưu.</p>
             <div className="flex space-x-4 mt-2 md:mt-0">
               <a href="#" className="hover:text-amber-400 transition-colors">Chính sách bảo mật</a>
               <a href="#" className="hover:text-amber-400 transition-colors">Điều khoản sử dụng</a>
