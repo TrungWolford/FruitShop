@@ -60,7 +60,7 @@ public class AccountServiceImpl implements AccountService {
         account.setAccountName(request.getAccountName());
         account.setAccountPhone(request.getAccountPhone());
         account.setPassword(request.getPassword());
-        account.setStatus(request.getStatus());
+        account.setStatus(1);
 
         // Set roles if provided
         if (request.getRoleIds() != null && !request.getRoleIds().isEmpty()) {

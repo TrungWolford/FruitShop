@@ -11,7 +11,7 @@ public class RoleResponse {
     public static RoleResponse fromEntity(Role role){
         RoleResponse response = new RoleResponse();
         response.setRoleId(role.getRoleId());
-        response.setRoleName(response.getRoleName());
+        response.setRoleName(role.getRoleName());
 
         return response;
     }

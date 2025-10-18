@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Table(name = "accounts")
@@ -28,5 +29,12 @@ public class Account {
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Set<Role> roles = new HashSet<>();
+
+    @PrePersist
+    public void generateIdIfAbsent() {
+        if (this.accountId == null) {
+            this.accountId = UUID.randomUUID().toString();
+        }
+    }
 }
 
