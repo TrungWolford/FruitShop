@@ -1,8 +1,10 @@
+// src/components/CategoryMainPage.tsx
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, Plus, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { categoryService } from '../services/categoryService';
+// import { categoryService } from '../services/categoryService';
 import { toast } from 'sonner';
+import { mockCategories } from '@/hooks/data';
 
 interface Category {
   categoryId: string;
@@ -22,14 +24,20 @@ const CategoryMainPage: React.FC = () => {
   const loadCategories = async () => {
     try {
       setLoading(true);
-      const response = await categoryService.getAllCategories();
-      console.log('Categories response:', response);
+      // const response = await categoryService.getAllCategories();
+      // console.log('Categories response:', response);
       
-      if (response && response.content) {
-        setCategories(response.content);
-      } else {
-        setCategories([]);
-      }
+      // if (response && response.content) {
+      //   setCategories(response.content);
+      // } else {
+      //   setCategories([]);
+      // }
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Load from mockdata instead of API
+      const activeCategories = mockCategories.filter(category => category.status === 1); // Chỉ lấy categories có status = 1
+      
+      setCategories(activeCategories);
     } catch (error) {
       console.error('Error loading categories:', error);
       toast.error('Không thể tải danh mục sản phẩm');
@@ -46,15 +54,17 @@ const CategoryMainPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="bg-white shadow-sm border border-gray-200 p-4">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-4 h-4 bg-gray-200 animate-pulse rounded"></div>
-          <div className="h-4 bg-gray-200 animate-pulse rounded w-28"></div>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden h-fit sticky top-4">
+        <div className="bg-primary text-white px-4 py-3">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-white/20 animate-pulse rounded"></div>
+            <div className="h-4 bg-white/20 animate-pulse rounded w-32"></div>
+          </div>
         </div>
-        <div className="space-y-2">
+        <div className="p-4 space-y-3">
           {Array.from({ length: 8 }).map((_, index) => (
             <div key={index} className="flex items-center justify-between">
-              <div className="h-4 bg-gray-200 animate-pulse rounded w-24"></div>
+              <div className="h-4 bg-gray-200 animate-pulse rounded w-28"></div>
               <div className="w-3 h-3 bg-gray-200 animate-pulse rounded"></div>
             </div>
           ))}
@@ -64,38 +74,48 @@ const CategoryMainPage: React.FC = () => {
   }
 
   return (
-    <div className="bg-white shadow-sm border border-gray-200 p-4">
-                {/* Header */}
-          <div className="flex items-center gap-2 mb-4">
-            <Menu className="w-4 h-4 text-gray-600" />
-            <h2 className="text-sm font-extrabold text-gray-900">DANH MỤC SẢN PHẨM</h2>
-          </div>
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden h-fit sticky top-4">
+      {/* Header */}
+      <div className="bg-primary text-white px-4 py-3">
+        <div className="flex items-center gap-2">
+          <Menu className="w-4 h-4 text-white" />
+          <h2 className="text-sm font-extrabold text-white">DANH MỤC SẢN PHẨM</h2>
+        </div>
+      </div>
 
-          {/* Category List */}
-          <div className="space-y-2">
-            {categories.slice(0, 10).map((category) => (
-              <div
-                key={category.categoryId}
-                onClick={() => handleCategoryClick(category.categoryName)}
-                className="flex items-center justify-between py-2 px-2 hover:bg-blue-50 hover:text-blue-600 rounded cursor-pointer transition-all duration-200 group relative"
-              >
-                {/* Blue bar on hover */}
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
-                <span className="text-gray-700 text-sm font-semibold group-hover:text-blue-600 transition-colors">{category.categoryName}</span>
-                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all duration-200" />
-              </div>
-            ))}
-          </div>
-
-                {/* See More */}
-          {categories.length > 10 && (
-            <div className="mt-4 pt-2 border-t border-gray-100">
-              <div className="flex items-center gap-2 text-blue-600 hover:text-blue-700 cursor-pointer">
-                <Plus className="w-4 h-4" />
-                <span className="text-sm font-bold">Xem thêm</span>
-              </div>
+      {/* Category List */}
+      <div className="divide-y divide-gray-100">
+        {categories.slice(0, 12).map((category) => (
+          <div
+            key={category.categoryId}
+            onClick={() => handleCategoryClick(category.categoryName)}
+            className="relative px-4 py-3 hover:bg-blue-50 cursor-pointer transition-all duration-200 group"
+          >
+            {/* Blue accent bar on hover */}
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-gray-700 text-sm font-medium group-hover:text-primary transition-colors duration-200 line-clamp-1">
+                {category.categoryName}
+              </span>
+              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-200 flex-shrink-0 ml-2" />
             </div>
-          )}
+          </div>
+        ))}
+      </div>
+
+      {/* See More Footer */}
+      {categories.length > 12 && (
+        <div className="bg-gray-50 border-t border-gray-100">
+          <div 
+            className="px-4 py-3 flex items-center gap-2 text-primary hover:text-primary-dark cursor-pointer transition-colors duration-200"
+            onClick={() => navigate('/categories')}
+          >
+            <Plus className="w-4 h-4" />
+            <span className="text-sm font-semibold">Xem tất cả danh mục</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

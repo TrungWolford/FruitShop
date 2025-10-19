@@ -130,6 +130,7 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
         console.error('❌ Failed to add to cart:', addToCartResponse);
         toast.error(addToCartResponse.message || "Không thể thêm sản phẩm vào giỏ hàng");
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('💥 Error adding to cart:', error);
       console.error('Error details:', error.response?.data);

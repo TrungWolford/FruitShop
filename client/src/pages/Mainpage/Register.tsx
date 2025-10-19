@@ -12,8 +12,8 @@ import {
   CardTitle
 } from '../../components/ui'
 import { Eye, EyeOff, Lock, User, Phone, Loader2 } from 'lucide-react'
-import TopNavigation from '../../components/TopNavigation'
-import Footer from '../../components/Footer'
+import TopNavigation from '../../components/ui/Header/Header'
+import Footer from '../../components/ui/Footer/Footer'
 import { registerService } from '../../services/registerService'
 import { toast } from 'sonner'
 

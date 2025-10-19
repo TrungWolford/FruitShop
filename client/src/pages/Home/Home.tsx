@@ -1,50 +1,55 @@
-import React, { useEffect } from 'react'
-import TopNavigation from '../../components/TopNavigation'
-import Footer from '../../components/Footer'
-import CategoryMainPage from '../../components/CategoryMainPage'
-import MainBanner from '../../components/MainBanner'
-import ProductSection from '../../components/ProductSection'
+// src/pages/Home/Home.tsx
+import React from 'react';
+import TopNavigation from '../../components/ui/Header/Header';
+import MainBanner from '../../components/MainBanner';
+import ProductGrid from '../../components/ProductGrid';
+import CategoryMainPage from '../../components/CategoryMainPage';
+import Footer from '../../components/ui/Footer/Footer';
 
 const Home: React.FC = () => {
-  // Set page title for home page
-  useEffect(() => {
-    document.title = 'BookCity - Hệ thống nhà sách trực tuyến'
-  }, [])
+  const handleAddToCart = (productId: string) => {
+    console.log('Add to cart:', productId);
+    // TODO: Implement add to cart logic
+  };
+
+  const handleAddToWishlist = (productId: string) => {
+    console.log('Add to wishlist:', productId);
+    // TODO: Implement wishlist logic
+  };
 
   return (
-    <div className="bg-[#f2f3f5]">
+    <div className="min-h-screen bg-gray-50">
       <TopNavigation />
-      
-      <main className="max-w-8xl mx-auto px-16 pt-0 pb-8">
-        {/* Main content with 2.5:7.5 layout */}
-        <div className="grid grid-cols-10 gap-6">
-          {/* Left sidebar - 2.5 columns */}
-          <div className="col-span-2">
-            <div className="shadow-md">
+  {/* Hero Section with Category and Banner side by side */}
+        <section className="container mx-auto px-4 py-6">
+          <div className="grid grid-cols-12 gap-6">
+            {/* Left: Category Menu */}
+            <div className="col-span-12 lg:col-span-3">
               <CategoryMainPage />
             </div>
-          </div>
-          
-          {/* Main content - 7.5 columns */}
-          <div className="col-span-8">
-            {/* Banner Section */}
-            <div className="mb-6 shadow-md">
+            
+            {/* Right: Main Banner */}
+            <div className="col-span-12 lg:col-span-9">
               <MainBanner />
             </div>
-            
-
           </div>
-        </div>
-
-        {/* Product Section */}
-        <div className="mt-6">
-          <ProductSection />
-        </div>
-      </main>
-
+        </section>
+      
+      {/* Featured Products */}
+      <section className="container mx-auto px-4 py-8">
+        <ProductGrid 
+          title="Sản phẩm nổi bật"
+          limit={10}
+          onAddToCart={handleAddToCart}
+          onAddToWishlist={handleAddToWishlist}
+        />
+      </section>
+      
+      
+      
       <Footer />
     </div>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;
