@@ -105,8 +105,8 @@ const TopNavigation: React.FC = () => {
         }
         setCartItemCount(count);
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      console.error('Error fetching cart items count:', error);
       setCartItemCount(0);
     }
   };
@@ -130,8 +130,9 @@ const TopNavigation: React.FC = () => {
         const localCart = localStorageCartService.getCartItems();
         setHoverCartItems(localCart.slice(0, 3));
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      console.error('Error fetching hover cart items:', error);
+      //   console.error('Error fetching hover cart items:', error);
       setHoverCartItems([]);
     }
   };
@@ -152,8 +153,9 @@ const TopNavigation: React.FC = () => {
       } else {
         localStorageCartService.updateQuantity(cartItemId, newQuantity);
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      console.error('Error updating quantity:', error);
+      //   console.error('Error updating quantity:', error);
       toast.error('Không thể cập nhật số lượng');
     }
   };
@@ -170,8 +172,8 @@ const TopNavigation: React.FC = () => {
         localStorageCartService.removeItem(cartItemId);
         toast.success('Đã xóa sản phẩm');
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      console.error('Error removing item:', error);
       toast.error('Không thể xóa sản phẩm');
     }
   };

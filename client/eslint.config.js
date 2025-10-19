@@ -19,5 +19,13 @@ export default tseslint.config([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+    //React rules
+
+    //Common rules
+    'no-console': 'warn',
+    'no-lonely-if': 'warn',
+    'no-unused-vars': 'warn',
+  }
   },
 ])

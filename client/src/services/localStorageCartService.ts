@@ -9,8 +9,8 @@ export const localStorageCartService = {
         try {
             const cartData = localStorage.getItem(CART_STORAGE_KEY);
             return cartData ? JSON.parse(cartData) : [];
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
-            console.error('Error reading cart from localStorage:', error);
             return [];
         }
     },
@@ -42,19 +42,20 @@ export const localStorageCartService = {
                 productPrice: product.productPrice,
                 images: product.images,
                 quantity: quantity,
-                totalPrice: product.productPrice * quantity,  // Thêm totalPrice
+                totalPrice: product.productPrice * quantity // Thêm totalPrice
             };
             cart.push(newItem);
         }
 
         localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
-        
+
         // Dispatch event để cập nhật UI
         window.dispatchEvent(new CustomEvent('cartUpdated'));
-        
+
         return cart;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-        console.error('Error adding to cart:', error);
+
         return [];
     }
 },
@@ -77,10 +78,10 @@ updateQuantity: (cartItemId: string, quantity: number): CartItem[] => {
 
         localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
         window.dispatchEvent(new CustomEvent('cartUpdated'));
-        
+
         return cart;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-        console.error('Error updating cart quantity:', error);
         return [];
     }
 },
@@ -93,10 +94,10 @@ updateQuantity: (cartItemId: string, quantity: number): CartItem[] => {
 
             localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
             window.dispatchEvent(new CustomEvent('cartUpdated'));
-            
+
             return cart;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
-            console.error('Error removing cart item:', error);
             return [];
         }
     },
@@ -117,5 +118,5 @@ updateQuantity: (cartItemId: string, quantity: number): CartItem[] => {
     getTotalAmount: (): number => {
         const cart = localStorageCartService.getCartItems();
         return cart.reduce((total, item) => total + item.productPrice * item.quantity, 0);
-    },
+    }
 };

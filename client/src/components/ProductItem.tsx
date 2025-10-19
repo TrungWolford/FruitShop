@@ -107,14 +107,14 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
     try {
       if (isAuthenticated && user) {
         // User đã đăng nhập → thêm qua API
-        console.log('🛒 Starting cart process for product:', product.productId, 'user:', user.accountId);
+        // console.log('🛒 Starting cart process for product:', product.productId, 'user:', user.accountId);
 
         const addToCartResponse = await cartService.addToCart({
           productId: product.productId,
           quantity: 1,
           accountId: user.accountId,
         });
-        console.log('✅ Add to cart response:', addToCartResponse);
+        // console.log('✅ Add to cart response:', addToCartResponse);
 
         if (addToCartResponse.success) {
           toast.success('Đã thêm sản phẩm vào giỏ hàng');
@@ -127,12 +127,12 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
           // Dispatch event để Cart component có thể refresh
           window.dispatchEvent(new CustomEvent('cartUpdated'));
         } else {
-          console.error('❌ Failed to add to cart:', addToCartResponse);
+          // console.error('❌ Failed to add to cart:', addToCartResponse);
           toast.error(addToCartResponse.message || 'Không thể thêm sản phẩm vào giỏ hàng');
         }
       } else {
         // Guest user → thêm vào localStorage
-        console.log('🛒 Adding to localStorage cart for guest user');
+        // console.log('🛒 Adding to localStorage cart for guest user');
 
         // Lấy imageUrl cho localStorage
         let imageUrl = product.imageUrl;
@@ -160,8 +160,8 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      console.error('💥 Error adding to cart:', error);
-      console.error('Error details:', error.response?.data);
+      // console.error('💥 Error adding to cart:', error);
+      // console.error('Error details:', error.response?.data);
       toast.error(error.response?.data?.message || error.message || 'Đã xảy ra lỗi khi thêm vào giỏ hàng');
     } finally {
       setIsAddingToCart(false);
@@ -243,12 +243,15 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
         </div>
 
         {/* Product Name */}
-        <h3
-          className="text-sm font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-blue-600 transition-colors cursor-pointer"
-          onClick={handleProductClick}
-        >
-          <span className="text-red-700 font-bold">[{product.productId}]</span> {product.productName}
-        </h3>
+        <div className="mb-1 h-8">
+          <h3
+            className="text-sm font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-blue-600 transition-colors cursor-pointer"
+            onClick={handleProductClick}
+            title={product.productName}
+          >
+            <span className="text-red-700 font-bold">[{product.productId}]</span> {product.productName}
+          </h3>
+        </div>
 
         {/* Price */}
         <div className="flex items-center gap-2 mb-3">
@@ -268,13 +271,13 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
         <button
           onClick={handleAddToCart}
           disabled={isAddingToCart}
-          className={`w-full bg-white hover:bg-blue-600 text-black hover:text-white text-sm font-semibold py-2 px-4 rounded-2xl hover:rounded-3xl flex items-center justify-center gap-2 transition-all duration-200 ${
+          className={`w-full bg-white hover:bg-orange-500 text-black hover:text-white text-sm font-semibold py-2 px-4 rounded-2xl hover:rounded-3xl flex items-center justify-center gap-2 transition-all duration-200 ${
             isAddingToCart ? 'opacity-50 cursor-not-allowed' : ''
           }`}
         >
           <div
             className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              isAddingToCart ? 'bg-gray-400' : 'bg-blue-600'
+              isAddingToCart ? 'bg-gray-400' : 'bg-primary'
             }`}
           >
             {isAddingToCart ? (
@@ -283,7 +286,7 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
               <ShoppingBag className="w-4 h-4 text-white" />
             )}
           </div>
-          {isAddingToCart ? 'ĐANG THÊM...' : 'THÊM VÀO GIỎ'}
+          {isAddingToCart ? 'ĐANG THÊM...' : 'THÊM VÀO GIỎ HÀNG'}
         </button>
       </div>
     </div>

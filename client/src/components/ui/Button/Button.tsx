@@ -7,16 +7,16 @@ import { cn } from '@/libs/utils';
 import { ButtonVariants } from './ButtonVariants'; // Import từ file riêng
 
 export interface ButtonProps
-    extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-        VariantProps<typeof ButtonVariants> {
-    asChild?: boolean;
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof ButtonVariants> {
+  asChild?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-    ({ className, variant, size, hover, asChild = false, ...props }, ref) => {
-        const Comp = asChild ? Slot : 'button';
-        return <Comp className={cn(ButtonVariants({ variant, size, hover, className }))} ref={ref} {...props} />;
-    },
+  ({ className, variant, size, hover, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : 'button';
+    return <Comp className={cn(ButtonVariants({ variant, size, hover, className }))} ref={ref} {...props} />;
+  },
 );
 Button.displayName = 'Button';
 
