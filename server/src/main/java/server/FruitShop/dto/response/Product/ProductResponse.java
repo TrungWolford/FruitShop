@@ -47,7 +47,11 @@ public class ProductResponse {
         if (product.getImages() != null) {
             List<ProductImageResponse> imageResponses = product.getImages().stream()
                     .map(ProductImageResponse::fromEntity)
-                    .sorted((img1, img2) -> Integer.compare(img1.getImageOrder(), img2.getImageOrder()))
+                    .sorted((img1, img2) -> {
+                        Integer order1 = img1.getImageOrder() != null ? img1.getImageOrder() : Integer.MAX_VALUE;
+                        Integer order2 = img2.getImageOrder() != null ? img2.getImageOrder() : Integer.MAX_VALUE;
+                        return Integer.compare(order1, order2);
+                    })
                     .collect(Collectors.toList());
             response.setImages(imageResponses);
         }

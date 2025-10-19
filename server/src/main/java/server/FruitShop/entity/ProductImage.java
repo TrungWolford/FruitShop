@@ -4,6 +4,8 @@ package server.FruitShop.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "product_images")
 @Data
@@ -16,12 +18,13 @@ public class ProductImage {
     private String imageUrl;
 
     @Column(name = "image_order")
-    private Integer imageOrder;
+    private Integer imageOrder = 0;
 
     @Column(name = "is_main")
-    private Boolean isMain;
+    private Boolean isMain = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     private Product product;
+
 }

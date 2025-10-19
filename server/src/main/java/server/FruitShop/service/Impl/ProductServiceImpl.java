@@ -95,10 +95,10 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     public ProductResponse createProduct(CreateProductRequest request) {
         Product product = new Product();
         product.setProductName(request.getProductName());
-
         product.setPrice(request.getPrice());
         product.setStock(request.getStock());
         product.setDescription(request.getDescription());
@@ -106,33 +106,47 @@ public class ProductServiceImpl implements ProductService {
         product.setUpdatedAt(new Date());
         product.setStatus(1);
 
-        // Xử lý categories từ categoryIds
-        if (request.getCategoryIds() != null && !request.getCategoryIds().isEmpty()) {
-            List<Category> categories = categoryRepository.findAllById(request.getCategoryIds());
-            product.setCategories(categories);
-        }
+        // Lưu product trước (không có categories để tránh lỗi constraint)
+        Product savedProduct = productRepository.save(product);
 
-        // Lưu product trước để có ID
-        productRepository.saveAndFlush(product);
+        // Xử lý categories sau khi product đã có ID
+        if (request.getCategoryIds() != null && !request.getCategoryIds().isEmpty()) {
+            // Remove duplicates
+            List<String> uniqueCategoryIds = request.getCategoryIds().stream()
+                    .distinct()
+                    .toList();
+            
+            List<Category> categories = categoryRepository.findAllById(uniqueCategoryIds);
+            
+            // Validate all categories exist
+            if (categories.size() != uniqueCategoryIds.size()) {
+                throw new RuntimeException("Some categories were not found");
+            }
+            
+            // Set categories và save lại
+            savedProduct.setCategories(categories);
+            savedProduct = productRepository.save(savedProduct);
+        }
 
         // Xử lý images
         if (request.getImages() != null && !request.getImages().isEmpty()) {
+            final Product finalProduct = savedProduct; // Make final for lambda
             List<ProductImage> images = request.getImages().stream()
                     .map(imageRequest -> {
                         ProductImage image = new ProductImage();
                         image.setImageUrl(imageRequest.getImageUrl());
-                        image.setImageOrder(imageRequest.getImageOrder());
-                        image.setIsMain(imageRequest.getIsMain());
-                        image.setProduct(product);
+                        image.setImageOrder(imageRequest.getImageOrder() != null ? imageRequest.getImageOrder() : 0);
+                        image.setIsMain(imageRequest.getIsMain() != null ? imageRequest.getIsMain() : false);
+                        image.setProduct(finalProduct);
                         return image;
                     })
                     .collect(Collectors.toList());
 
             productImageRepository.saveAll(images);
-            product.setImages(images);
+            savedProduct.setImages(images);
         }
 
-        return ProductResponse.fromEntity(product);
+        return ProductResponse.fromEntity(savedProduct);
     }
 
     @Override
@@ -164,8 +178,21 @@ public class ProductServiceImpl implements ProductService {
 
             // Xử lý categories từ categoryIds
             if (request.getCategoryIds() != null && !request.getCategoryIds().isEmpty()) {
-                List<Category> categories = categoryRepository.findAllById(request.getCategoryIds());
-                product.setCategories(categories);
+                // Remove duplicates by converting to Set
+                List<String> uniqueCategoryIds = request.getCategoryIds().stream()
+                        .distinct()
+                        .toList();
+                
+                List<Category> categories = categoryRepository.findAllById(uniqueCategoryIds);
+                
+                // Validate all categories exist
+                if (categories.size() != uniqueCategoryIds.size()) {
+                    throw new RuntimeException("Some categories were not found");
+                }
+                
+                // Clear existing categories and add new ones
+                product.getCategories().clear();
+                product.getCategories().addAll(categories);
             }
 
             // Xử lý images thông minh - chỉ update khi có thay đổi
@@ -204,8 +231,8 @@ public class ProductServiceImpl implements ProductService {
                                 .map(imageRequest -> {
                                     ProductImage image = new ProductImage();
                                     image.setImageUrl(imageRequest.getImageUrl());
-                                    image.setImageOrder(imageRequest.getImageOrder());
-                                    image.setIsMain(imageRequest.getIsMain());
+                                    image.setImageOrder(imageRequest.getImageOrder() != null ? imageRequest.getImageOrder() : 0);
+                                    image.setIsMain(imageRequest.getIsMain() != null ? imageRequest.getIsMain() : false);
                                     image.setProduct(product);
                                     return image;
                                 })

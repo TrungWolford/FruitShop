@@ -6,6 +6,7 @@ import lombok.Data;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 
 @Entity
 @Table(name = "categories")
@@ -21,4 +22,11 @@ public class Category {
 
     @ManyToMany(mappedBy = "categories")
     private List<Product> products;
+
+    @PrePersist
+    public void generateIdIfAbsent() {
+        if (this.categoryId == null) {
+            this.categoryId = UUID.randomUUID().toString();
+        }
+    }
 }
