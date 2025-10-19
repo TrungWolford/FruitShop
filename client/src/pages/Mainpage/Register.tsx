@@ -118,6 +118,7 @@ const Register: React.FC = () => {
          password: formData.password
        }
 
+       // eslint-disable-next-line @typescript-eslint/no-unused-vars
        const result = await registerService.registerAccount(registerData)
       
       toast.success('Đăng ký tài khoản thành công! Vui lòng đăng nhập.')
@@ -133,6 +134,7 @@ const Register: React.FC = () => {
       
       // Navigate to login
       navigate('/')
+         // eslint-disable-next-line @typescript-eslint/no-explicit-any
          } catch (error: any) {
        let errorMessage = 'Không thể đăng ký tài khoản. Vui lòng thử lại!'
        
@@ -165,11 +167,11 @@ const Register: React.FC = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-lg mx-auto">
             <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+              <CardHeader className="bg-gradient-to-r from-orange-400 to-orange-600 text-white">
                 <CardTitle className="text-2xl font-bold text-center">
                   Đăng ký tài khoản
                 </CardTitle>
-                <CardDescription className="text-blue-100 text-center">
+                <CardDescription className="text-white text-center">
                   Tạo tài khoản mới để khám phá thế giới sách
                 </CardDescription>
               </CardHeader>
@@ -272,7 +274,7 @@ const Register: React.FC = () => {
 
                   {/* Accept Terms */}
                   <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 text-white">
                       <Checkbox
                         id="acceptTerms"
                         name="acceptTerms"
@@ -284,11 +286,11 @@ const Register: React.FC = () => {
                       />
                       <Label htmlFor="acceptTerms" className="text-sm text-gray-600">
                         Tôi đồng ý với{' '}
-                        <a href="#" className="text-blue-600 hover:text-blue-700 underline">
+                        <a href="#" className="text-orange-500 hover:text-orange-600 underline">
                           Điều khoản sử dụng
                         </a>{' '}
                         và{' '}
-                        <a href="#" className="text-blue-600 hover:text-blue-700 underline">
+                        <a href="#" className="text-orange-00 hover:text-orange-600 underline">
                           Chính sách bảo mật
                         </a>
                       </Label>
@@ -298,7 +300,7 @@ const Register: React.FC = () => {
                   {/* Submit Button */}
                   <Button 
                     type="submit" 
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 h-12 text-base rounded-md"
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 h-12 text-base rounded-md"
                     disabled={!formData.acceptTerms || isLoading}
                   >
                     {isLoading ? (
@@ -318,7 +320,7 @@ const Register: React.FC = () => {
                       <button
                         type="button"
                         onClick={handleBackToLogin}
-                        className="text-blue-600 hover:text-blue-700 font-semibold underline"
+                        className="text-orange-500 hover:text-orange-600 font-semibold underline"
                       >
                         Đăng nhập ngay
                       </button>

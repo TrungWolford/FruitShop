@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { Search, User, ShoppingCart, Phone, LogOut, UserCircle, History, Settings } from 'lucide-react'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from './ui/dropdown-menu'
 import { useAppSelector, useAppDispatch } from '../hooks/redux'
 import { logout } from '../store/slices/authSlice'
@@ -16,6 +16,7 @@ import LoginDialog from '../pages/Mainpage/Login'
 import Cart from './Cart'
 import { cartService } from '../services/cartService'
 import { toast } from 'sonner'
+import { imgaes } from '../assets/img'
 
 const TopNavigation: React.FC = () => {
   const navigate = useNavigate()
@@ -63,7 +64,7 @@ const TopNavigation: React.FC = () => {
 
     window.addEventListener('cartUpdated', handleCartUpdate)
     window.addEventListener('closeCartModal', handleCloseCartModal)
-    
+
     return () => {
       window.removeEventListener('cartUpdated', handleCartUpdate)
       window.removeEventListener('closeCartModal', handleCloseCartModal)
@@ -72,7 +73,7 @@ const TopNavigation: React.FC = () => {
 
   const fetchCartItemsCount = async () => {
     if (!user) return
-    
+
     try {
       const response = await cartService.getCartItems(user.accountId)
       if (response.success && response.data) {
@@ -80,6 +81,7 @@ const TopNavigation: React.FC = () => {
         if (Array.isArray(response.data)) {
           count = response.data.reduce((total, item) => total + item.quantity, 0)
         } else if (typeof response.data === 'object' && 'items' in response.data) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           count = (response.data as any).items?.reduce((total: number, item: any) => total + item.quantity, 0) || 0
         }
         setCartItemCount(count)
@@ -91,55 +93,53 @@ const TopNavigation: React.FC = () => {
   }
 
   return (
-    <div className="bg-slate-700 text-white">
+    <div className="bg-primary text-white">
       {/* Top bar with hotline */}
-      <div className="bg-amber-400 text-black px-4 py-1 text-sm">
+      <div className="bg-[#F38258] text-white px-4 py-1 text-sm">
         <div className="container mx-auto flex items-center">
           <Phone className="w-4 h-4 mr-2" />
           <span className="font-medium">Hotline: 0903.400.028</span>
-          <span className="ml-2 text-gray-700">(8h - 12h, 13h30 - 17h)</span>
+          <span className="ml-2 text-white-700">(8h - 12h, 13h30 - 17h)</span>
           <span className="ml-auto">Liên hệ hợp tác</span>
         </div>
       </div>
 
       {/* Main navigation */}
-      <div className="container mx-auto px-2 py-3">
+      <div className="container h-[75px]  mx-auto px-[70px] py-3 flex justify-between">
         <div className="flex items-center justify-between gap-4">
           {/* Logo */}
-          <button 
+          <button
             onClick={() => navigate('/')}
             className="flex items-center hover:opacity-80 transition-opacity cursor-pointer"
           >
-            <div className="bg-blue-500 text-white px-3 py-2 rounded-md mr-3">
-              <span className="font-bold text-lg">BC</span>
+            <div className=" px-3 py-2 rounded-md mr-3">
+              <img src={imgaes.logo} alt="" className="w-15 h-16 bg-contain"/>
             </div>
-            <div className="text-xl font-bold text-blue-400">
-              BOOK<span className="text-white">CITY</span><span className="text-blue-400">.VN</span>
-            </div>
+            
           </button>
 
           {/* Search bar */}
-          <div className="flex-1 max-w-2xl mx-8">
+          <div className="flex-1 w-[500px] max-w-2xl mx-8">
             <div className="relative">
               <Input
                 type="text"
                 placeholder="Tìm kiếm sản phẩm..."
-                className="w-full pl-4 pr-12 py-2 rounded border-0 bg-white text-black"
+                className="w-full pl-4 pr-12 py-2 rounded border-0 bg-white text-black "
+
               />
               <Button
                 size="sm"
-                className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-slate-700 hover:bg-slate-600 text-white px-4 rounded"
+                className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-primary hover:bg-[#F38258] text-white px-4 rounded"
               >
                 <Search className="w-4 h-4" />
               </Button>
             </div>
           </div>
+          </div>
 
-          {/* Divider */}
-          <div className="w-px h-8 bg-gray-500 mx-4"></div>
 
           {/* User actions */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 ml-auto">
             {/* Login/Register or User Info */}
             {isAuthenticated && user ? (
               <DropdownMenu>
@@ -151,7 +151,7 @@ const TopNavigation: React.FC = () => {
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-48 mr-4">
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={() => {
                       if (requireAuth('xem thông tin tài khoản')) {
                         navigate('/account/profile')
@@ -162,7 +162,7 @@ const TopNavigation: React.FC = () => {
                     <UserCircle className="mr-2 h-4 w-4" />
                     <span>Thông tin tài khoản</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={() => {
                       if (requireAuth('xem lịch sử đơn hàng')) {
                         navigate('/customer/orders')
@@ -173,12 +173,12 @@ const TopNavigation: React.FC = () => {
                     <History className="mr-2 h-4 w-4" />
                     <span>Lịch sử đơn hàng</span>
                   </DropdownMenuItem>
-                  
+
                   {/* Admin Panel - Only show for admin users */}
                   {user.roles && user.roles.some(role => role.roleName === 'ADMIN') && (
                     <>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         onClick={() => {
                           if (requireAuth('truy cập trang quản trị')) {
                             navigate('/admin/dashboard')
@@ -191,9 +191,9 @@ const TopNavigation: React.FC = () => {
                       </DropdownMenuItem>
                     </>
                   )}
-                  
+
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={handleLogout}
                     className="cursor-pointer text-red-600 focus:text-red-600"
                   >
@@ -203,7 +203,7 @@ const TopNavigation: React.FC = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <button 
+              <button
                 onClick={() => setIsLoginDialogOpen(true)}
                 className="flex items-center gap-2 hover:text-amber-400 transition-colors cursor-pointer"
               >
@@ -216,10 +216,10 @@ const TopNavigation: React.FC = () => {
             )}
 
             {/* Divider */}
-            <div className="w-px h-8 bg-gray-500 mx-4"></div>
+            <div className="w-[1px] h-8 bg-gray-300 mx-4"></div>
 
             {/* Shopping cart */}
-            <div 
+            <div
               className="flex items-center gap-2 relative hover:text-amber-400 transition-colors cursor-pointer"
               onClick={() => {
                 if (requireAuth('xem giỏ hàng')) {
@@ -240,19 +240,18 @@ const TopNavigation: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
       </div>
 
       {/* Login Dialog */}
-      <LoginDialog 
-        isOpen={isLoginDialogOpen} 
-        onClose={() => setIsLoginDialogOpen(false)} 
+      <LoginDialog
+        isOpen={isLoginDialogOpen}
+        onClose={() => setIsLoginDialogOpen(false)}
       />
 
       {/* Cart Dialog */}
-      <Cart 
-        isOpen={isCartOpen} 
-        onClose={() => setIsCartOpen(false)} 
+      <Cart
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
       />
     </div>
   )
