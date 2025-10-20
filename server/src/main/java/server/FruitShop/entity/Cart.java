@@ -7,13 +7,13 @@ import lombok.Data;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Random;
 
 @Entity
 @Table(name = "carts")
 @Data
 public class Cart {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String cartId;
 
     @OneToOne

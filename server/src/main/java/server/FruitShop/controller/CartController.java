@@ -37,6 +37,7 @@ public class CartController {
             CartResponse cart = cartService.createCart(accountId);
             return ResponseEntity.ok(cart);
         } catch (RuntimeException e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
     }
@@ -57,6 +58,7 @@ public class CartController {
             CartItemResponse cartItem = cartService.addCartItem(accountId, request);
             return ResponseEntity.ok(cartItem);
         } catch (RuntimeException e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
     }
@@ -70,6 +72,7 @@ public class CartController {
             CartItemResponse cartItem = cartService.updateCartItem(cartItemId, request);
             return ResponseEntity.ok(cartItem);
         } catch (RuntimeException e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
     }
