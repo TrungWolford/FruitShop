@@ -21,14 +21,48 @@ const ViewProductModal: React.FC<ViewProductModalProps> = ({ isOpen, onClose, pr
         }).format(price);
     };
 
-    const formatDate = (date: Date) => {
+    const parseServerDate = (value?: string | Date | number): Date | null => {
+        if (!value && value !== 0) return null;
+        if (value instanceof Date) return value;
+        if (typeof value === 'number') return new Date(value);
+
+        const isoAttempt = new Date(value as string);
+        if (!Number.isNaN(isoAttempt.getTime())) return isoAttempt;
+
+        const str = (value as string).trim();
+        const dateTimeParts = str.split(' ');
+        const dateParts = dateTimeParts[0].split('/');
+        if (dateParts.length === 3) {
+            const day = parseInt(dateParts[0], 10);
+            const month = parseInt(dateParts[1], 10) - 1;
+            const year = parseInt(dateParts[2], 10);
+
+            let hours = 0,
+                minutes = 0;
+
+            if (dateTimeParts[1]) {
+                const timeParts = dateTimeParts[1].split(':');
+                hours = parseInt(timeParts[0] || '0', 10);
+                minutes = parseInt(timeParts[1] || '0', 10);
+            }
+
+            const constructed = new Date(year, month, day, hours, minutes);
+            if (!Number.isNaN(constructed.getTime())) return constructed;
+        }
+
+        return null;
+    };
+
+    const formatDate = (date?: string | Date | number) => {
+        const d = parseServerDate(date);
+        if (!d) return '—';
         return new Intl.DateTimeFormat('vi-VN', {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
-        }).format(new Date(date));
+        }).format(d);
     };
 
     const getImageUrl = (imageUrl: string) => {

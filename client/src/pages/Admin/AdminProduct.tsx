@@ -209,8 +209,53 @@ const AdminProduct: React.FC = () => {
         }).format(price);
     };
 
-    const formatDate = (date: string | Date) => {
-        return new Intl.DateTimeFormat('vi-VN').format(new Date(date));
+    // Backend returns dates formatted as 'dd/MM/yyyy HH:mm:ss' (see server application.properties)
+    const parseServerDate = (value?: string | Date | number): Date | null => {
+        if (!value && value !== 0) return null;
+
+        if (value instanceof Date) return value;
+        if (typeof value === 'number') return new Date(value);
+
+        // Try native parse first (covers ISO strings)
+        const isoAttempt = new Date(value as string);
+        if (!Number.isNaN(isoAttempt.getTime())) return isoAttempt;
+
+        // Try parsing 'dd/MM/yyyy HH:mm:ss' or 'dd/MM/yyyy' formats
+        const str = (value as string).trim();
+        const dateTimeParts = str.split(' ');
+        const dateParts = dateTimeParts[0].split('/');
+        if (dateParts.length === 3) {
+            const day = parseInt(dateParts[0], 10);
+            const month = parseInt(dateParts[1], 10) - 1; // JS months 0-based
+            const year = parseInt(dateParts[2], 10);
+
+            let hours = 0,
+                minutes = 0,
+                seconds = 0;
+
+            if (dateTimeParts[1]) {
+                const timeParts = dateTimeParts[1].split(':');
+                hours = parseInt(timeParts[0] || '0', 10);
+                minutes = parseInt(timeParts[1] || '0', 10);
+                seconds = parseInt(timeParts[2] || '0', 10);
+            }
+
+            const constructed = new Date(year, month, day, hours, minutes, seconds);
+            if (!Number.isNaN(constructed.getTime())) return constructed;
+        }
+
+        return null;
+    };
+
+    const formatDate = (date?: string | Date | number) => {
+        const d = parseServerDate(date);
+        if (!d) return '—';
+        return new Intl.DateTimeFormat('vi-VN').format(d);
+    };
+
+    const truncate = (text: string | undefined, max = 30) => {
+        if (!text) return '';
+        return text.length > max ? `${text.slice(0, max)}...` : text;
     };
 
     // Function để lấy URL hình ảnh từ public/products
@@ -382,8 +427,8 @@ const AdminProduct: React.FC = () => {
                                     <TableHead className="font-semibold text-white px-4 py-3 text-left text-sm w-48">
                                         Tên sản phẩm
                                     </TableHead>
-                                    <TableHead className="font-semibold text-white px-4 py-3 text-left text-sm w-32">
-                                        Tác giả
+                                    <TableHead className="font-semibold text-white px-4 py-3 text-left text-sm w-48">
+                                        Mô tả
                                     </TableHead>
                                     <TableHead className="font-semibold text-white px-4 py-3 text-center text-sm w-28">
                                         Giá
@@ -534,7 +579,7 @@ const AdminProduct: React.FC = () => {
                                               </TableCell>
                                               <TableCell className="px-4 py-3 select-none">
                                                   <div className="font-medium text-gray-700 text-sm">
-                                                      {product.author}
+                                                      {truncate(product.description, 30)}
                                                   </div>
                                               </TableCell>
                                               <TableCell className="px-4 py-3 select-none">

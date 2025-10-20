@@ -1,10 +1,11 @@
 // src/components/ProductGrid.tsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import ProductItem from './ProductItem';
-import { mockProducts } from '../hooks/data';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/Button/Button';
 import { ArrowRight } from 'lucide-react';
+import { productService } from '../services/productService';
+import type { Product as ApiProduct } from '../types/product';
 
 interface ProductGridProps {
   title?: string;
@@ -27,30 +28,70 @@ const ProductGrid: React.FC<ProductGridProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  // Filter products from mockdata
-  let filteredProducts = mockProducts.filter((product) => product.status === 1); // Active products
+  const [products, setProducts] = useState<ApiProduct[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [totalProducts, setTotalProducts] = useState(0);
 
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        setLoading(true);
+        // Request first page with size large enough (or you can implement pagination later)
+        const response: any = await productService.getAllProducts(0, limit || 20);
+
+        // If backend returns paginated { content, totalElements }
+        if (response && response.content) {
+          if (!mounted) return;
+          setProducts(response.content as ApiProduct[]);
+          setTotalProducts(response.totalElements || response.content.length || 0);
+        } else if (Array.isArray(response)) {
+          if (!mounted) return;
+          setProducts(response as ApiProduct[]);
+          setTotalProducts(response.length);
+        } else if (response && response.data) {
+          // Some endpoints wrap in data
+          const data = response.data;
+          if (Array.isArray(data)) {
+            setProducts(data as ApiProduct[]);
+            setTotalProducts(data.length);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading products for ProductGrid:', error);
+        setProducts([]);
+        setTotalProducts(0);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, [categoryId, limit]);
+
+  // Filter and slice locally
+  let filteredProducts = products.filter((p) => p.status === 1);
   if (categoryId) {
     filteredProducts = filteredProducts.filter((product) =>
-      product.categories.some((cat) => cat.categoryId === categoryId),
+      product.categories?.some((cat) => cat.categoryId === categoryId),
     );
   }
 
-  const totalProducts = filteredProducts.length;
   const isLimited = limit && filteredProducts.length > limit;
-
   if (limit) {
     filteredProducts = filteredProducts.slice(0, limit);
   }
 
-  // Transform mockdata to match ProductItem interface
   const transformedProducts = filteredProducts.map((product) => ({
     productId: product.productId,
     productName: product.productName,
     price: product.price,
-    images: product.images, // mockdata có image: string[]
-    category: product.categories[0]?.categoryName || 'Không phân loại',
-    categoryCount: product.categories.length,
+    images: product.images,
+    category: product.categories?.[0]?.categoryName || 'Không phân loại',
+    categoryCount: product.categories?.length || 0,
     rating: undefined,
     discount: undefined,
   }));
@@ -81,14 +122,18 @@ const ProductGrid: React.FC<ProductGridProps> = ({
 
       {/* Product Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-        {transformedProducts.map((product) => (
-          <ProductItem
-            key={product.productId}
-            product={product}
-            onAddToCart={() => onAddToCart?.(product.productId)}
-            onAddToWishlist={() => onAddToWishlist?.(product.productId)}
-          />
-        ))}
+        {loading
+          ? Array.from({ length: limit || 8 }).map((_, i) => (
+              <div key={i} className="h-64 bg-gray-100 animate-pulse rounded-lg" />
+            ))
+          : transformedProducts.map((product) => (
+              <ProductItem
+                key={product.productId}
+                product={product}
+                onAddToCart={() => onAddToCart?.(product.productId)}
+                onAddToWishlist={() => onAddToWishlist?.(product.productId)}
+              />
+            ))}
       </div>
 
       {/* View All Button - Mobile & Bottom */}
