@@ -154,9 +154,12 @@ export const orderService = {
   getOrdersByAccount: async (accountId: string): Promise<{ success: boolean; data?: OrderResponse[]; message?: string }> => {
     try {
       const response = await axiosInstance.get(API.GET_ORDERS_BY_ACCOUNT(accountId));
+      // Backend returns OrderResponse with fields: createdAt, orderItems, payment (object)
+      // Map backend shape to frontend OrderResponse expected by components
+      const mapped: OrderResponse[] = (response.data || []).map((o: any) => mapBackendOrderToFrontend(o));
       return {
         success: true,
-        data: response.data
+        data: mapped
       };
     } catch (error: any) {
       console.error('Error getting orders:', error);
@@ -171,9 +174,10 @@ export const orderService = {
   getOrderById: async (orderId: string): Promise<{ success: boolean; data?: OrderResponse; message?: string }> => {
     try {
       const response = await axiosInstance.get(API.GET_ORDER_BY_ID(orderId));
+      const mapped = response.data ? mapBackendOrderToFrontend(response.data) : undefined;
       return {
         success: true,
-        data: response.data
+        data: mapped
       };
     } catch (error: any) {
       console.error('Error getting order:', error);
@@ -201,3 +205,47 @@ export const orderService = {
     }
   }
 };
+
+// Helper: map backend Order DTO (server) to frontend OrderResponse shape used in components
+export function mapBackendOrderToFrontend(o: any): OrderResponse {
+  const paymentMethodFromBackend = (() => {
+    // backend returns payment.paymentMethod as string like "COD" or "BANK_TRANSFER"
+    const pm = o?.payment?.paymentMethod || o?.paymentMethod;
+    if (!pm) return 0; // default to COD if missing
+    const lower = String(pm).toLowerCase();
+    if (lower.includes('cod') || lower.includes('cash')) return 0;
+    if (lower.includes('bank') || lower.includes('transfer') || lower.includes('ck')) return 1;
+    return 0;
+  })();
+
+  const orderDetails: OrderDetailResponse[] = (o?.orderItems || o?.orderDetails || []).map((it: any) => ({
+    orderDetailId: it.orderDetailId || it.orderDetailId,
+    productId: it.productId,
+    productName: it.productName,
+    quantity: it.quantity,
+    unitPrice: it.unitPrice ?? it.unitPrice,
+    totalPrice: it.totalPrice ?? (it.unitPrice ? it.unitPrice * (it.quantity || 0) : 0),
+    productImages: it.productImages || []
+  }));
+
+  return {
+    orderId: o.orderId,
+    accountId: o.accountId,
+    accountName: o.accountName,
+    orderDate: (o.createdAt ? new Date(o.createdAt).toISOString() : new Date().toISOString()),
+    status: o.status ?? 0,
+    paymentMethod: paymentMethodFromBackend,
+    totalAmount: o.totalAmount ?? 0,
+    orderDetails,
+    totalItems: o.totalItems ?? orderDetails.length,
+    shipping: o.shipping ? {
+      shippingId: o.shipping.shippingId,
+      accountId: o.shipping.accountId,
+      accountName: o.shipping.accountName,
+      receiverName: o.shipping.receiverName,
+      receiverPhone: o.shipping.receiverPhone,
+      receiverAddress: o.shipping.receiverAddress,
+      city: o.shipping.city,
+    } : undefined as any,
+  };
+}

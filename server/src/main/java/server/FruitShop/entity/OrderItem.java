@@ -8,6 +8,7 @@ import lombok.Data;
 @Data
 public class OrderItem {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String orderDetailId;
 
     @ManyToOne
@@ -21,5 +22,12 @@ public class OrderItem {
     private int quantity;
 
     private long unitPrice;
+
+    @PrePersist
+    public void generateIdIfAbsent() {
+        if (this.orderDetailId == null) {
+            this.orderDetailId = java.util.UUID.randomUUID().toString();
+        }
+    }
 }
 

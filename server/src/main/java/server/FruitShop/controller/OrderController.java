@@ -28,9 +28,13 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(@RequestBody CreateOrderRequest request) {
         try {
+            // Log incoming request for debugging
+            System.out.println("🔔 Incoming CreateOrderRequest: " + request);
+
             OrderResponse order = orderService.createOrder(request);
             return ResponseEntity.ok(order);
         } catch (RuntimeException e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
     }

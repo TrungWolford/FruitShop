@@ -64,28 +64,63 @@ public class OrderServiceImpl implements OrderService {
 
         System.out.println("🛒 Shipping found: " + shippingOptional.get().getReceiverName());
 
-        // Validate payment
-        Optional<Payment> paymentOptional = paymentRepository.findById(request.getPaymentId());
-        if (paymentOptional.isEmpty()) {
-            throw new RuntimeException("Payment not found with id: " + request.getPaymentId());
+        // Validate or create payment
+        Payment paymentEntity = null;
+        if (request.getPaymentId() != null) {
+            Optional<Payment> paymentOptional = paymentRepository.findById(request.getPaymentId());
+            if (paymentOptional.isEmpty()) {
+                throw new RuntimeException("Payment not found with id: " + request.getPaymentId());
+            }
+            paymentEntity = paymentOptional.get();
+            System.out.println("🛒 Payment found: " + paymentEntity.getPaymentId());
+        } else if (request.getPaymentMethod() != null) {
+            // Create a Payment record based on numeric paymentMethod
+            Payment p = new Payment();
+            String method = switch (request.getPaymentMethod()) {
+                case 0 -> "COD";
+                case 1 -> "BANK_TRANSFER";
+                default -> "OTHER";
+            };
+            p.setPaymentMethod(method);
+            p.setPaymentStatus(0); // pending
+            p.setPaymentDate(new java.util.Date());
+            p.setAmount(java.math.BigDecimal.ZERO);
+            paymentEntity = paymentRepository.save(p);
+            System.out.println("🛒 Created payment: " + paymentEntity.getPaymentId() + " method=" + method);
+        } else {
+            throw new RuntimeException("Payment information missing");
         }
 
-        System.out.println("🛒 Payment found: " + paymentOptional.get().getPaymentId());
-
         // Create order
-        Order order = new Order();
+    Order order = new Order();
         order.setAccount(accountOptional.get());
-        order.setShipping(shippingOptional.get());
-        order.setPayment(paymentOptional.get());
+        // To avoid potential DB unique constraints on existing shippingId,
+        // clone the Shipping into a new Shipping record attached to this order.
+        Shipping existingShipping = shippingOptional.get();
+        Shipping shippingClone = new Shipping();
+        shippingClone.setAccount(existingShipping.getAccount());
+        shippingClone.setStartLocation(existingShipping.getStartLocation());
+        shippingClone.setEndLocation(existingShipping.getEndLocation());
+        shippingClone.setReceiverName(existingShipping.getReceiverName());
+        shippingClone.setReceiverPhone(existingShipping.getReceiverPhone());
+        shippingClone.setReceiverAddress(existingShipping.getReceiverAddress());
+        shippingClone.setCity(existingShipping.getCity());
+        shippingClone.setShippingFee(existingShipping.getShippingFee());
+        shippingClone.setShippedAt(existingShipping.getShippedAt());
+        shippingClone.setStatus(existingShipping.getStatus());
+        // Persist clone
+        Shipping savedShippingClone = shippingRepository.save(shippingClone);
+        order.setShipping(savedShippingClone);
+    order.setPayment(paymentEntity);
         order.setStatus(1); // Dang van chuyen
         order.setTotalAmount(0);
 
-        Order savedOrder = orderRepository.save(order);
+    Order savedOrder = orderRepository.save(order);
 
         // Create order details and calculate total
         long totalAmount = 0;
-        List<OrderItem> orderItems = request.getItems().stream()
-                .map(item -> {
+    List<OrderItem> orderItems = request.getItems().stream()
+        .map(item -> {
                     Optional<Product> productOptional = productRepository.findById(item.getProductId());
                     if (productOptional.isEmpty()) {
                         throw new RuntimeException("Product not found with id: " + item.getProductId());
@@ -111,7 +146,7 @@ public class OrderServiceImpl implements OrderService {
 
                     return orderItemRepository.save(orderDetail);
                 })
-                .toList();
+                .collect(Collectors.toList());
 
         // Calculate total amount
         totalAmount = orderItems.stream()
@@ -120,6 +155,12 @@ public class OrderServiceImpl implements OrderService {
 
         savedOrder.setTotalAmount(totalAmount);
         savedOrder.setOrderItems(orderItems);
+        // Update payment amount with total
+        if (paymentEntity != null) {
+            paymentEntity.setAmount(java.math.BigDecimal.valueOf(totalAmount));
+            paymentRepository.save(paymentEntity);
+            savedOrder.setPayment(paymentEntity);
+        }
 
         Order finalOrder = orderRepository.save(savedOrder);
         return OrderResponse.fromEntity(finalOrder);

@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import server.FruitShop.entity.Shipping;
+import java.util.List;
 
 @Repository
 public interface ShippingRepository extends JpaRepository<Shipping, String> {
@@ -19,4 +20,8 @@ public interface ShippingRepository extends JpaRepository<Shipping, String> {
     
     @Query("SELECT s FROM Shipping s WHERE LOWER(s.receiverPhone) LIKE LOWER(CONCAT('%', :phone, '%'))")
     Page<Shipping> findByReceiverPhone(@Param("phone") String phone, Pageable pageable);
+
+    // Find shippings by account id
+    @Query("SELECT s FROM Shipping s WHERE s.account.accountId = :accountId")
+    List<Shipping> findByAccountAccountId(@Param("accountId") String accountId);
 }

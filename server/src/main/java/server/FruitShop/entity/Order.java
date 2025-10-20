@@ -13,14 +13,15 @@ import java.util.List;
 @Data
 public class Order {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String orderId;
 
     @ManyToOne
     @JoinColumn(name = "accountid")
     private Account account;
 
-    @OneToOne
-    @JoinColumn(name = "shippingid")
+    @ManyToOne
+    @JoinColumn(name = "shippingid", unique = false)
     private Shipping shipping;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
@@ -35,4 +36,11 @@ public class Order {
     private Payment payment;
 
     private long totalAmount;
+
+    @PrePersist
+    public void generateIdIfAbsent() {
+        if (this.orderId == null) {
+            this.orderId = java.util.UUID.randomUUID().toString();
+        }
+    }
 }

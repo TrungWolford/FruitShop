@@ -9,6 +9,7 @@ public class CreateOrderRequest {
     private String accountId;
     private String shippingId;
     private String paymentId;
+    private Integer paymentMethod;
     private List<OrderItemRequest> items;
     private long totalPrice;
     private int status;

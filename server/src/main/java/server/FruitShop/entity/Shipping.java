@@ -10,7 +10,12 @@ import java.util.Date;
 @Data
 public class Shipping {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String shippingId;
+
+    @ManyToOne
+    @JoinColumn(name = "accountid")
+    private Account account;
 
     private String startLocation;
 
@@ -30,4 +35,10 @@ public class Shipping {
 
     private int status;
 
+    @PrePersist
+    public void generateIdIfAbsent() {
+        if (this.shippingId == null) {
+            this.shippingId = java.util.UUID.randomUUID().toString();
+        }
+    }
 }
