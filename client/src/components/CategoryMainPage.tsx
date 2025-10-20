@@ -4,7 +4,7 @@ import { ChevronRight, Plus, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 // import { categoryService } from '../services/categoryService';
 import { toast } from 'sonner';
-import { mockCategories } from '@/hooks/data';
+import { categoryService } from '../services/categoryService';
 
 interface Category {
   categoryId: string;
@@ -24,23 +24,19 @@ const CategoryMainPage: React.FC = () => {
   const loadCategories = async () => {
     try {
       setLoading(true);
-      // const response = await categoryService.getAllCategories();
-      // console.log('Categories response:', response);
-      
-      // if (response && response.content) {
-      //   setCategories(response.content);
-      // } else {
-      //   setCategories([]);
-      // }
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Load from mockdata instead of API
-      const activeCategories = mockCategories.filter(category => category.status === 1); // Chỉ lấy categories có status = 1
-      
-      setCategories(activeCategories);
+      const response = await categoryService.getAllCategories(0, 100);
+      console.log('Categories response:', response);
+      if (response && response.content) {
+        // filter active categories (status = 1)
+        const activeCategories = response.content.filter(c => c.status === 1);
+        setCategories(activeCategories);
+      } else {
+        setCategories([]);
+      }
     } catch (error) {
       console.error('Error loading categories:', error);
       toast.error('Không thể tải danh mục sản phẩm');
+      // fallback to empty list
       setCategories([]);
     } finally {
       setLoading(false);
@@ -85,7 +81,7 @@ const CategoryMainPage: React.FC = () => {
 
       {/* Category List */}
       <div className="divide-y divide-gray-100">
-        {categories.slice(0, 12).map((category) => (
+        {categories.slice(0, 8).map((category) => (
           <div
             key={category.categoryId}
             onClick={() => handleCategoryClick(category.categoryName)}
