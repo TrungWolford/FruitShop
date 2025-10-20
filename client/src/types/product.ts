@@ -16,8 +16,6 @@ export interface Product {
   productName: string;
   categories: Category[];
   images: ProductImage[]; // Array of image objects from backend
-  author: string;
-  cover: string; // Loại bìa sách
   price: number;
   stock: number;
   description: string;
@@ -29,8 +27,6 @@ export interface Product {
 export interface CreateProductRequest {
   productName: string;
   categoryIds: string[]; // Array of category IDs
-  author: string;
-  cover: string;
   price: number;
   stock: number;
   description: string;
@@ -50,8 +46,6 @@ export interface ProductImageRequest {
 export interface ProductFormData {
   productName: string;
   selectedCategories: string[];
-  author: string;
-  cover: string;
   price: string;
   stock: string;
   description: string;

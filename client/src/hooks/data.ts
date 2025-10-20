@@ -187,8 +187,6 @@ export const mockProducts: Product[] = [
       '/images/dac-nhan-tam-1.jpg',
       '/images/dac-nhan-tam-2.jpg'
     ],
-    author: 'Dale Carnegie',
-    cover: 'Bìa mềm',
     price: 89000,
     stock: 150,
     description: 'Cuốn sách kinh điển về nghệ thuật giao tiếp và ứng xử trong cuộc sống. Đây là một trong những cuốn sách bán chạy nhất mọi thời đại.',
@@ -204,8 +202,6 @@ export const mockProducts: Product[] = [
       '/images/sapiens-2.jpg',
       '/images/sapiens-3.jpg'
     ],
-    author: 'Yuval Noah Harari',
-    cover: 'Bìa cứng',
     price: 299000,
     stock: 75,
     description: 'Cuốn sách đưa chúng ta đi qua toàn bộ lịch sử phát triển của loài người từ thời nguyên thủy đến hiện đại.',
@@ -219,8 +215,6 @@ export const mockProducts: Product[] = [
     image: [
       '/images/toi-tai-gioi-1.jpg'
     ],
-    author: 'Adam Khoo',
-    cover: 'Bìa mềm',
     price: 79000,
     stock: 200,
     description: 'Cuốn sách giúp phát triển tư duy tích cực và kỹ năng học tập hiệu quả cho học sinh, sinh viên.',
@@ -235,8 +229,6 @@ export const mockProducts: Product[] = [
       '/images/kinh-te-vi-mo-1.jpg',
       '/images/kinh-te-vi-mo-2.jpg'
     ],
-    author: 'N. Gregory Mankiw',
-    cover: 'Bìa cứng',
     price: 450000,
     stock: 50,
     description: 'Giáo trình kinh tế học vĩ mô dành cho sinh viên đại học, được sử dụng rộng rãi tại các trường đại học.',
@@ -250,8 +242,6 @@ export const mockProducts: Product[] = [
     image: [
       '/images/thanh-pho-tinh-yeu-1.jpg'
     ],
-    author: 'Trần Việt Thắng',
-    cover: 'Bìa mềm',
     price: 65000,
     stock: 120,
     description: 'Tiểu thuyết lãng mạn về những câu chuyện tình yêu trong thành phố hiện đại.',
@@ -266,8 +256,6 @@ export const mockProducts: Product[] = [
       '/images/python-co-ban-1.jpg',
       '/images/python-co-ban-2.jpg'
     ],
-    author: 'Nguyễn Văn A',
-    cover: 'Bìa mềm',
     price: 199000,
     stock: 80,
     description: 'Sách hướng dẫn lập trình Python từ cơ bản đến nâng cao, phù hợp cho người mới bắt đầu.',
@@ -281,8 +269,6 @@ export const mockProducts: Product[] = [
     image: [
       '/images/doraemon-15-1.jpg'
     ],
-    author: 'Fujiko F. Fujio',
-    cover: 'Bìa mềm',
     price: 25000,
     stock: 300,
     description: 'Tập truyện tranh Doraemon với những câu chuyện thú vị về Nobita và chú mèo máy đến từ tương lai.',
@@ -297,8 +283,6 @@ export const mockProducts: Product[] = [
       '/images/triet-hoc-phuong-dong-1.jpg',
       '/images/triet-hoc-phuong-dong-2.jpg'
     ],
-    author: 'Lê Minh Quốc',
-    cover: 'Bìa cứng',
     price: 350000,
     stock: 45,
     description: 'Tổng quan về các trường phái triết học phương Đông, từ Ấn Độ, Trung Quốc đến Nhật Bản.',
@@ -312,8 +296,6 @@ export const mockProducts: Product[] = [
     image: [
       '/images/english-grammar-1.jpg'
     ],
-    author: 'Raymond Murphy',
-    cover: 'Bìa mềm',
     price: 180000,
     stock: 95,
     description: 'Sách ngữ pháp tiếng Anh phổ biến nhất thế giới, phù hợp cho người học trình độ trung cấp.',
@@ -327,8 +309,6 @@ export const mockProducts: Product[] = [
     image: [
       '/images/toan-12-sgk-1.jpg'
     ],
-    author: 'Bộ Giáo Dục và Đào Tạo',
-    cover: 'Bìa mềm',
     price: 45000,
     stock: 250,
     description: 'Sách giáo khoa Toán lớp 12 theo chương trình giáo dục phổ thông mới.',
@@ -343,8 +323,6 @@ export const mockProducts: Product[] = [
       '/images/nguoi-khong-lo-1.jpg',
       '/images/nguoi-khong-lo-2.jpg'
     ],
-    author: 'Ken Follett',
-    cover: 'Bìa cứng',
     price: 420000,
     stock: 30,
     description: 'Tiểu thuyết lịch sử hấp dẫn về cuộc sống của các gia đình trong Thế chiến thứ nhất.',
@@ -358,8 +336,6 @@ export const mockProducts: Product[] = [
     image: [
       '/images/quan-ly-thoi-gian-1.jpg'
     ],
-    author: 'Brian Tracy',
-    cover: 'Bìa mềm',
     price: 95000,
     stock: 110,
     description: 'Hướng dẫn các phương pháp quản lý thời gian hiệu quả để tăng năng suất làm việc.',
@@ -413,16 +389,14 @@ export const searchProducts = (keyword: string): Product[] => {
   return mockProducts.filter(product => 
     product.status === 1 && (
       product.productName.toLowerCase().includes(lowerKeyword) ||
-      product.author.toLowerCase().includes(lowerKeyword) ||
       product.description.toLowerCase().includes(lowerKeyword)
     )
   );
 };
 
 export const getProductsByAuthor = (author: string): Product[] => {
-  return mockProducts.filter(product => 
-    product.author.toLowerCase().includes(author.toLowerCase()) && product.status === 1
-  );
+  // This helper is deprecated after removing author field; return empty list
+  return [];
 };
 
 export const getTotalProducts = (): number => {

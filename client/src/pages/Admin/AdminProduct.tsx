@@ -574,7 +574,7 @@ const AdminProduct: React.FC = () => {
                                                       <div className="font-medium text-gray-900 text-sm">
                                                           {product.productName}
                                                       </div>
-                                                      <div className="text-xs text-gray-500 mt-1">{product.cover}</div>
+                                                      {/* cover removed */}
                                                   </div>
                                               </TableCell>
                                               <TableCell className="px-4 py-3 select-none">

@@ -31,8 +31,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
     const [formData, setFormData] = useState<ProductFormData>({
         productName: '',
         selectedCategories: [],
-        author: '',
-        cover: 'Bìa mềm',
         price: '',
         stock: '',
         description: '',
@@ -167,10 +165,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
             return false;
         }
 
-        if (!formData.author.trim()) {
-            toast.error('Vui lòng nhập tác giả');
-            return false;
-        }
 
         if (!formData.price || parseFloat(formData.price) <= 0) {
             toast.error(VALIDATION_RULES.PRICE.MESSAGE);
@@ -206,8 +200,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
             const productData: CreateProductRequest = {
                 productName: formData.productName.trim(),
                 categoryIds: formData.selectedCategories,
-                author: formData.author.trim(),
-                cover: formData.cover,
                 price: parseFloat(formData.price),
                 stock: parseInt(formData.stock),
                 description: formData.description.trim(),
@@ -217,7 +209,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
 
             console.log('📦 Creating product with data:', {
                 productName: productData.productName,
-                author: productData.author,
                 price: productData.price,
                 stock: productData.stock,
                 categories: productData.categoryIds,
@@ -237,8 +228,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
             setFormData({
                 productName: '',
                 selectedCategories: [],
-                author: '',
-                cover: 'Bìa mềm',
                 price: '',
                 stock: '',
                 description: '',
@@ -276,8 +265,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
         setFormData({
             productName: '',
             selectedCategories: [],
-            author: '',
-            cover: 'Bìa mềm',
             price: '',
             stock: '',
             description: '',
@@ -314,33 +301,11 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="author">Tác giả *</Label>
-                            <Input
-                                id="author"
-                                value={formData.author}
-                                onChange={(e) => handleInputChange('author', e.target.value)}
-                                placeholder="Nhập tên tác giả..."
-                                className="w-full"
-                            />
-                        </div>
+                        {/* author field removed */}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="cover">Loại bìa</Label>
-                            <Select value={formData.cover} onValueChange={(value) => handleInputChange('cover', value)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Chọn loại bìa" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Bìa mềm">Bìa mềm</SelectItem>
-                                    <SelectItem value="Bìa cứng">Bìa cứng</SelectItem>
-                                    <SelectItem value="Bìa bóng">Bìa bóng</SelectItem>
-                                    <SelectItem value="Bìa matte">Bìa matte</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        {/* cover field removed */}
 
                         <div className="space-y-2">
                             <Label htmlFor="price">Giá bán (VNĐ) *</Label>

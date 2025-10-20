@@ -239,22 +239,7 @@ const ViewProductModal: React.FC<ViewProductModalProps> = ({ isOpen, onClose, pr
                                 </div>
 
                                 {/* Author and Cover */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="text-xs font-medium text-gray-600 mb-1 block flex items-center gap-1">
-                                            <User className="w-3 h-3" />
-                                            Tác giả
-                                        </label>
-                                        <p className="text-sm text-gray-900 font-medium">{product.author}</p>
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-medium text-gray-600 mb-1 block flex items-center gap-1">
-                                            <Package className="w-3 h-3" />
-                                            Loại bìa
-                                        </label>
-                                        <p className="text-sm text-gray-900 font-medium">{product.cover}</p>
-                                    </div>
-                                </div>
+                                {/* author and cover removed from view */}
 
                                 {/* Categories */}
                                 <div>

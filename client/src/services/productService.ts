@@ -44,8 +44,6 @@ export const productService = {
       // Prepare JSON data for API
       const requestData = {
         productName: productData.productName,
-        author: productData.author,
-        cover: productData.cover,
         price: productData.price,
         stock: productData.stock,
         description: productData.description,
@@ -82,8 +80,6 @@ export const productService = {
       // Prepare JSON data for API - same format as createProduct
       const requestData = {
         productName: productData.productName,
-        author: productData.author,
-        cover: productData.cover,
         price: productData.price,
         stock: productData.stock,
         description: productData.description,

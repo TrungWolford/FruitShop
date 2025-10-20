@@ -62,8 +62,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
     const [formData, setFormData] = useState<ProductFormData>({
         productName: '',
         selectedCategories: [],
-        author: '',
-        cover: 'Bìa mềm',
         price: '',
         stock: '',
         description: '',
@@ -129,8 +127,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
         setFormData({
             productName: product.productName,
             selectedCategories: product.categories.map((cat) => cat.categoryId),
-            author: product.author,
-            cover: product.cover,
             price: product.price.toString(),
             stock: product.stock.toString(),
             description: product.description,
@@ -315,10 +311,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
             return;
         }
 
-        if (!formData.author.trim()) {
-            toast.error('Vui lòng nhập tác giả');
-            return;
-        }
+        // author field removed - no validation needed
 
         if (!formData.price || parseFloat(formData.price) <= 0) {
             toast.error('Vui lòng nhập giá hợp lệ');
@@ -347,8 +340,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
             const productData: CreateProductRequest = {
                 productName: formData.productName.trim(),
                 categoryIds: formData.selectedCategories,
-                author: formData.author.trim(),
-                cover: formData.cover,
                 price: parseFloat(formData.price),
                 stock: parseInt(formData.stock),
                 description: formData.description.trim(),
@@ -359,7 +350,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
 
             console.log('📦 Updating product with data:', {
                 productName: productData.productName,
-                author: productData.author,
                 price: productData.price,
                 stock: productData.stock,
                 categories: productData.categoryIds,
@@ -382,8 +372,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
             setFormData({
                 productName: '',
                 selectedCategories: [],
-                author: '',
-                cover: 'Bìa mềm',
                 price: '',
                 stock: '',
                 description: '',
@@ -418,8 +406,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
         setFormData({
             productName: '',
             selectedCategories: [],
-            author: '',
-            cover: 'Bìa mềm',
             price: '',
             stock: '',
             description: '',
@@ -475,18 +461,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
                                 />
                             </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="author" className="text-sm font-medium text-gray-700">
-                                    Tác giả <span className="text-red-500">*</span>
-                                </Label>
-                                <Input
-                                    id="author"
-                                    value={formData.author}
-                                    onChange={(e) => handleInputChange('author', e.target.value)}
-                                    placeholder="Nhập tên tác giả"
-                                    className="border-gray-300 focus:border-amber-500 focus:ring-amber-500/20"
-                                />
-                            </div>
+                            {/* author field removed */}
                         </div>
                     </div>
 
@@ -518,22 +493,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
                                 </Select>
                             </div>
 
-                            <div className="space-y-2">
-                                <Label className="text-sm font-medium text-gray-700">Loại bìa</Label>
-                                <Select
-                                    value={formData.cover}
-                                    onValueChange={(value) => handleInputChange('cover', value)}
-                                >
-                                    <SelectTrigger className="border-gray-300 focus:border-amber-500 focus:ring-amber-500/20">
-                                        <SelectValue placeholder="Chọn loại bìa" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Bìa mềm">Bìa mềm</SelectItem>
-                                        <SelectItem value="Bìa cứng">Bìa cứng</SelectItem>
-                                        <SelectItem value="Bìa bóng">Bìa bóng</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                            {/* cover field removed */}
                         </div>
                     </div>
 
@@ -719,7 +679,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
                                 const hasNewImage = imagePreviewUrls[index];
                                 const hasExistingImage =
                                     product.images && product.images[index] && !removedExistingImages.has(index);
-                                const isEmpty = !hasNewImage && !hasExistingImage;
 
                                 return (
                                     <input

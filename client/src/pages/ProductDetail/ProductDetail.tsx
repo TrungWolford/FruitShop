@@ -460,18 +460,7 @@ const ProductDetail: React.FC = () => {
                                                 {product.status === 1 ? 'Còn hàng' : 'Hết hàng'}
                                             </Badge>
                                         </div>
-                                        <div className="flex items-center space-x-2">
-                                            <span className="text-sm text-gray-600">Tác giả:</span>
-                                            <span className="text-sm font-bold text-orange-700">
-                                                {product.author || 'Chưa cập nhật'}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <span className="text-sm text-gray-600">Loại bìa:</span>
-                                            <span className="text-sm font-bold text-orange-700">
-                                                {product.cover || 'Chưa cập nhật'}
-                                            </span>
-                                        </div>
+                                        {/* author and cover removed */}
                                         <div className="flex items-center space-x-2">
                                             <span className="text-sm text-gray-600">Kho:</span>
                                             <span className="text-sm font-bold text-orange-700">
@@ -647,8 +636,7 @@ const ProductDetail: React.FC = () => {
                                 <div className="mt-4">
                                     <h3 className="text-lg font-semibold text-gray-900 mb-2">Thông tin sách:</h3>
                                     <ul className="list-disc list-inside space-y-1 text-gray-700">
-                                        <li>Tác giả: {product.author || 'Chưa cập nhật'}</li>
-                                        <li>Loại bìa: {product.cover || 'Chưa cập nhật'}</li>
+                                        {/* author and cover removed from details */}
                                         <li>Mã sản phẩm: {product.productId}</li>
                                         <li>Số lượng còn lại: {product.stock} sản phẩm</li>
                                         <li>Giá: {formatPrice(product.price)}</li>
