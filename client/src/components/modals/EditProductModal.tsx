@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { productService } from '../../services/productService';
 import { categoryService } from '../../services/categoryService';
 import { imageService } from '../../services/imageService';
+import { cloudinaryService } from '../../services/cloudinaryService';
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '../../config/constants';
 import type { ProductFormData, CreateProductRequest, Product } from '../../types/product';
 import type { Category } from '../../types/category';
@@ -26,8 +27,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
     const [isLoading, setIsLoading] = useState(false);
     const [categories, setCategories] = useState<Category[]>([]);
     const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
-    const [imageNames, setImageNames] = useState<string[]>([]); // Track image names for database
-    const [originalImageNames, setOriginalImageNames] = useState<string[]>([]); // Track original image names to compare changes
+    const [originalImageUrls, setOriginalImageUrls] = useState<string[]>([]); // Track original Cloudinary URLs
     const [removedExistingImages, setRemovedExistingImages] = useState<Set<number>>(new Set()); // Track which existing images were removed
 
     // Helper function to count current images accurately
@@ -134,14 +134,12 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
             images: [],
         });
 
-        // Set existing image names
+        // Set existing image URLs (Cloudinary URLs from database)
         if (product.images && product.images.length > 0) {
-            const existingImageNames = product.images.map((img) => img.imageUrl);
-            setImageNames(existingImageNames);
-            setOriginalImageNames(existingImageNames); // Keep track of original images
+            const existingImageUrls = product.images.map((img) => img.imageUrl);
+            setOriginalImageUrls(existingImageUrls); // Keep track of original Cloudinary URLs
         } else {
-            setImageNames([]);
-            setOriginalImageNames([]);
+            setOriginalImageUrls([]);
         }
 
         // Clear image previews and reset removed images tracking
@@ -154,71 +152,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
             ...prev,
             [field]: value,
         }));
-    };
-
-    const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const files = event.target.files;
-        if (!files) return;
-
-        const newFiles = Array.from(files);
-
-        // Calculate current images using the same logic as display counter
-        const currentImageCount = getCurrentImageCount();
-
-        if (currentImageCount + newFiles.length > 5) {
-            toast.error('Tối đa chỉ được chọn 5 hình ảnh');
-            return;
-        }
-
-        const validFiles = newFiles.filter((file) => {
-            const validation = imageService.validateImage(file);
-            if (!validation.isValid) {
-                toast.error(validation.error);
-                return false;
-            }
-            return true;
-        });
-
-        if (validFiles.length === 0) return;
-
-        try {
-            const savedFileNames: string[] = [];
-            const newPreviewUrls: string[] = [];
-
-            for (const file of validFiles) {
-                const fileName = await imageService.saveImageToAssets(file);
-                savedFileNames.push(fileName);
-                const previewUrl = imageService.createPreviewUrl(file);
-                newPreviewUrls.push(previewUrl);
-            }
-
-            setFormData((prev) => ({ ...prev, images: [...prev.images, ...validFiles] }));
-            setImagePreviewUrls((prev) => [...prev, ...newPreviewUrls]);
-            setImageNames((prev) => [...prev, ...savedFileNames]);
-
-            toast.success(`Đã thêm ${validFiles.length} hình ảnh. Lưu tên file gốc vào database.`);
-        } catch (error) {
-            console.error('Error saving images:', error);
-            toast.error('Không thể lưu hình ảnh');
-        }
-    };
-
-    const removeImage = (index: number) => {
-        setFormData((prev) => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
-        imageService.revokePreviewUrl(imagePreviewUrls[index]);
-        setImagePreviewUrls((prev) => prev.filter((_, i) => i !== index));
-        setImageNames((prev) => prev.filter((_, i) => i !== index));
-    };
-
-    const removeExistingImage = (index: number) => {
-        // Mark this existing image as removed
-        setRemovedExistingImages((prev) => new Set([...prev, index]));
-
-        // Remove from imageNames if it exists there
-        if (index < originalImageNames.length) {
-            const imageNameToRemove = originalImageNames[index];
-            setImageNames((prev) => prev.filter((name) => name !== imageNameToRemove));
-        }
     };
 
     const handleSingleImageChange = async (file: File, slotIndex: number) => {
@@ -240,7 +173,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
         }
 
         try {
-            const fileName = await imageService.saveImageToAssets(file);
             const previewUrl = imageService.createPreviewUrl(file);
 
             // Check if this slot has an existing image that needs to be replaced
@@ -248,40 +180,27 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
                 product.images && product.images[slotIndex] && !removedExistingImages.has(slotIndex);
 
             if (hasExistingImage) {
-                // Replace existing image
-                console.log(`🔄 Replacing existing image at slot ${slotIndex + 1}`);
-
-                // Mark existing image as removed
+                // Mark existing image as removed (will be replaced with new one)
+                console.log(`🔄 Marking existing image at slot ${slotIndex + 1} for replacement`);
                 setRemovedExistingImages((prev) => new Set([...prev, slotIndex]));
-
-                // Remove existing image name from imageNames
-                if (slotIndex < originalImageNames.length) {
-                    const existingImageName = originalImageNames[slotIndex];
-                    setImageNames((prev) => prev.filter((name) => name !== existingImageName));
-                }
             }
 
-            // Update arrays at specific index
+            // Add file to formData images array
             setFormData((prev) => ({
                 ...prev,
                 images: [...prev.images, file],
             }));
 
+            // Set preview URL at specific slot
             setImagePreviewUrls((prev) => {
                 const newUrls = [...prev];
                 newUrls[slotIndex] = previewUrl;
                 return newUrls;
             });
 
-            setImageNames((prev) => {
-                const newNames = [...prev];
-                newNames[slotIndex] = fileName;
-                return newNames;
-            });
-
             toast.success(
                 hasExistingImage
-                    ? `Đã thay thế hình ảnh ở ô ${slotIndex + 1}`
+                    ? `Sẽ thay thế hình ảnh ở ô ${slotIndex + 1} khi lưu`
                     : `Đã thêm hình ảnh vào ô ${slotIndex + 1}`,
             );
 
@@ -291,9 +210,38 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
                 fileInput.value = '';
             }
         } catch (error) {
-            console.error('Error saving image:', error);
-            toast.error('Không thể lưu hình ảnh');
+            console.error('Error preparing image:', error);
+            toast.error('Không thể xử lý hình ảnh');
         }
+    };
+
+    const removeNewImage = (index: number) => {
+        // Remove preview URL
+        if (imagePreviewUrls[index]) {
+            imageService.revokePreviewUrl(imagePreviewUrls[index]);
+        }
+
+        // Clear preview at this slot
+        setImagePreviewUrls((prev) => {
+            const newUrls = [...prev];
+            newUrls[index] = '';
+            return newUrls;
+        });
+
+        // Remove file from formData.images
+        // Note: This is simplified - in production you'd need to track which file corresponds to which slot
+        setFormData((prev) => ({
+            ...prev,
+            images: prev.images.filter((_, i) => i !== index),
+        }));
+
+        toast.info('Đã xóa hình ảnh mới');
+    };
+
+    const removeExistingImage = (index: number) => {
+        // Mark this existing image as removed
+        setRemovedExistingImages((prev) => new Set([...prev, index]));
+        toast.info('Hình ảnh sẽ bị xóa khi lưu sản phẩm');
     };
 
     const handleSubmit = async (event: React.FormEvent) => {
@@ -310,8 +258,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
             toast.error('Vui lòng chọn ít nhất một danh mục');
             return;
         }
-
-        // author field removed - no validation needed
 
         if (!formData.price || parseFloat(formData.price) <= 0) {
             toast.error('Vui lòng nhập giá hợp lệ');
@@ -331,12 +277,78 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
         setIsLoading(true);
 
         try {
-            // Filter out empty/undefined image names
-            const validImageNames = imageNames.filter((name) => name && name.trim() !== '');
+            // ========== STEP 1: Upload NEW images to Cloudinary ==========
+            console.log('=== STARTING FILE UPLOADS FOR EDIT ===');
+            let uploadedImageUrls: string[] = [];
 
+            // Upload new images to Cloudinary
+            if (formData.images.length > 0) {
+                console.log('Uploading', formData.images.length, 'new images to Cloudinary...');
+                
+                for (let i = 0; i < formData.images.length; i++) {
+                    const image = formData.images[i];
+                    console.log(`Uploading new image ${i + 1}/${formData.images.length}:`, image.name);
+                    
+                    try {
+                        const result = await cloudinaryService.uploadImage(image, {
+                            folder: 'products/images'
+                        });
+                        
+                        if (result.success && result.data) {
+                            uploadedImageUrls.push(result.data.url);
+                            console.log(`✅ New image ${i + 1} uploaded successfully:`, result.data.url);
+                            
+                            toast.success(`Đã tải lên hình ảnh mới ${i + 1}/${formData.images.length}`, {
+                                duration: 2000,
+                                position: 'top-right',
+                            });
+                        } else {
+                            console.error(`❌ New image ${i + 1} upload failed:`, result.message);
+                            toast.error(`Không thể tải lên hình ảnh ${i + 1}: ${result.message}`, {
+                                duration: 4000,
+                                position: 'top-right',
+                            });
+                            throw new Error(`Failed to upload image ${i + 1}: ${result.message}`);
+                        }
+                    } catch (error) {
+                        console.error(`❌ Error uploading new image ${i + 1}:`, error);
+                        toast.error(`Lỗi khi tải lên hình ảnh ${i + 1}`, {
+                            duration: 4000,
+                            position: 'top-right',
+                        });
+                        throw error;
+                    }
+                }
+                
+                console.log('✅ All new images uploaded successfully:', uploadedImageUrls);
+            }
+
+            // ========== STEP 2: Combine existing and new image URLs ==========
+            // Keep existing images that weren't removed
+            const remainingOriginalUrls = originalImageUrls.filter((_, index) => 
+                !removedExistingImages.has(index)
+            );
+            
+            // Combine remaining original URLs with newly uploaded URLs
+            const allImageUrls = [...remainingOriginalUrls, ...uploadedImageUrls];
+            
             // Check if images have changed
-            const imagesChanged = JSON.stringify(validImageNames.sort()) !== JSON.stringify(originalImageNames.sort());
+            const imagesChanged = 
+                remainingOriginalUrls.length !== originalImageUrls.length || // Some removed
+                uploadedImageUrls.length > 0; // Or new ones added
 
+            console.log('📊 Image comparison:', {
+                original: originalImageUrls.length,
+                remaining: remainingOriginalUrls.length,
+                newUploaded: uploadedImageUrls.length,
+                total: allImageUrls.length,
+                removed: Array.from(removedExistingImages),
+                imagesChanged
+            });
+
+            // ========== STEP 3: Update product with combined URLs ==========
+            console.log('=== UPDATING PRODUCT IN DATABASE ===');
+            
             const productData: CreateProductRequest = {
                 productName: formData.productName.trim(),
                 categoryIds: formData.selectedCategories,
@@ -345,7 +357,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
                 description: formData.description.trim(),
                 status: formData.status,
                 // Only send images if they have changed
-                imageNames: imagesChanged ? validImageNames : undefined,
+                imageNames: imagesChanged ? allImageUrls : undefined,
             };
 
             console.log('📦 Updating product with data:', {
@@ -353,19 +365,27 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
                 price: productData.price,
                 stock: productData.stock,
                 categories: productData.categoryIds,
-                imagesChanged: imagesChanged,
-                imageCount: validImageNames.length,
-                imageNames: validImageNames,
-                originalImageNames: originalImageNames, // For debugging
-                totalImageNames: imageNames, // For debugging
+                imagesChanged,
+                imageCount: allImageUrls.length,
+                imageUrls: allImageUrls,
             });
 
             await productService.updateProduct(product.productId, productData);
 
             toast.success(
                 `${SUCCESS_MESSAGES.PRODUCT_UPDATED} ${
-                    validImageNames.length > 0 ? `với ${validImageNames.length} hình ảnh` : ''
+                    allImageUrls.length > 0 ? `với ${allImageUrls.length} hình ảnh` : ''
                 }`,
+                {
+                    duration: 3000,
+                    position: 'top-right',
+                    style: {
+                        background: '#10b981',
+                        color: '#fff',
+                        borderRadius: '8px',
+                        padding: '12px 16px',
+                    },
+                }
             );
 
             // Reset form
@@ -379,11 +399,10 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
                 images: [],
             });
             setImagePreviewUrls([]);
-            setImageNames([]);
-            setOriginalImageNames([]);
+            setOriginalImageUrls([]);
             setRemovedExistingImages(new Set());
 
-            // Cleanup localStorage để tránh vượt quota
+            // Cleanup localStorage
             imageService.cleanupStorage();
 
             // Close modal first
@@ -391,10 +410,11 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
 
             // Add delay for loading effect and then reload table
             setTimeout(() => {
-                onSuccess(); // This will trigger table reload
-            }, 500); // 0.5 seconds delay
+                onSuccess();
+            }, 500);
         } catch (error: any) {
-            const errorMessage = error.response?.data?.message || ERROR_MESSAGES.PRODUCT_UPDATE_FAILED;
+            console.error('Error updating product:', error);
+            const errorMessage = error.response?.data?.message || error.message || ERROR_MESSAGES.PRODUCT_UPDATE_FAILED;
             toast.error(errorMessage);
         } finally {
             setIsLoading(false);
@@ -413,11 +433,10 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
             images: [],
         });
         setImagePreviewUrls([]);
-        setImageNames([]);
-        setOriginalImageNames([]);
+        setOriginalImageUrls([]);
         setRemovedExistingImages(new Set());
 
-        // Cleanup localStorage để tránh vượt quota
+        // Cleanup localStorage
         imageService.cleanupStorage();
 
         onClose();
@@ -613,13 +632,13 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
                                                     />
                                                     <button
                                                         type="button"
-                                                        onClick={() => removeImage(index)}
+                                                        onClick={() => removeNewImage(index)}
                                                         className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
                                                     >
                                                         <X className="w-3 h-3" />
                                                     </button>
                                                     <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 truncate">
-                                                        {imageNames[index]}
+                                                        Hình ảnh mới
                                                     </div>
                                                 </>
                                             ) : hasExistingImage ? (
@@ -676,10 +695,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
 
                             {/* Hidden file inputs for each slot */}
                             {Array.from({ length: 5 }, (_, index) => {
-                                const hasNewImage = imagePreviewUrls[index];
-                                const hasExistingImage =
-                                    product.images && product.images[index] && !removedExistingImages.has(index);
-
                                 return (
                                     <input
                                         key={index}

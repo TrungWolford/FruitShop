@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { productService } from '../../services/productService';
 import { categoryService } from '../../services/categoryService';
 import { imageService } from '../../services/imageService';
+import { cloudinaryService } from '../../services/cloudinaryService';
 
 import { VALIDATION_RULES, SUCCESS_MESSAGES, ERROR_MESSAGES } from '../../config/constants';
 import type { ProductFormData, CreateProductRequest } from '../../types/product';
@@ -26,7 +27,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
     const [isLoading, setIsLoading] = useState(false);
     const [categories, setCategories] = useState<Category[]>([]);
     const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>(new Array(5).fill(''));
-    const [imageNames, setImageNames] = useState<string[]>(new Array(5).fill('')); // Track image names for database
 
     const [formData, setFormData] = useState<ProductFormData>({
         productName: '',
@@ -89,9 +89,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
 
         // Save image to assets and create preview URL
         try {
-            // Save to assets and get filename
-            const fileName = await imageService.saveImageToAssets(file);
-
             // Create preview URL
             const previewUrl = imageService.createPreviewUrl(file);
 
@@ -107,13 +104,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
                 return newUrls;
             });
 
-            setImageNames((prev) => {
-                const newNames = [...prev];
-                newNames[index] = fileName;
-                return newNames;
-            });
-
-            toast.success(`Đã thêm hình ảnh ${index + 1}. Lưu tên file gốc vào database.`);
+            toast.success(`Đã thêm hình ảnh ${index + 1}. Sẽ upload lên Cloudinary khi tạo sản phẩm.`);
         } catch (error) {
             console.error('Error saving image:', error);
             toast.error('Không thể lưu hình ảnh');
@@ -131,12 +122,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
             const newUrls = [...prev];
             newUrls[index] = '';
             return newUrls;
-        });
-
-        setImageNames((prev) => {
-            const newNames = [...prev];
-            newNames[index] = '';
-            return newNames;
         });
 
         setFormData((prev) => ({
@@ -197,6 +182,70 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
         setIsLoading(true);
 
         try {
+            // ========== STEP 1: Upload images to Cloudinary ==========
+            console.log('=== STARTING FILE UPLOADS ===');
+            let uploadedImageUrls: string[] = [];
+
+            // Upload all images to Cloudinary
+            if (formData.images.length > 0) {
+                console.log('Uploading', formData.images.length, 'images to Cloudinary...');
+                
+                for (let i = 0; i < formData.images.length; i++) {
+                    const image = formData.images[i];
+                    console.log(`Uploading image ${i + 1}/${formData.images.length}:`, image.name, 'Size:', image.size, 'Type:', image.type);
+                    
+                    try {
+                        const result = await cloudinaryService.uploadImage(image, {
+                            folder: 'products/images'
+                        });
+                        
+                        console.log(`Image ${i + 1} upload result:`, result);
+                        if (result.success && result.data) {
+                            uploadedImageUrls.push(result.data.url);
+                            console.log(`✅ Image ${i + 1} uploaded successfully:`, result.data.url);
+                            
+                            toast.success(`Đã tải lên hình ảnh ${i + 1}/${formData.images.length}`, {
+                                duration: 2000,
+                                position: 'top-right',
+                            });
+                        } else {
+                            console.error(`❌ Image ${i + 1} upload failed:`, result.message);
+                            toast.error(`Không thể tải lên hình ảnh ${i + 1}: ${result.message}`, {
+                                duration: 4000,
+                                position: 'top-right',
+                                style: {
+                                    background: '#ef4444',
+                                    color: '#fff',
+                                    borderRadius: '8px',
+                                    padding: '12px 16px',
+                                },
+                            });
+                            throw new Error(`Failed to upload image ${i + 1}: ${result.message}`);
+                        }
+                    } catch (error) {
+                        console.error(`❌ Error uploading image ${i + 1}:`, error);
+                        toast.error(`Lỗi khi tải lên hình ảnh ${i + 1}`, {
+                            duration: 4000,
+                            position: 'top-right',
+                            style: {
+                                background: '#ef4444',
+                                color: '#fff',
+                                borderRadius: '8px',
+                                padding: '12px 16px',
+                            },
+                        });
+                        throw error;
+                    }
+                }
+                
+                console.log('✅ All images uploaded successfully:', uploadedImageUrls);
+            } else {
+                console.log('No images to upload');
+            }
+
+            // ========== STEP 2: Create product with Cloudinary URLs ==========
+            console.log('=== CREATING PRODUCT IN DATABASE ===');
+            
             const productData: CreateProductRequest = {
                 productName: formData.productName.trim(),
                 categoryIds: formData.selectedCategories,
@@ -204,7 +253,8 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
                 stock: parseInt(formData.stock),
                 description: formData.description.trim(),
                 status: formData.status,
-                imageNames: imageNames.length > 0 ? imageNames : undefined, // Send image filenames
+                // Use Cloudinary URLs instead of local file names
+                imageNames: uploadedImageUrls.length > 0 ? uploadedImageUrls : undefined,
             };
 
             console.log('📦 Creating product with data:', {
@@ -212,16 +262,26 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
                 price: productData.price,
                 stock: productData.stock,
                 categories: productData.categoryIds,
-                imageCount: imageNames.length,
-                imageNames: imageNames,
+                imageCount: uploadedImageUrls.length,
+                imageUrls: uploadedImageUrls,
             });
 
             await productService.createProduct(productData);
 
             toast.success(
                 `${SUCCESS_MESSAGES.PRODUCT_CREATED} ${
-                    imageNames.length > 0 ? `với ${imageNames.length} hình ảnh` : ''
+                    uploadedImageUrls.length > 0 ? `với ${uploadedImageUrls.length} hình ảnh` : ''
                 }`,
+                {
+                    duration: 3000,
+                    position: 'top-right',
+                    style: {
+                        background: '#10b981',
+                        color: '#fff',
+                        borderRadius: '8px',
+                        padding: '12px 16px',
+                    },
+                }
             );
 
             // Reset form
@@ -240,7 +300,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
                 if (url) imageService.revokePreviewUrl(url);
             });
             setImagePreviewUrls(new Array(5).fill(''));
-            setImageNames(new Array(5).fill(''));
 
             onSuccess();
             onClose();
@@ -256,10 +315,9 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
     };
 
     const handleClose = () => {
-        // Clean up image preview URLs and names
+        // Clean up image preview URLs
         imagePreviewUrls.forEach((url) => imageService.revokePreviewUrl(url));
         setImagePreviewUrls([]);
-        setImageNames([]);
 
         // Reset form
         setFormData({
