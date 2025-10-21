@@ -39,24 +39,33 @@ const ProductDetail: React.FC = () => {
     // Fetch product data
     useEffect(() => {
         const fetchProduct = async () => {
-            if (!productName) return;
+            if (!productName) {
+                console.warn('⚠️ No productName in URL params');
+                return;
+            }
 
             try {
                 setIsLoading(true);
-                // Extract product ID from productName (assuming format: "productId-productName")
-                const productId = productName.split('-')[0];
+                
+                // productName từ URL params chính là productId (không cần parse gì cả)
+                const productId = productName;
+                
+                console.log('🔍 URL param productName:', productName);
+                console.log('🔑 ProductId:', productId);
+                console.log('📡 Will call API: /api/product/' + productId);
+                
                 const response = await productService.getProductById(productId);
 
                 if (response.success && response.data) {
-                    console.log('📦 Product data from API:', response.data);
+                    console.log('✅ Product data from API:', response.data);
                     setProduct(response.data);
                 } else {
                     console.error('❌ Failed to fetch product:', response);
-                    toast.error('Không tìm thấy sản phẩm');
+                    toast.error(response.message || 'Không tìm thấy sản phẩm');
                     navigate('/');
                 }
             } catch (error) {
-                console.error('Error fetching product:', error);
+                console.error('💥 Error fetching product:', error);
                 toast.error('Đã xảy ra lỗi khi tải sản phẩm');
                 navigate('/');
             } finally {

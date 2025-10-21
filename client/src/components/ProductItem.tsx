@@ -93,12 +93,8 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
 
   // Xử lý click vào sản phẩm để đi tới trang chi tiết
   const handleProductClick = () => {
-    // Tạo URL từ productId và productName
-    const productSlug = `${product.productId}-${product.productName
-      .toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/[^a-z0-9-]/g, '')}`;
-    navigate(`/product/${productSlug}`);
+    // Chỉ truyền productId vào URL
+    navigate(`/product/${product.productId}`);
   };
 
   // Xử lý thêm vào giỏ hàng với logic createCart trước
@@ -249,7 +245,7 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
             onClick={handleProductClick}
             title={product.productName}
           >
-            <span className="text-red-700 font-bold">[{product.productId}]</span> {product.productName}
+            {product.productName}
           </h3>
         </div>
 
