@@ -43,6 +43,13 @@ export const API = {
   DELETE_PRODUCT: (productId: string) => `/product/${productId}`, // DELETE /api/product/{productId} (Admin only)
   FILTER_PRODUCTS: '/product/filter', // GET /api/product/filter?categoryId=xxx&status=1&minPrice=0&maxPrice=999999999&page=0&size=10
   SEARCH_PRODUCTS: '/product/search', // GET /api/product/search?keywords=xxx&page=0&size=10
+ 
+  // File Upload - Cloudinary
+  UPLOAD_IMAGE: '/upload/image', // POST /api/upload/image
+  UPLOAD_FILE: '/upload/file', // POST /api/upload/file  
+  GET_FILE_INFO: '/upload/info', // GET /api/upload/info?publicId=xxx
+  DELETE_FILE: '/upload/delete', // DELETE /api/upload/delete/{publicId}
+  OPTIMIZE_URL: '/upload/optimize', // POST /api/upload/optimize
 
   // Categories - Theo CategoryController.java
   GET_ALL_CATEGORIES: '/category', // GET /api/category?page=0&size=10
