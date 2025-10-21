@@ -22,18 +22,32 @@ export const productService = {
   // Lấy sản phẩm theo ID
   getProductById: async (productId: string) => {
     try {
+      console.log('🔍 Fetching product with ID:', productId);
+      console.log('📡 API URL:', `${API.GET_PRODUCT_BY_ID(productId)}`);
+      
       const response = await axiosInstance.get(`${API.GET_PRODUCT_BY_ID(productId)}`);
+      
+      console.log('✅ Product fetched successfully:', response.data);
+      
       return {
         success: true,
         data: response.data,
         message: 'Product fetched successfully'
       };
     } catch (error: any) {
-      console.error('Error fetching product:', error);
+      console.error('❌ Error fetching product:', error);
+      console.error('📋 Error details:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url,
+      });
+      
       return {
         success: false,
         data: null,
-        message: error.response?.data?.message || error.message || 'Failed to fetch product'
+        message: error.response?.data?.message || error.response?.data || error.message || 'Failed to fetch product'
       };
     }
   },
