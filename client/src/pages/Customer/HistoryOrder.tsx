@@ -178,7 +178,7 @@ const HistoryReceipt: React.FC = () => {
     // Helper function to construct proper image URL
     const getImageUrl = (imageUrl: string) => {
         // If imageUrl is already a full URL, return as is
-        if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('/')) {
+        if (imageUrl?.startsWith('http://') || imageUrl?.startsWith('https://') || imageUrl?.startsWith('/')) {
             return imageUrl;
         }
 
