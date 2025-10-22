@@ -17,6 +17,7 @@ import { logout } from '../../../store/slices/authSlice';
 import LoginDialog from '../../../pages/Mainpage/Login';
 import Cart from '../../Cart';
 import { cartService } from '../../../services/cartService';
+import { productService } from '../../../services/productService';
 import { toast } from 'sonner';
 import { imgaes } from '../../../assets/img';
 import { localStorageCartService } from '@/services/localStorageCartService';
@@ -28,12 +29,58 @@ const TopNavigation: React.FC = () => {
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [cartItemCount, setCartItemCount] = useState(0);
   const [hoverCartItems, setHoverCartItems] = useState<CartItem[]>([]);
 
   const handleLogout = () => {
     dispatch(logout());
     navigate('/');
+  };
+
+  // Handle search
+  const handleSearch = async () => {
+    console.log('🎯 handleSearch called');
+    console.log('🎯 searchQuery value:', searchQuery);
+    console.log('🎯 searchQuery trimmed:', searchQuery.trim());
+    
+    if (!searchQuery.trim()) {
+      console.log('⚠️ Search query is empty');
+      toast.error('Vui lòng nhập từ khóa tìm kiếm');
+      return;
+    }
+
+    try {
+      console.log('🔍 Searching for:', searchQuery);
+      console.log('🔍 Calling productService.searchProducts...');
+      
+      const response = await productService.searchProducts(searchQuery, 0, 12);
+      
+      console.log('📦 Full response:', response);
+      
+      // Response trực tiếp có content, totalElements (không có success, data wrapper)
+      if (response && response.content) {
+        console.log('✅ Search results:', response.content);
+        console.log('✅ Total elements:', response.totalElements);
+        toast.success(`Tìm thấy ${response.totalElements || 0} sản phẩm`);
+        
+        // Navigate to search results page
+        navigate(`/product/search?q=${encodeURIComponent(searchQuery)}`);
+      } else {
+        console.log('❌ No results or invalid response structure');
+        toast.error('Không tìm thấy sản phẩm nào');
+      }
+    } catch (error) {
+      console.error('❌ Search error:', error);
+      toast.error('Đã xảy ra lỗi khi tìm kiếm');
+    }
+  };
+
+  // Handle search on Enter key
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
   };
 
   // Helper function to check authentication and show login message
@@ -216,11 +263,15 @@ const TopNavigation: React.FC = () => {
               <Input
                 type="text"
                 placeholder="Tìm kiếm sản phẩm..."
-                className="w-full pl-4 pr-12 py-2 rounded border-0 bg-white text-black "
+                className="w-full pl-4 pr-12 py-2 rounded border-0 bg-white text-black"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={handleSearchKeyPress}
               />
               <Button
                 size="sm"
                 className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-primary hover:bg-[#F38258] text-white px-4 rounded"
+                onClick={handleSearch}
               >
                 <Search className="w-4 h-4" />
               </Button>
