@@ -232,16 +232,16 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
       <div className="p-4">
         {/* Category */}
         <div className="flex items-center justify-between mb-1">
-          <div className="text-xs text-gray-500 uppercase font-medium">{product.category || 'Không phân loại'}</div>
+          <div className="text-xs text-gray-500 uppercase font-medium h-8 line-clamp-2">{product.category || 'Không phân loại'}</div>
           {product.categoryCount && product.categoryCount > 1 && (
             <div className="text-xs text-blue-600 font-medium">+{product.categoryCount - 1}</div>
           )}
         </div>
 
         {/* Product Name */}
-        <div className="mb-1 h-8">
+        <div className="mb-1 h-12 text-sm overflow-hidden font-normal text-lower">
           <h3
-            className="text-sm font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-blue-600 transition-colors cursor-pointer"
+            className="text-sm font-semibold text-gray-900  line-clamp-2 hover:text-blue-600 transition-colors cursor-pointer"
             onClick={handleProductClick}
             title={product.productName}
           >
@@ -250,7 +250,7 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
         </div>
 
         {/* Price */}
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-2 mb-3 h-5">
           {product.discount ? (
             <>
               <span className="text-lg font-bold text-red-600">
@@ -267,17 +267,17 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
         <button
           onClick={handleAddToCart}
           disabled={isAddingToCart}
-          className={`w-full bg-white hover:bg-orange-500 text-black hover:text-white text-sm font-semibold py-2 px-4 rounded-2xl hover:rounded-3xl flex items-center justify-center gap-2 transition-all duration-200 ${
+          className={`leading-2 w-full bg-white hover:bg-orange-500 text-black hover:text-white text-sm font-semibold py-2 px-2 rounded-2xl hover:rounded-3xl flex items-center justify-center  transition-all duration-200 ${
             isAddingToCart ? 'opacity-50 cursor-not-allowed' : ''
           }`}
         >
           <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center ${
+            className={`w-8 h-8 rounded-full flex items-center justify-center mr-1 ${
               isAddingToCart ? 'bg-gray-400' : 'bg-primary'
             }`}
           >
             {isAddingToCart ? (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-4 h-4 border-2 mx-1 border-white border-t-transparent rounded-full animate-spin "></div>
             ) : (
               <ShoppingBag className="w-4 h-4 text-white" />
             )}
