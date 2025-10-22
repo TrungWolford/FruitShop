@@ -312,8 +312,32 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductResponse> searchProduct(String keywords, Pageable pageable) {
-        return productRepository.findByProductName(keywords, pageable).map(ProductResponse::fromEntity);
+    public Page<ProductResponse> searchProduct(String keywords, Double minPrice, Double maxPrice, Pageable pageable) {
+        Page<Product> products = productRepository.findByProductName(keywords, pageable);
+        
+        // Filter by price if provided
+        if (minPrice != null || maxPrice != null) {
+            List<Product> filteredProducts = products.getContent().stream()
+                    .filter(product -> {
+                        boolean matchMin = minPrice == null || product.getPrice() >= minPrice;
+                        boolean matchMax = maxPrice == null || product.getPrice() <= maxPrice;
+                        return matchMin && matchMax;
+                    })
+                    .toList();
+            
+            // Create new Page with filtered results
+            int start = (int) pageable.getOffset();
+            int end = Math.min((start + pageable.getPageSize()), filteredProducts.size());
+            List<Product> pageContent = filteredProducts.subList(start, end);
+            
+            return new org.springframework.data.domain.PageImpl<>(
+                    pageContent.stream().map(ProductResponse::fromEntity).toList(),
+                    pageable,
+                    filteredProducts.size()
+            );
+        }
+        
+        return products.map(ProductResponse::fromEntity);
     }
 
     @Override

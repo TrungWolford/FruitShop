@@ -21,7 +21,7 @@ public interface ProductService {
 
     public Page<ProductResponse> filterProduct(List<String> categoryId, Pageable pageable, Integer status, long minPrice, long maxPrice);
 
-    public Page<ProductResponse> searchProduct(String keywords, Pageable pageable);
+    public Page<ProductResponse> searchProduct(String keywords, Double minPrice, Double maxPrice, Pageable pageable);
 
     public List<ProductResponse> getTopSoldProduct();
 
