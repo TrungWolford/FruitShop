@@ -31,6 +31,14 @@ const App: React.FC = () => {
         }
       />
       <Route
+        path="/product/search"
+        element={
+          <ErrorBoundary>
+            <ProductPage />
+          </ErrorBoundary>
+        }
+      />
+      <Route
         path="/product/collection/:categoryName"
         element={
           <ErrorBoundary>
