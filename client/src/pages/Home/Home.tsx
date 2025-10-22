@@ -50,7 +50,7 @@ const Home: React.FC = () => {
         <div className="flex justify-center mt-8">
           <button
             onClick={() => navigate('/product')}
-            className="px-8 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200 shadow-md hover:shadow-lg"
+            className="px-8 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-orange-700 transition-colors duration-200 shadow-md hover:shadow-lg"
           >
             Xem tất cả sản phẩm
           </button>
