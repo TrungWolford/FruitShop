@@ -139,18 +139,32 @@ export const productService = {
   },
 
   // Tìm kiếm sản phẩm
-  searchProducts: async (keywords: string, page: number = 0, size: number = 10) => {
+  searchProducts: async (
+    keywords: string, 
+    page: number = 0, 
+    size: number = 10,
+    minPrice?: number,
+    maxPrice?: number
+  ) => {
     try {
-      const response = await axiosInstance.get(`${API.SEARCH_PRODUCTS}`, {
-        params: {
-          keywords,
-          page,
-          size
-        }
-      });
+      const params: any = {
+        keywords,
+        page,
+        size
+      };
+      
+      if (minPrice !== undefined) params.minPrice = minPrice;
+      if (maxPrice !== undefined) params.maxPrice = maxPrice;
+      
+      console.log('📡 productService.searchProducts called with:', params);
+      console.log('📡 API endpoint:', API.SEARCH_PRODUCTS);
+      
+      const response = await axiosInstance.get(`${API.SEARCH_PRODUCTS}`, { params });
+      
+      console.log('✅ Search API response:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error searching products:', error);
+      console.error('❌ Error searching products:', error);
       throw error;
     }
   },
