@@ -97,6 +97,17 @@ export const API = {
   DELETE_SHIPPING: (shippingId: string) => `/shipping/${shippingId}`, // DELETE /api/shipping/{shippingId}
   GET_SHIPPING_BY_ORDER: (orderId: string) => `/shipping/order/${orderId}`, // GET /api/shipping/order/{orderId}
   GET_SHIPPING_BY_ACCOUNT: (accountId: string) => `/shipping/account/${accountId}`, // GET /api/shipping/account/{accountId}
+
+  // Ratings - Theo RatingController.java
+  GET_ALL_RATINGS: '/rating', // GET /api/rating?page=0&size=10
+  GET_RATINGS_BY_ACCOUNT: (accountId: string) => `/rating/account/${accountId}`, // GET /api/rating/account/{accountId}?page=0&size=10
+  GET_RATINGS_BY_PRODUCT: (productId: string) => `/rating/product/${productId}`, // GET /api/rating/product/{productId}?page=0&size=10
+  GET_RATING_BY_ACCOUNT_AND_PRODUCT: (accountId: string, productId: string) => `/rating/account/${accountId}/product/${productId}`, // GET /api/rating/account/{accountId}/product/{productId}
+  GET_AVERAGE_RATING_BY_PRODUCT: (productId: string) => `/rating/product/${productId}/average`, // GET /api/rating/product/{productId}/average
+  CREATE_RATING: '/rating', // POST /api/rating
+  UPDATE_RATING: (ratingId: string) => `/rating/${ratingId}`, // PUT /api/rating/{ratingId}
+  CHANGE_RATING_STATUS: (ratingId: string) => `/rating/${ratingId}/status`, // PATCH /api/rating/{ratingId}/status
+  DELETE_RATING: (ratingId: string) => `/rating/${ratingId}`, // DELETE /api/rating/{ratingId}
 } as const;
 
 // HTTP Status Codes
