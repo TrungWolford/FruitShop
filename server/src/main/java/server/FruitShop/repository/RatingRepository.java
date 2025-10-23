@@ -1,0 +1,20 @@
+package server.FruitShop.repository;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import server.FruitShop.entity.Rating;
+
+import java.util.List;
+
+@Repository
+public interface RatingRepository extends JpaRepository<Rating, String> {
+    Page<Rating> findAll(Pageable pageable);
+    Page<Rating> findByAccountAccountId(Pageable pageable, String accountId);
+    Page<Rating> findByProductProductId(Pageable pageable, String productId);
+    Rating findByAccountAccountIdAndProductProductId(String accountId, String productId);
+    
+    // Find all ratings by productId without pagination
+    List<Rating> findByProductProductId(String productId);
+}
