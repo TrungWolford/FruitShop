@@ -418,8 +418,8 @@ const ProductPage: React.FC = () => {
               </div>
             </div>
             
-            {/* Price Filter - Only show when searching */}
-            {searchQuery && (
+            {/* Price Filter - Show when searching or viewing category */}
+            {(searchQuery || categoryName) && (
               <div className="bg-white shadow-sm border border-gray-200 p-4 mt-4">
                 <div className="flex items-center gap-2 mb-4">
                   <h2 className="text-sm font-extrabold text-gray-900">LỌC THEO GIÁ</h2>
