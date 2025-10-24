@@ -51,8 +51,6 @@ public class ShippingController {
     public ResponseEntity<ShippingResponse> create(@RequestBody ShippingRequest request) {
         try {
             Shipping s = new Shipping();
-            s.setStartLocation(request.getStartLocation());
-            s.setEndLocation(request.getEndLocation());
             s.setReceiverName(request.getReceiverName());
             s.setReceiverPhone(request.getReceiverPhone());
             s.setReceiverAddress(request.getReceiverAddress());
@@ -79,8 +77,6 @@ public class ShippingController {
         Optional<Shipping> opt = shippingRepository.findById(shippingId);
         if (opt.isEmpty()) return ResponseEntity.notFound().build();
         Shipping s = opt.get();
-        s.setStartLocation(request.getStartLocation());
-        s.setEndLocation(request.getEndLocation());
         s.setReceiverName(request.getReceiverName());
         s.setReceiverPhone(request.getReceiverPhone());
         s.setReceiverAddress(request.getReceiverAddress());

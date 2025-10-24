@@ -7,9 +7,8 @@ import java.util.Date;
 @Data
 public class ShippingResponse {
     private String shippingId;
+    private String orderId;
     private String accountId;
-    private String startLocation;
-    private String endLocation;
     private String receiverName;
     private String receiverPhone;
     private String receiverAddress;
@@ -21,9 +20,8 @@ public class ShippingResponse {
     public static ShippingResponse fromEntity(Shipping shipping) {
         ShippingResponse response = new ShippingResponse();
         response.setShippingId(shipping.getShippingId());
+        if (shipping.getOrder() != null) response.setOrderId(shipping.getOrder().getOrderId());
         if (shipping.getAccount() != null) response.setAccountId(shipping.getAccount().getAccountId());
-        response.setStartLocation(shipping.getStartLocation());
-        response.setEndLocation(shipping.getEndLocation());
         response.setReceiverName(shipping.getReceiverName());
         response.setReceiverPhone(shipping.getReceiverPhone());
         response.setReceiverAddress(shipping.getReceiverAddress());

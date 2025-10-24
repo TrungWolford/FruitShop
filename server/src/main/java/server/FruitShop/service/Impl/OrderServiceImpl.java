@@ -99,8 +99,6 @@ public class OrderServiceImpl implements OrderService {
         Shipping existingShipping = shippingOptional.get();
         Shipping shippingClone = new Shipping();
         shippingClone.setAccount(existingShipping.getAccount());
-        shippingClone.setStartLocation(existingShipping.getStartLocation());
-        shippingClone.setEndLocation(existingShipping.getEndLocation());
         shippingClone.setReceiverName(existingShipping.getReceiverName());
         shippingClone.setReceiverPhone(existingShipping.getReceiverPhone());
         shippingClone.setReceiverAddress(existingShipping.getReceiverAddress());

@@ -20,8 +20,8 @@ public class Order {
     @JoinColumn(name = "accountid")
     private Account account;
 
-    @ManyToOne
-    @JoinColumn(name = "shippingid", unique = false)
+    @OneToOne
+    @JoinColumn(name = "shippingid", unique = true)
     private Shipping shipping;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)

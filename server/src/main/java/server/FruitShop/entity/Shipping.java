@@ -13,13 +13,12 @@ public class Shipping {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String shippingId;
 
+    @OneToOne(mappedBy = "shipping")
+    private Order order;
+
     @ManyToOne
     @JoinColumn(name = "accountid")
     private Account account;
-
-    private String startLocation;
-
-    private String endLocation;
 
     private String receiverName;
 

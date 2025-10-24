@@ -7,8 +7,6 @@ import java.util.Date;
 @Data
 public class ShippingRequest {
     private String accountId;
-    private String startLocation;
-    private String endLocation;
     private String receiverName;
     private String receiverPhone;
     private String receiverAddress;
