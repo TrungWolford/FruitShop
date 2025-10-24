@@ -46,8 +46,14 @@ const ProductDetail: React.FC = () => {
     const [userRating, setUserRating] = useState<Rating | null>(null);
     const [isWritingReview, setIsWritingReview] = useState(false);
     const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+    const [isEditingRating, setIsEditingRating] = useState(false);
+    const [isUpdatingRating, setIsUpdatingRating] = useState(false);
     const [averageRating, setAverageRating] = useState<number>(0);
     const [newRating, setNewRating] = useState({
+        ratingStar: 5,
+        comment: ''
+    });
+    const [editRating, setEditRating] = useState({
         ratingStar: 5,
         comment: ''
     });
@@ -146,6 +152,28 @@ const ProductDetail: React.FC = () => {
         console.log('- userRating:', userRating);
         console.log('- ratingsLoading:', ratingsLoading);
         
+        // Check if any rating belongs to current user
+        if (user && ratings.length > 0) {
+            console.log('👤 Current user accountId:', user.accountId);
+            ratings.forEach((rating, index) => {
+                console.log(`Rating ${index}:`, {
+                    ratingId: rating.ratingId,
+                    accountId: rating.account?.accountId,
+                    accountName: rating.account?.accountName,
+                    isCurrentUser: rating.account?.accountId === user.accountId ? '✅ YES' : '❌ NO'
+                });
+            });
+            
+            // 🔧 FIX: If userRating is null but we found user's rating in the list, set it
+            if (!userRating) {
+                const foundUserRating = ratings.find(rating => rating.account?.accountId === user.accountId);
+                if (foundUserRating) {
+                    console.log('🔧 Found user rating in list, setting userRating:', foundUserRating);
+                    setUserRating(foundUserRating);
+                }
+            }
+        }
+        
         const filteredRatings = ratings.filter(rating => rating.ratingId !== userRating?.ratingId);
         console.log('- Filtered ratings (excluding user):', filteredRatings);
         console.log('- Filtered length:', filteredRatings.length);
@@ -154,25 +182,57 @@ const ProductDetail: React.FC = () => {
     // Fetch user's existing rating for this product
     useEffect(() => {
         const fetchUserRating = async () => {
-            if (!isAuthenticated || !user || !product?.productId) return;
+            console.log('🔍 Fetching user rating...');
+            console.log('- isAuthenticated:', isAuthenticated);
+            console.log('- user:', user);
+            console.log('- product?.productId:', product?.productId);
+            
+            if (!isAuthenticated || !user || !product?.productId) {
+                console.log('❌ Cannot fetch user rating - missing data');
+                return;
+            }
 
             try {
+                console.log('📡 Calling getRatingByAccountAndProduct:', {
+                    accountId: user.accountId,
+                    productId: product.productId
+                });
+                
                 const response = await ratingService.getRatingByAccountAndProduct(user.accountId, product.productId);
+                
+                console.log('📦 Response from getRatingByAccountAndProduct:', response);
+                
                 if (response.success && response.data) {
+                    console.log('✅ User rating found:', response.data);
                     setUserRating(response.data);
                 } else {
-                    // User hasn't rated this product yet
+                    console.log('⚠️ User has not rated this product yet (no data in response)');
                     setUserRating(null);
                 }
             } catch (error: any) {
+                console.log('❌ Error fetching user rating:', error);
+                console.log('Error response:', error.response?.data);
                 // If error is 404 or rating not found, user hasn't rated yet
-                console.log('User has not rated this product yet');
                 setUserRating(null);
             }
         };
 
         fetchUserRating();
     }, [isAuthenticated, user, product]);
+
+    // Debug: Log when userRating changes
+    useEffect(() => {
+        console.log('🔄 userRating changed:', userRating);
+        if (userRating) {
+            console.log('✅ User HAS rated this product');
+            console.log('- Rating ID:', userRating.ratingId);
+            console.log('- Account:', userRating.account);
+            console.log('- Stars:', userRating.ratingStar);
+            console.log('- Comment:', userRating.comment);
+        } else {
+            console.log('⚠️ User has NOT rated this product (userRating is null)');
+        }
+    }, [userRating]);
 
     // Handle rating submission
     const handleSubmitRating = async () => {
@@ -250,6 +310,99 @@ const ProductDetail: React.FC = () => {
             toast.error(errorMessage);
             setIsSubmittingRating(false);
         }
+    };
+
+    // Handle rating update
+    const handleUpdateRating = async () => {
+        if (!isAuthenticated || !user || !product || !userRating) {
+            toast.error('Không thể cập nhật đánh giá');
+            return;
+        }
+
+        if (!editRating.comment.trim()) {
+            toast.error('Vui lòng nhập nội dung đánh giá');
+            return;
+        }
+
+        setIsUpdatingRating(true);
+        
+        try {
+            const updateData = {
+                comment: editRating.comment,
+                ratingStar: editRating.ratingStar,
+                status: 1 // Keep status active
+            };
+
+            const response = await ratingService.updateRating(userRating.ratingId, updateData);
+            
+            if (response.success) {
+                toast.success('Đánh giá của bạn đã được cập nhật thành công!', {
+                    duration: 3000,
+                });
+                
+                setIsEditingRating(false);
+                setIsUpdatingRating(false);
+                
+                // Fetch lại data
+                const fetchUpdatedRatings = async () => {
+                    try {
+                        // Fetch user's rating
+                        const userRatingResponse = await ratingService.getRatingByAccountAndProduct(user.accountId, product.productId);
+                        if (userRatingResponse.success && userRatingResponse.data) {
+                            setUserRating(userRatingResponse.data);
+                        }
+                        
+                        // Fetch all ratings
+                        const ratingsResponse: any = await ratingService.getRatingsByProduct(product.productId, currentPage, 5);
+                        if (ratingsResponse && ratingsResponse.content) {
+                            setRatings(ratingsResponse.content);
+                            setTotalPages(ratingsResponse.totalPages);
+                            setTotalRatings(ratingsResponse.totalElements);
+                        }
+                        
+                        // Fetch average rating
+                        const avgResponse: any = await ratingService.getAverageRatingByProduct(product.productId);
+                        if (typeof avgResponse === 'number') {
+                            setAverageRating(avgResponse);
+                        } else if (avgResponse.success && typeof avgResponse.data === 'number') {
+                            setAverageRating(avgResponse.data);
+                        }
+                    } catch (error) {
+                        console.error('Error fetching updated ratings:', error);
+                    }
+                };
+                
+                setTimeout(fetchUpdatedRatings, 500);
+            } else {
+                toast.error(response.message || 'Không thể cập nhật đánh giá. Vui lòng thử lại!');
+                setIsUpdatingRating(false);
+            }
+        } catch (error: any) {
+            console.error('Error updating rating:', error);
+            const errorMessage = error.response?.data?.message || 'Đã xảy ra lỗi khi cập nhật đánh giá';
+            toast.error(errorMessage);
+            setIsUpdatingRating(false);
+        }
+    };
+
+    // Handle start editing rating
+    const handleStartEdit = () => {
+        if (userRating) {
+            setEditRating({
+                ratingStar: userRating.ratingStar,
+                comment: userRating.comment
+            });
+            setIsEditingRating(true);
+        }
+    };
+
+    // Handle cancel editing
+    const handleCancelEdit = () => {
+        setIsEditingRating(false);
+        setEditRating({
+            ratingStar: 5,
+            comment: ''
+        });
     };
 
     const formatPrice = (price: number) => {
@@ -935,26 +1088,89 @@ const ProductDetail: React.FC = () => {
                             )}
 
                             {/* User's Existing Review */}
-                            {userRating && (
+                            {(() => {
+                                console.log('🎨 Render check:', { 
+                                    hasUserRating: !!userRating, 
+                                    isEditingRating,
+                                    shouldShowEditButton: userRating && !isEditingRating,
+                                    userRating 
+                                });
+                                return null;
+                            })()}
+                            {userRating && !isEditingRating && (
                                 <div className="bg-blue-50 p-6 rounded-lg mb-6 border-2 border-blue-200">
-                                    <div className="flex items-start gap-4">
-                                        <div className="flex-shrink-0">
-                                            <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-                                                <User className="w-6 h-6 text-white" />
+                                    <div className="flex items-start justify-between mb-3">
+                                        <div className="flex items-start gap-4 flex-1">
+                                            <div className="flex-shrink-0">
+                                                <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                                                    <User className="w-6 h-6 text-white" />
+                                                </div>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <p className="font-semibold text-gray-900">{userRating.account?.accountName || 'Bạn'}</p>
+                                                    <Badge className="bg-blue-600 text-white">Đánh giá của bạn</Badge>
+                                                </div>
+                                                <p className="text-sm text-gray-500">
+                                                    {new Date(userRating.createdAt || '').toLocaleDateString('vi-VN')}
+                                                    {userRating.updatedAt && userRating.updatedAt !== userRating.createdAt && (
+                                                        <span className="ml-2">(Đã chỉnh sửa)</span>
+                                                    )}
+                                                </p>
                                             </div>
                                         </div>
-                                        <div className="flex-1">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <div>
-                                                    <p className="font-semibold text-gray-900">{userRating.account?.accountName || 'Bạn'}</p>
-                                                    <p className="text-sm text-gray-500">
-                                                        {new Date(userRating.createdAt || '').toLocaleDateString('vi-VN')}
-                                                    </p>
-                                                </div>
-                                                <Badge className="bg-blue-600 text-white">Đánh giá của bạn</Badge>
-                                            </div>
-                                            {renderStars(userRating.ratingStar)}
-                                            <p className="text-gray-700 mt-2 leading-relaxed">{userRating.comment}</p>
+                                        <Button
+                                            onClick={handleStartEdit}
+                                            className="bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 px-4 py-2 text-sm font-medium rounded-md shadow-sm flex-shrink-0 ml-4"
+                                        >
+                                            ✏️ Sửa
+                                        </Button>
+                                    </div>
+                                    <div className="ml-16">
+                                        {renderStars(userRating.ratingStar)}
+                                        <p className="text-gray-700 mt-2 leading-relaxed">{userRating.comment}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Edit Review Form */}
+                            {userRating && isEditingRating && (
+                                <div className="bg-blue-50 p-6 rounded-lg mb-6 border-2 border-blue-200">
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Chỉnh sửa đánh giá của bạn</h3>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Đánh giá của bạn
+                                            </label>
+                                            {renderStars(editRating.ratingStar, true, (star) => setEditRating({ ...editRating, ratingStar: star }))}
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Nhận xét
+                                            </label>
+                                            <textarea
+                                                value={editRating.comment}
+                                                onChange={(e) => setEditRating({ ...editRating, comment: e.target.value })}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                                                rows={4}
+                                                placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."
+                                            />
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                onClick={handleUpdateRating}
+                                                disabled={isUpdatingRating}
+                                                className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                {isUpdatingRating ? 'Đang cập nhật...' : 'Cập nhật đánh giá'}
+                                            </Button>
+                                            <Button
+                                                onClick={handleCancelEdit}
+                                                disabled={isUpdatingRating}
+                                                className="bg-gray-200 hover:bg-gray-300 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                Hủy
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>
