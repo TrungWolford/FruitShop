@@ -42,8 +42,11 @@ const ProductDetail: React.FC = () => {
     const [ratingsLoading, setRatingsLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
+    const [totalRatings, setTotalRatings] = useState(0);
     const [userRating, setUserRating] = useState<Rating | null>(null);
     const [isWritingReview, setIsWritingReview] = useState(false);
+    const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+    const [averageRating, setAverageRating] = useState<number>(0);
     const [newRating, setNewRating] = useState({
         ratingStar: 5,
         comment: ''
@@ -96,13 +99,37 @@ const ProductDetail: React.FC = () => {
 
             setRatingsLoading(true);
             try {
-                const response = await ratingService.getRatingsByProduct(product.productId, currentPage, 5);
-                if (response.success && response.data) {
+                // Fetch ratings list - Backend trả về Spring Boot Page format trực tiếp
+                const response: any = await ratingService.getRatingsByProduct(product.productId, currentPage, 5);
+                console.log('📊 Ratings API Response:', response);
+                
+                // Backend trả về trực tiếp Spring Boot Page format (không có wrapper success/data)
+                if (response && response.content) {
+                    console.log('✅ Ratings content:', response.content);
+                    console.log('📏 Total ratings:', response.totalElements);
+                    
+                    setRatings(response.content);
+                    setTotalPages(response.totalPages);
+                    setTotalRatings(response.totalElements);
+                } else if (response.success && response.data) {
+                    // Fallback: Nếu có wrapper
+                    console.log('✅ Ratings data (with wrapper):', response.data);
                     setRatings(response.data.content);
                     setTotalPages(response.data.totalPages);
+                    setTotalRatings(response.data.totalElements);
+                }
+
+                // Fetch average rating
+                const avgResponse: any = await ratingService.getAverageRatingByProduct(product.productId);
+                console.log('⭐ Average rating response:', avgResponse);
+                
+                if (typeof avgResponse === 'number') {
+                    setAverageRating(avgResponse);
+                } else if (avgResponse.success && typeof avgResponse.data === 'number') {
+                    setAverageRating(avgResponse.data);
                 }
             } catch (error) {
-                console.error('Error fetching ratings:', error);
+                console.error('❌ Error fetching ratings:', error);
             } finally {
                 setRatingsLoading(false);
             }
@@ -110,6 +137,19 @@ const ProductDetail: React.FC = () => {
 
         fetchRatings();
     }, [product, currentPage]);
+
+    // Debug: Log ratings state whenever it changes
+    useEffect(() => {
+        console.log('🔍 DEBUG Ratings State:');
+        console.log('- ratings:', ratings);
+        console.log('- ratings.length:', ratings.length);
+        console.log('- userRating:', userRating);
+        console.log('- ratingsLoading:', ratingsLoading);
+        
+        const filteredRatings = ratings.filter(rating => rating.ratingId !== userRating?.ratingId);
+        console.log('- Filtered ratings (excluding user):', filteredRatings);
+        console.log('- Filtered length:', filteredRatings.length);
+    }, [ratings, userRating, ratingsLoading]);
 
     // Fetch user's existing rating for this product
     useEffect(() => {
@@ -120,9 +160,13 @@ const ProductDetail: React.FC = () => {
                 const response = await ratingService.getRatingByAccountAndProduct(user.accountId, product.productId);
                 if (response.success && response.data) {
                     setUserRating(response.data);
+                } else {
+                    // User hasn't rated this product yet
+                    setUserRating(null);
                 }
-            } catch (error) {
-                // User hasn't rated this product yet
+            } catch (error: any) {
+                // If error is 404 or rating not found, user hasn't rated yet
+                console.log('User has not rated this product yet');
                 setUserRating(null);
             }
         };
@@ -142,6 +186,8 @@ const ProductDetail: React.FC = () => {
             return;
         }
 
+        setIsSubmittingRating(true);
+        
         try {
             const ratingData: CreateRatingRequest = {
                 accountId: user.accountId,
@@ -153,27 +199,56 @@ const ProductDetail: React.FC = () => {
             const response = await ratingService.createRating(ratingData);
             
             if (response.success) {
-                toast.success('Đánh giá của bạn đã được gửi thành công!');
+                // Hiển thị thông báo thành công
+                toast.success('Đánh giá của bạn đã được gửi thành công!', {
+                    duration: 3000,
+                });
+                
+                // Đóng form và reset dữ liệu
                 setIsWritingReview(false);
                 setNewRating({ ratingStar: 5, comment: '' });
+                setIsSubmittingRating(false);
                 
-                // Refresh ratings
-                const ratingsResponse = await ratingService.getRatingsByProduct(product.productId, 0, 5);
-                if (ratingsResponse.success && ratingsResponse.data) {
-                    setRatings(ratingsResponse.data.content);
-                    setTotalPages(ratingsResponse.data.totalPages);
-                    setCurrentPage(0);
-                }
+                // Fetch lại ratings thay vì reload trang
+                const fetchUpdatedRatings = async () => {
+                    try {
+                        // Fetch user's rating
+                        const userRatingResponse = await ratingService.getRatingByAccountAndProduct(user.accountId, product.productId);
+                        if (userRatingResponse.success && userRatingResponse.data) {
+                            setUserRating(userRatingResponse.data);
+                        }
+                        
+                        // Fetch all ratings
+                        const ratingsResponse: any = await ratingService.getRatingsByProduct(product.productId, currentPage, 5);
+                        if (ratingsResponse && ratingsResponse.content) {
+                            setRatings(ratingsResponse.content);
+                            setTotalPages(ratingsResponse.totalPages);
+                            setTotalRatings(ratingsResponse.totalElements);
+                        }
+                        
+                        // Fetch average rating
+                        const avgResponse: any = await ratingService.getAverageRatingByProduct(product.productId);
+                        if (typeof avgResponse === 'number') {
+                            setAverageRating(avgResponse);
+                        } else if (avgResponse.success && typeof avgResponse.data === 'number') {
+                            setAverageRating(avgResponse.data);
+                        }
+                    } catch (error) {
+                        console.error('Error fetching updated ratings:', error);
+                    }
+                };
                 
-                // Refresh user rating
-                const userRatingResponse = await ratingService.getRatingByAccountAndProduct(user.accountId, product.productId);
-                if (userRatingResponse.success && userRatingResponse.data) {
-                    setUserRating(userRatingResponse.data);
-                }
+                // Fetch sau 500ms để đảm bảo backend đã lưu
+                setTimeout(fetchUpdatedRatings, 500);
+            } else {
+                toast.error(response.message || 'Không thể gửi đánh giá. Vui lòng thử lại!');
+                setIsSubmittingRating(false);
             }
         } catch (error: any) {
             console.error('Error submitting rating:', error);
-            toast.error(error.response?.data?.message || 'Đã xảy ra lỗi khi gửi đánh giá');
+            const errorMessage = error.response?.data?.message || 'Đã xảy ra lỗi khi gửi đánh giá';
+            toast.error(errorMessage);
+            setIsSubmittingRating(false);
         }
     };
 
@@ -414,13 +489,6 @@ const ProductDetail: React.FC = () => {
                 ))}
             </div>
         );
-    };
-
-    // Calculate average rating
-    const calculateAverageRating = () => {
-        if (ratings.length === 0) return 0;
-        const sum = ratings.reduce((acc, rating) => acc + rating.ratingStar, 0);
-        return (sum / ratings.length).toFixed(1);
     };
 
     if (isLoading) {
@@ -804,10 +872,10 @@ const ProductDetail: React.FC = () => {
                                     <h2 className="text-xl font-bold text-gray-900 mb-2">ĐÁNH GIÁ KHÁCH HÀNG</h2>
                                     <div className="flex items-center gap-4">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-3xl font-bold text-yellow-500">{calculateAverageRating()}</span>
-                                            {renderStars(Number(calculateAverageRating()))}
+                                            <span className="text-3xl font-bold text-yellow-500">{averageRating.toFixed(1)}</span>
+                                            {renderStars(averageRating)}
                                         </div>
-                                        <span className="text-gray-600">({ratings.length} đánh giá)</span>
+                                        <span className="text-gray-600">({totalRatings} đánh giá)</span>
                                     </div>
                                 </div>
                                 {isAuthenticated && !userRating && (
@@ -846,16 +914,18 @@ const ProductDetail: React.FC = () => {
                                         <div className="flex gap-2">
                                             <Button
                                                 onClick={handleSubmitRating}
-                                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                                                disabled={isSubmittingRating}
+                                                className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
-                                                Gửi đánh giá
+                                                {isSubmittingRating ? 'Đang gửi...' : 'Gửi đánh giá'}
                                             </Button>
                                             <Button
                                                 onClick={() => {
                                                     setIsWritingReview(false);
                                                     setNewRating({ ratingStar: 5, comment: '' });
                                                 }}
-                                                className="bg-gray-200 hover:bg-gray-300 text-gray-700"
+                                                disabled={isSubmittingRating}
+                                                className="bg-gray-200 hover:bg-gray-300 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
                                                 Hủy
                                             </Button>
@@ -876,7 +946,7 @@ const ProductDetail: React.FC = () => {
                                         <div className="flex-1">
                                             <div className="flex items-center justify-between mb-2">
                                                 <div>
-                                                    <p className="font-semibold text-gray-900">{userRating.account.accountName}</p>
+                                                    <p className="font-semibold text-gray-900">{userRating.account?.accountName || 'Bạn'}</p>
                                                     <p className="text-sm text-gray-500">
                                                         {new Date(userRating.createdAt || '').toLocaleDateString('vi-VN')}
                                                     </p>
@@ -927,7 +997,7 @@ const ProductDetail: React.FC = () => {
                                                 <div className="flex-1">
                                                     <div className="flex items-center justify-between mb-2">
                                                         <div>
-                                                            <p className="font-semibold text-gray-900">{rating.account.accountName}</p>
+                                                            <p className="font-semibold text-gray-900">{rating.account?.accountName || 'Khách hàng'}</p>
                                                             <p className="text-sm text-gray-500">
                                                                 {new Date(rating.createdAt || '').toLocaleDateString('vi-VN', {
                                                                     year: 'numeric',
@@ -981,18 +1051,6 @@ const ProductDetail: React.FC = () => {
                                 </div>
                             )}
                         </div>
-
-                        {/* Debug Information - Remove in production */}
-                        {process.env.NODE_ENV === 'development' && (
-                            <div className="mt-8 p-4 bg-gray-100 border border-gray-300">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                                    Debug Info (Development Only)
-                                </h3>
-                                <pre className="text-xs text-gray-600 overflow-auto">
-                                    {JSON.stringify(product, null, 2)}
-                                </pre>
-                            </div>
-                        )}
                     </div>
                 </div>
             </main>
