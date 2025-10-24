@@ -111,10 +111,10 @@ export const ratingService = {
         }
     },
 
-    // Change rating status
-    changeRatingStatus: async (ratingId: string, status: number): Promise<ApiResponse<Rating>> => {
+    // Change rating status (toggle between active/inactive)
+    changeRatingStatus: async (ratingId: string): Promise<ApiResponse<Rating>> => {
         try {
-            const response = await axios.patch(`${CONFIG.API_GATEWAY}${API.CHANGE_RATING_STATUS(ratingId)}`, { status });
+            const response = await axios.patch(`${CONFIG.API_GATEWAY}${API.CHANGE_RATING_STATUS(ratingId)}`);
             return response.data;
         } catch (error: any) {
             console.error('Error changing rating status:', error);

@@ -6,6 +6,16 @@ import Footer from '../../components/ui/Footer/Footer';
 import { Button } from '../../components/ui/Button/Button';
 import { Badge } from '../../components/ui/badge';
 import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '../../components/ui/alert-dialog';
+import {
     ShoppingBag,
     Star,
     Minus,
@@ -49,6 +59,7 @@ const ProductDetail: React.FC = () => {
     const [isEditingRating, setIsEditingRating] = useState(false);
     const [isUpdatingRating, setIsUpdatingRating] = useState(false);
     const [averageRating, setAverageRating] = useState<number>(0);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [newRating, setNewRating] = useState({
         ratingStar: 5,
         comment: ''
@@ -271,47 +282,15 @@ const ProductDetail: React.FC = () => {
                 
                 // Hiển thị thông báo thành công
                 toast.success('Đánh giá của bạn đã được gửi thành công!', {
-                    duration: 3000,
+                    duration: 2000,
                 });
                 
                 console.log('✅ Toast called');
                 
-                // Đóng form và reset dữ liệu
-                setIsWritingReview(false);
-                setNewRating({ ratingStar: 5, comment: '' });
-                setIsSubmittingRating(false);
-                
-                // Fetch lại ratings thay vì reload trang
-                const fetchUpdatedRatings = async () => {
-                    try {
-                        // Fetch user's rating
-                        const userRatingResponse = await ratingService.getRatingByAccountAndProduct(user.accountId, product.productId);
-                        if (userRatingResponse.success && userRatingResponse.data) {
-                            setUserRating(userRatingResponse.data);
-                        }
-                        
-                        // Fetch all ratings
-                        const ratingsResponse: any = await ratingService.getRatingsByProduct(product.productId, currentPage, 5);
-                        if (ratingsResponse && ratingsResponse.content) {
-                            setRatings(ratingsResponse.content);
-                            setTotalPages(ratingsResponse.totalPages);
-                            setTotalRatings(ratingsResponse.totalElements);
-                        }
-                        
-                        // Fetch average rating
-                        const avgResponse: any = await ratingService.getAverageRatingByProduct(product.productId);
-                        if (typeof avgResponse === 'number') {
-                            setAverageRating(avgResponse);
-                        } else if (avgResponse.success && typeof avgResponse.data === 'number') {
-                            setAverageRating(avgResponse.data);
-                        }
-                    } catch (error) {
-                        console.error('Error fetching updated ratings:', error);
-                    }
-                };
-                
-                // Fetch sau 500ms để đảm bảo backend đã lưu
-                setTimeout(fetchUpdatedRatings, 500);
+                // Reload page sau khi gửi thành công
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
             } else {
                 toast.error(response.message || 'Không thể gửi đánh giá. Vui lòng thử lại!');
                 setIsSubmittingRating(false);
@@ -359,44 +338,15 @@ const ProductDetail: React.FC = () => {
                 console.log('✅ Rating updated successfully, showing toast...');
                 
                 toast.success('Đánh giá của bạn đã được cập nhật thành công!', {
-                    duration: 3000,
+                    duration: 2000,
                 });
                 
                 console.log('✅ Toast called');
                 
-                setIsEditingRating(false);
-                setIsUpdatingRating(false);
-                
-                // Fetch lại data
-                const fetchUpdatedRatings = async () => {
-                    try {
-                        // Fetch user's rating
-                        const userRatingResponse = await ratingService.getRatingByAccountAndProduct(user.accountId, product.productId);
-                        if (userRatingResponse.success && userRatingResponse.data) {
-                            setUserRating(userRatingResponse.data);
-                        }
-                        
-                        // Fetch all ratings
-                        const ratingsResponse: any = await ratingService.getRatingsByProduct(product.productId, currentPage, 5);
-                        if (ratingsResponse && ratingsResponse.content) {
-                            setRatings(ratingsResponse.content);
-                            setTotalPages(ratingsResponse.totalPages);
-                            setTotalRatings(ratingsResponse.totalElements);
-                        }
-                        
-                        // Fetch average rating
-                        const avgResponse: any = await ratingService.getAverageRatingByProduct(product.productId);
-                        if (typeof avgResponse === 'number') {
-                            setAverageRating(avgResponse);
-                        } else if (avgResponse.success && typeof avgResponse.data === 'number') {
-                            setAverageRating(avgResponse.data);
-                        }
-                    } catch (error) {
-                        console.error('Error fetching updated ratings:', error);
-                    }
-                };
-                
-                setTimeout(fetchUpdatedRatings, 500);
+                // Reload page sau khi cập nhật thành công
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
             } else {
                 toast.error(response.message || 'Không thể cập nhật đánh giá. Vui lòng thử lại!');
                 setIsUpdatingRating(false);
@@ -427,6 +377,43 @@ const ProductDetail: React.FC = () => {
             ratingStar: 5,
             comment: ''
         });
+    };
+
+    // Handle delete rating (soft delete by changing status)
+    const handleDeleteRating = async () => {
+        if (!isAuthenticated || !user || !product || !userRating) {
+            toast.error('Không thể xóa đánh giá');
+            return;
+        }
+
+        try {
+            const response = await ratingService.changeRatingStatus(userRating.ratingId);
+            
+            console.log('📤 Delete rating response:', response);
+            
+            // Backend returns RatingResponse with updated status
+            const isSuccess = response.success === true || (response as any).ratingId;
+            
+            if (isSuccess) {
+                console.log('✅ Rating deleted successfully');
+                
+                toast.success('Đánh giá của bạn đã được xóa thành công!', {
+                    duration: 2000,
+                });
+                
+                // Close dialog and reload page
+                setShowDeleteDialog(false);
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                toast.error(response.message || 'Không thể xóa đánh giá. Vui lòng thử lại!');
+            }
+        } catch (error: any) {
+            console.error('Error deleting rating:', error);
+            const errorMessage = error.response?.data?.message || 'Đã xảy ra lỗi khi xóa đánh giá';
+            toast.error(errorMessage);
+        }
     };
 
     const formatPrice = (price: number) => {
@@ -1143,12 +1130,20 @@ const ProductDetail: React.FC = () => {
                                                 </p>
                                             </div>
                                         </div>
-                                        <Button
-                                            onClick={handleStartEdit}
-                                            className="bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 px-4 py-2 text-sm font-medium rounded-md shadow-sm flex-shrink-0 ml-4"
-                                        >
-                                            ✏️ Sửa
-                                        </Button>
+                                        <div className="flex gap-2 flex-shrink-0 ml-4">
+                                            <Button
+                                                onClick={handleStartEdit}
+                                                className="bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 px-4 py-2 text-sm font-medium rounded-md shadow-sm"
+                                            >
+                                                ✏️ Sửa
+                                            </Button>
+                                            <Button
+                                                onClick={() => setShowDeleteDialog(true)}
+                                                className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-300 px-4 py-2 text-sm font-medium rounded-md shadow-sm"
+                                            >
+                                                🗑️ Xóa
+                                            </Button>
+                                        </div>
                                     </div>
                                     <div className="ml-16">
                                         {renderStars(userRating.ratingStar)}
@@ -1294,6 +1289,31 @@ const ProductDetail: React.FC = () => {
                     </div>
                 </div>
             </main>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-xl font-bold text-gray-900">
+                            Xác nhận xóa đánh giá
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-gray-600 text-base">
+                            Bạn có chắc chắn muốn xóa đánh giá này? Hành động này không thể hoàn tác.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className="bg-gray-100 hover:bg-gray-200 text-gray-700">
+                            Hủy
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDeleteRating}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                        >
+                            Xóa đánh giá
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             <Footer />
         </div>
