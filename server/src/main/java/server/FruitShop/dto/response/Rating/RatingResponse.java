@@ -3,6 +3,8 @@ package server.FruitShop.dto.response.Rating;
 import lombok.Data;
 import server.FruitShop.entity.Rating;
 
+import java.time.LocalDateTime;
+
 @Data
 public class RatingResponse {
     private String ratingId;
@@ -11,6 +13,8 @@ public class RatingResponse {
     private String comment;
     private int status;
     private double ratingStar;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     public static RatingResponse fromEntity(Rating rating){
         RatingResponse response = new RatingResponse();
@@ -20,6 +24,8 @@ public class RatingResponse {
         response.setComment(rating.getComment());
         response.setStatus(rating.getStatus());
         response.setRatingStar(rating.getRatingStar());
+        response.setCreatedAt(rating.getCreatedAt());
+        response.setUpdatedAt(rating.getUpdatedAt());
 
         return response;
     }
