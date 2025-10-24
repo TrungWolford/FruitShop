@@ -13,6 +13,10 @@ public interface RatingRepository extends JpaRepository<Rating, String> {
     Page<Rating> findAll(Pageable pageable);
     Page<Rating> findByAccountAccountId(Pageable pageable, String accountId);
     Page<Rating> findByProductProductId(Pageable pageable, String productId);
+    
+    // Find ratings by productId and status (for active/visible ratings only)
+    Page<Rating> findByProductProductIdAndStatus(Pageable pageable, String productId, Integer status);
+    
     Rating findByAccountAccountIdAndProductProductId(String accountId, String productId);
     
     // Find all ratings by productId without pagination

@@ -54,7 +54,8 @@ public class RatingServiceImpl implements RatingService {
 
         String id = product.getProductId();
 
-        return ratingRepository.findByProductProductId(pageable, id)
+        // Only return active ratings (status = 1)
+        return ratingRepository.findByProductProductIdAndStatus(pageable, id, 1)
                 .map(RatingDetailResponse::fromEntity);
     }
 
