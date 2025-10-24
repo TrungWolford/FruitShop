@@ -258,11 +258,23 @@ const ProductDetail: React.FC = () => {
 
             const response = await ratingService.createRating(ratingData);
             
-            if (response.success) {
+            console.log('📤 Create rating response:', response);
+            console.log('- response.success:', response.success);
+            console.log('- response.data:', response.data);
+            
+            // Backend trả về trực tiếp RatingResponse, không có wrapper
+            // Check nếu có ratingId là thành công
+            const isSuccess = response.success === true || (response as any).ratingId;
+            
+            if (isSuccess) {
+                console.log('✅ Rating created successfully, showing toast...');
+                
                 // Hiển thị thông báo thành công
                 toast.success('Đánh giá của bạn đã được gửi thành công!', {
                     duration: 3000,
                 });
+                
+                console.log('✅ Toast called');
                 
                 // Đóng form và reset dữ liệu
                 setIsWritingReview(false);
@@ -335,10 +347,22 @@ const ProductDetail: React.FC = () => {
 
             const response = await ratingService.updateRating(userRating.ratingId, updateData);
             
-            if (response.success) {
+            console.log('📤 Update rating response:', response);
+            console.log('- response.success:', response.success);
+            console.log('- response.data:', response.data);
+            
+            // Backend trả về trực tiếp RatingResponse, không có wrapper
+            // Check nếu có ratingId là thành công
+            const isSuccess = response.success === true || (response as any).ratingId;
+            
+            if (isSuccess) {
+                console.log('✅ Rating updated successfully, showing toast...');
+                
                 toast.success('Đánh giá của bạn đã được cập nhật thành công!', {
                     duration: 3000,
                 });
+                
+                console.log('✅ Toast called');
                 
                 setIsEditingRating(false);
                 setIsUpdatingRating(false);
