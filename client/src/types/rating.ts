@@ -3,7 +3,6 @@ export interface Rating {
   account: {
     accountId: string;
     accountName: string;
-    accountEmail?: string;
     accountPhone?: string;
   };
   product: {

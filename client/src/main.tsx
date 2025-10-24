@@ -17,8 +17,7 @@ createRoot(document.getElementById('root')!).render(
         <Toaster 
           position="top-right" 
           richColors 
-          duration={1000}
-          pauseWhenPageIsHidden={false}
+          duration={3000}
         />
       </Router>
     </Provider>
