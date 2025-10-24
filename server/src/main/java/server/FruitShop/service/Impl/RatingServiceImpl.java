@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import server.FruitShop.dto.request.Rating.CreateRatingRequest;
 import server.FruitShop.dto.request.Rating.UpdateRatingRequest;
 import server.FruitShop.dto.response.Rating.RatingResponse;
+import server.FruitShop.dto.response.Rating.RatingDetailResponse;
 import server.FruitShop.entity.Account;
 import server.FruitShop.entity.Product;
 import server.FruitShop.entity.Rating;
@@ -36,29 +37,29 @@ public class RatingServiceImpl implements RatingService {
     }
 
     @Override
-    public Page<RatingResponse> getRatingsByAccountId(String accountId, Pageable pageable) {
+    public Page<RatingDetailResponse> getRatingsByAccountId(String accountId, Pageable pageable) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new RuntimeException("Account not found with id: " + accountId));
 
         String id = account.getAccountId();
 
         return ratingRepository.findByAccountAccountId(pageable, id)
-                .map(RatingResponse::fromEntity);
+                .map(RatingDetailResponse::fromEntity);
     }
 
     @Override
-    public Page<RatingResponse> getRatingsByProductId(String productId, Pageable pageable) {
+    public Page<RatingDetailResponse> getRatingsByProductId(String productId, Pageable pageable) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
 
         String id = product.getProductId();
 
         return ratingRepository.findByProductProductId(pageable, id)
-                .map(RatingResponse::fromEntity);
+                .map(RatingDetailResponse::fromEntity);
     }
 
     @Override
-    public RatingResponse getRatingsByAccountIdAndProductId(String accountId, String productId) {
+    public RatingDetailResponse getRatingsByAccountIdAndProductId(String accountId, String productId) {
         // Validate account exists
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new RuntimeException("Account not found with id: " + accountId));
@@ -69,7 +70,13 @@ public class RatingServiceImpl implements RatingService {
 
         // Find rating by account and product
         Rating savedRating = ratingRepository.findByAccountAccountIdAndProductProductId(accountId, productId);
-        return RatingResponse.fromEntity(savedRating);
+        
+        // Return null if rating doesn't exist (user hasn't rated this product yet)
+        if (savedRating == null) {
+            return null;
+        }
+        
+        return RatingDetailResponse.fromEntity(savedRating);
     }
 
     @Override
@@ -81,6 +88,16 @@ public class RatingServiceImpl implements RatingService {
         // Validate product exists
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + request.getProductId()));
+
+        // Check if user has already rated this product
+        Rating existingRating = ratingRepository.findByAccountAccountIdAndProductProductId(
+            request.getAccountId(), 
+            request.getProductId()
+        );
+        
+        if (existingRating != null) {
+            throw new RuntimeException("You have already rated this product. Please update your existing rating instead.");
+        }
 
         // Create new rating
         Rating rating = new Rating();
