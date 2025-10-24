@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import server.FruitShop.dto.request.Rating.CreateRatingRequest;
 import server.FruitShop.dto.request.Rating.UpdateRatingRequest;
 import server.FruitShop.dto.response.Rating.RatingResponse;
+import server.FruitShop.dto.response.Rating.RatingDetailResponse;
 import server.FruitShop.service.RatingService;
 
 @RestController
@@ -39,13 +40,13 @@ public class RatingController {
      * GET /api/rating/account/{accountId}?page=0&size=10
      */
     @GetMapping("/account/{accountId}")
-    public ResponseEntity<Page<RatingResponse>> getRatingsByAccountId(
+    public ResponseEntity<Page<RatingDetailResponse>> getRatingsByAccountId(
             @PathVariable String accountId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         
         Pageable pageable = PageRequest.of(page, size);
-        Page<RatingResponse> ratings = ratingService.getRatingsByAccountId(accountId, pageable);
+        Page<RatingDetailResponse> ratings = ratingService.getRatingsByAccountId(accountId, pageable);
         return ResponseEntity.ok(ratings);
     }
 
@@ -54,13 +55,13 @@ public class RatingController {
      * GET /api/rating/product/{productId}?page=0&size=10
      */
     @GetMapping("/product/{productId}")
-    public ResponseEntity<Page<RatingResponse>> getRatingsByProductId(
+    public ResponseEntity<Page<RatingDetailResponse>> getRatingsByProductId(
             @PathVariable String productId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         
         Pageable pageable = PageRequest.of(page, size);
-        Page<RatingResponse> ratings = ratingService.getRatingsByProductId(productId, pageable);
+        Page<RatingDetailResponse> ratings = ratingService.getRatingsByProductId(productId, pageable);
         return ResponseEntity.ok(ratings);
     }
 
@@ -69,11 +70,11 @@ public class RatingController {
      * GET /api/rating/account/{accountId}/product/{productId}
      */
     @GetMapping("/account/{accountId}/product/{productId}")
-    public ResponseEntity<RatingResponse> getRatingByAccountAndProduct(
+    public ResponseEntity<RatingDetailResponse> getRatingByAccountAndProduct(
             @PathVariable String accountId,
             @PathVariable String productId) {
         
-        RatingResponse rating = ratingService.getRatingsByAccountIdAndProductId(accountId, productId);
+        RatingDetailResponse rating = ratingService.getRatingsByAccountIdAndProductId(accountId, productId);
         return ResponseEntity.ok(rating);
     }
 
