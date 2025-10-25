@@ -72,8 +72,8 @@ const ProfileCustomer: React.FC = () => {
                 const shippingResponse = await shippingService.getShippingByAccount(user.accountId);
                 console.log('Shipping response:', shippingResponse); // Debug log
 
-                if (shippingResponse && shippingResponse.length > 0) {
-                    const firstShipping = shippingResponse[0];
+                if (shippingResponse.success && shippingResponse.data && shippingResponse.data.length > 0) {
+                    const firstShipping = shippingResponse.data[0];
                     console.log('First shipping data:', firstShipping); // Debug log
                     setShippingData(firstShipping);
                     setFormData({
@@ -150,7 +150,8 @@ const ProfileCustomer: React.FC = () => {
                 if (shippingData?.shippingId) {
                     // Update existing shipping
                     await shippingService.updateShipping(shippingData.shippingId, {
-                        phone: formData.accountPhone,
+                        receiverName: formData.accountName,
+                        receiverPhone: formData.accountPhone,
                         receiverAddress: formData.address,
                         city: formData.city,
                     });
@@ -158,13 +159,10 @@ const ProfileCustomer: React.FC = () => {
                     // Create new shipping
                     await shippingService.createShipping({
                         accountId: user.accountId,
-                        fullName: formData.accountName, // Use accountName as fullName
-                        phone: formData.accountPhone,
-                        address: formData.address,
+                        receiverName: formData.accountName,
+                        receiverPhone: formData.accountPhone,
                         receiverAddress: formData.address,
                         city: formData.city,
-                        district: '', // Empty district since we removed it from form
-                        ward: '', // Empty ward since we removed it from form
                     });
                 }
             }

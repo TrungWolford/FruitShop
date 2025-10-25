@@ -7,6 +7,7 @@ export interface CreateShippingRequest {
   receiverPhone: string;
   receiverAddress: string;
   city: string;
+  shippingFee?: number;
 }
 
 export interface UpdateShippingRequest {
@@ -14,10 +15,12 @@ export interface UpdateShippingRequest {
   receiverPhone: string;
   receiverAddress: string;
   city: string;
+  shippingFee?: number;
 }
 
 export interface ShippingResponse {
   shippingId: string;
+  orderId?: string;
   accountId: string;
   accountName?: string;
   receiverName: string;

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, MapPin, User, Phone, CreditCard } from 'lucide-react';
+import TopNavigation from '../../components/ui/Header/Header';
+import Footer from '../../components/ui/Footer/Footer';
 import { Button } from '../../components/ui/Button/Button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -13,6 +15,13 @@ import { productService } from '../../services/productService';
 import type { CreateShippingRequest, CreateOrderRequest, ShippingResponse } from '../../services/shippingService';
 import type { CartItem as CartItemType } from '../../types/cart';
 import { toast } from 'sonner';
+
+// Shipping method options
+const SHIPPING_METHODS = [
+    { id: 'super_fast', name: 'HCM - Siêu tốc', fee: 50000, description: 'Giao hàng trong 2 giờ' },
+    { id: 'express_4h', name: 'HCM - 4H', fee: 30000, description: 'Giao hàng trong 4 giờ' },
+    { id: 'super_cheap', name: 'HCM Siêu rẻ 2H', fee: 40000, description: 'Giao hàng trong 2 ngày' },
+];
 
 // Initial shipping data structure based on backend API
 const initialShippingData = {
@@ -35,6 +44,7 @@ const CheckoutPage: React.FC = () => {
     const [selectedShippingId, setSelectedShippingId] = useState<string>('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [isLoadingShipping, setIsLoadingShipping] = useState(false);
+    const [selectedShippingMethod, setSelectedShippingMethod] = useState<string>(SHIPPING_METHODS[0].id);
 
     // Fetch cart items and shipping addresses
     useEffect(() => {
@@ -171,8 +181,8 @@ const CheckoutPage: React.FC = () => {
     };
 
     const calculateShippingFee = () => {
-        // Fixed shipping fee for now
-        return 30000;
+        const method = SHIPPING_METHODS.find(m => m.id === selectedShippingMethod);
+        return method ? method.fee : SHIPPING_METHODS[0].fee;
     };
 
     const calculateTotal = () => {
@@ -260,6 +270,7 @@ const CheckoutPage: React.FC = () => {
                     receiverPhone: shippingData.receiverPhone,
                     receiverAddress: fullAddress, // Combined: address + ward + district
                     city: shippingData.city,
+                    shippingFee: calculateShippingFee(), // Add shipping fee based on selected method
                 };
 
                 console.log('Creating shipping address with data:', createShippingRequest);
@@ -448,43 +459,53 @@ const CheckoutPage: React.FC = () => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent  animate-spin mx-auto mb-4"></div>
-                    <p className="text-gray-600">Đang tải...</p>
+            <div>
+                <TopNavigation />
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                    <div className="text-center">
+                        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent  animate-spin mx-auto mb-4"></div>
+                        <p className="text-gray-600">Đang tải...</p>
+                    </div>
                 </div>
+                <Footer />
             </div>
         );
     }
 
     if (cartItems.length === 0) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-center">
-                    <ShoppingCart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <h2 className="text-2xl font-semibold text-gray-700 mb-2">Giỏ hàng trống</h2>
-                    <p className="text-gray-500 mb-6">Bạn cần có sản phẩm trong giỏ hàng để thanh toán</p>
-                    <Button onClick={() => navigate('/')} className="bg-blue-600 hover:bg-blue-700 rounded-none">
-                        Tiếp tục mua sắm
-                    </Button>
+            <div>
+                <TopNavigation />
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                    <div className="text-center">
+                        <ShoppingCart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                        <h2 className="text-2xl font-semibold text-gray-700 mb-2">Giỏ hàng trống</h2>
+                        <p className="text-gray-500 mb-6">Bạn cần có sản phẩm trong giỏ hàng để thanh toán</p>
+                        <Button onClick={() => navigate('/')} className="bg-blue-600 hover:bg-blue-700 rounded-none">
+                            Tiếp tục mua sắm
+                        </Button>
+                    </div>
                 </div>
+                <Footer />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Left Column - Shipping Information */}
-                    <div className="space-y-6">
-                        <div className="bg-white  shadow-sm border p-6">
-                            <div className="flex items-center gap-3 mb-6">
-                                <MapPin className="w-6 h-6 text-green-600" />
-                                <h2 className="text-lg font-semibold text-gray-900">Thông tin giao hàng</h2>
-                            </div>
+        <div>
+            <TopNavigation />
+            <div className="min-h-screen bg-gray-50">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {/* Left Column - Shipping Information */}
+                        <div className="space-y-6">
+                            <div className="bg-white  shadow-sm border p-6">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <MapPin className="w-6 h-6 text-green-600" />
+                                    <h2 className="text-lg font-semibold text-gray-900">Thông tin giao hàng</h2>
+                                </div>
 
-                            <div className="space-y-4">
+                                <div className="space-y-4">
                                 {/* Loading indicator for shipping addresses */}
                                 {isLoadingShipping && (
                                     <div className="text-center py-4">
@@ -637,6 +658,34 @@ const CheckoutPage: React.FC = () => {
                                     </Select>
                                 </div>
 
+                                {/* Shipping Method */}
+                                <div>
+                                    <Label htmlFor="shippingMethod">Phương thức vận chuyển *</Label>
+                                    <Select
+                                        value={selectedShippingMethod}
+                                        onValueChange={(value) => setSelectedShippingMethod(value)}
+                                    >
+                                        <SelectTrigger className="rounded-none">
+                                            <SelectValue placeholder="Chọn phương thức vận chuyển" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {SHIPPING_METHODS.map((method) => (
+                                                <SelectItem key={method.id} value={method.id}>
+                                                    <div className="flex items-center justify-between w-full">
+                                                        <span>{method.name}</span>
+                                                        <span className="ml-4 text-gray-600">
+                                                            {formatPrice(method.fee)}
+                                                        </span>
+                                                    </div>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        {SHIPPING_METHODS.find(m => m.id === selectedShippingMethod)?.description}
+                                    </p>
+                                </div>
+
                                 {/* Payment Method */}
                                 <div>
                                     <Label htmlFor="paymentMethod">Phương thức thanh toán *</Label>
@@ -728,7 +777,12 @@ const CheckoutPage: React.FC = () => {
 
                                 <div className="flex justify-between text-sm">
                                     <span className="text-gray-600">Phí vận chuyển:</span>
-                                    <span className="font-medium">{formatPrice(calculateShippingFee())}</span>
+                                    <div className="text-right">
+                                        <div className="font-medium">{formatPrice(calculateShippingFee())}</div>
+                                        <div className="text-xs text-gray-500">
+                                            {SHIPPING_METHODS.find(m => m.id === selectedShippingMethod)?.name}
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="border-t pt-3">
@@ -760,6 +814,8 @@ const CheckoutPage: React.FC = () => {
                     </div>
                 </div>
             </div>
+            </div>
+            <Footer />
         </div>
     );
 };
