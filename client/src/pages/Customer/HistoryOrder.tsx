@@ -103,6 +103,32 @@ const HistoryReceipt: React.FC = () => {
         }
     };
 
+    const getShippingStatusColor = (status: number) => {
+        switch (status) {
+            case 0:
+                return 'bg-yellow-100 text-yellow-800 border-yellow-300'; // Chờ xác nhận
+            case 1:
+                return 'bg-blue-100 text-blue-800 border-blue-300'; // Đang vận chuyển
+            case 2:
+                return 'bg-green-100 text-green-800 border-green-300'; // Đã giao hàng
+            default:
+                return 'bg-gray-100 text-gray-800 border-gray-300';
+        }
+    };
+
+    const getShippingStatusText = (status: number) => {
+        switch (status) {
+            case 0:
+                return 'Chờ xác nhận';
+            case 1:
+                return 'Đang vận chuyển';
+            case 2:
+                return 'Đã giao hàng';
+            default:
+                return 'Không xác định';
+        }
+    };
+
     const getPaymentMethodText = (paymentMethod: number) => {
         switch (paymentMethod) {
             case 0:
@@ -605,9 +631,14 @@ const HistoryReceipt: React.FC = () => {
                                                 {order.shipping && (
                                                     <div className="space-y-4">
                                                         <div>
-                                                            <h3 className="font-semibold text-gray-900 mb-3">
-                                                                Thông tin giao hàng
-                                                            </h3>
+                                                            <div className="flex items-center justify-between mb-3">
+                                                                <h3 className="font-semibold text-gray-900">
+                                                                    Thông tin giao hàng
+                                                                </h3>
+                                                                <Badge className={`${getShippingStatusColor(order.shipping.status)} rounded-none text-xs`}>
+                                                                    {getShippingStatusText(order.shipping.status)}
+                                                                </Badge>
+                                                            </div>
                                                             <div className="space-y-3">
                                                                 {/* Receiver Name */}
                                                                 <div className="p-4 bg-gray-50">
@@ -692,11 +723,16 @@ const HistoryReceipt: React.FC = () => {
                             {/* Shipping Information */}
                             {selectedOrder.shipping && (
                                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6  border border-blue-200 shadow-sm">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600  flex items-center justify-center shadow-md">
-                                            <Truck className="w-5 h-5 text-white" />
+                                    <div className="flex items-center justify-between gap-3 mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600  flex items-center justify-center shadow-md">
+                                                <Truck className="w-5 h-5 text-white" />
+                                            </div>
+                                            <h3 className="font-bold text-blue-900 text-lg">Thông tin giao hàng</h3>
                                         </div>
-                                        <h3 className="font-bold text-blue-900 text-lg">Thông tin giao hàng</h3>
+                                        <Badge className={`${getShippingStatusColor(selectedOrder.shipping.status)} rounded-none text-xs px-3 py-1`}>
+                                            {getShippingStatusText(selectedOrder.shipping.status)}
+                                        </Badge>
                                     </div>
                                     <div className="space-y-4">
                                         <div className="bg-white p-4  border border-blue-100">

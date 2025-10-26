@@ -27,6 +27,9 @@ export interface ShippingResponse {
   receiverPhone: string;
   receiverAddress: string;
   city: string;
+  shippingFee?: number;
+  shippedAt?: string;
+  status: number; // 0: Chờ xác nhận, 1: Đang vận chuyển, 2: Đã giao hàng
 }
 
 export interface CreateOrderRequest {
