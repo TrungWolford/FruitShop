@@ -10,7 +10,9 @@ import {
   Shield, 
   LogOut,
   User,
-  Home
+  Home,
+  ShoppingBag,
+  Truck
 } from 'lucide-react'
 
 const LeftTaskbar: React.FC = () => {
@@ -39,6 +41,16 @@ const LeftTaskbar: React.FC = () => {
       icon: Tags,
       label: 'Thể loại',
       path: '/admin/categories'
+    },
+    {
+      icon: ShoppingBag,
+      label: 'Đơn hàng',
+      path: '/admin/orders'
+    },
+    {
+      icon: Truck,
+      label: 'Vận chuyển',
+      path: '/admin/shippings'
     },
     {
       icon: Users,
