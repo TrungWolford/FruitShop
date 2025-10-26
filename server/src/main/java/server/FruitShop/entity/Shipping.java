@@ -13,7 +13,8 @@ public class Shipping {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String shippingId;
 
-    @OneToOne(mappedBy = "shipping")
+    @OneToOne
+    @JoinColumn(name = "orderid", unique = true)
     private Order order;
 
     @ManyToOne
@@ -32,6 +33,7 @@ public class Shipping {
 
     private Date shippedAt;
 
+    // Status: 1 = Đang chuẩn bị, 2 = Đang giao, 3 = Giao thành công, 0 = Đã hủy
     private int status;
 
     @PrePersist
