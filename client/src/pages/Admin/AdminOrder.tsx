@@ -106,14 +106,25 @@ const AdminOrder: React.FC = () => {
 
     // Get order status badge
     const getOrderStatusBadge = (status: number) => {
+        const statusConfig: Record<number, { text: string; color: string }> = {
+            0: { text: 'Đã hủy', color: 'bg-red-700 border-red-700' },
+            1: { text: 'Chờ xác nhận', color: 'bg-yellow-700 border-yellow-700' },
+            2: { text: 'Đã xác nhận', color: 'bg-blue-700 border-blue-700' },
+            3: { text: 'Đang giao', color: 'bg-purple-700 border-purple-700' },
+            4: { text: 'Giao thành công', color: 'bg-green-700 border-green-700' },
+        };
+
+        const config = statusConfig[status] || {
+            text: 'Không xác định',
+            color: 'bg-gray-700 border-gray-700',
+        };
+
         return (
             <Badge
-                variant={status === 1 ? 'default' : 'secondary'}
-                className={`px-1.5 py-0.5 text-xs font-medium text-white whitespace-nowrap ${
-                    status === 1 ? 'bg-green-700 border-green-700' : 'bg-red-700 border-red-700'
-                }`}
+                variant="default"
+                className={`px-1.5 py-0.5 text-xs font-medium text-white whitespace-nowrap ${config.color}`}
             >
-                {status === 1 ? 'Đã hoàn thành' : 'Đã hủy'}
+                {config.text}
             </Badge>
         );
     };
@@ -141,6 +152,86 @@ const AdminOrder: React.FC = () => {
     // Get payment method text
     const getPaymentMethodText = (method: number) => {
         return method === 0 ? 'Tiền mặt (COD)' : 'Chuyển khoản';
+    };
+
+    // Handle confirm order (status 1 -> 2)
+    const handleConfirmOrder = async (orderId: string) => {
+        try {
+            const response = await orderService.confirmOrder(orderId);
+            if (response.success) {
+                toast.success('Đã xác nhận đơn hàng thành công!');
+                loadOrders(currentPage - 1);
+                if (selectedOrder?.orderId === orderId) {
+                    setSelectedOrder(response.data || null);
+                }
+            } else {
+                toast.error(response.message || 'Không thể xác nhận đơn hàng');
+            }
+        } catch (error) {
+            console.error('Error confirming order:', error);
+            toast.error('Có lỗi xảy ra khi xác nhận đơn hàng');
+        }
+    };
+
+    // Handle start delivery (status 2 -> 3)
+    const handleStartDelivery = async (orderId: string) => {
+        try {
+            const response = await orderService.startDelivery(orderId);
+            if (response.success) {
+                toast.success('Đã bắt đầu giao hàng!');
+                loadOrders(currentPage - 1);
+                if (selectedOrder?.orderId === orderId) {
+                    setSelectedOrder(response.data || null);
+                }
+            } else {
+                toast.error(response.message || 'Không thể bắt đầu giao hàng');
+            }
+        } catch (error) {
+            console.error('Error starting delivery:', error);
+            toast.error('Có lỗi xảy ra khi bắt đầu giao hàng');
+        }
+    };
+
+    // Handle complete order (status 3 -> 4) - by customer, but admin can also do it
+    const handleCompleteOrder = async (orderId: string) => {
+        try {
+            const response = await orderService.completeOrder(orderId);
+            if (response.success) {
+                toast.success('Đã hoàn thành đơn hàng!');
+                loadOrders(currentPage - 1);
+                if (selectedOrder?.orderId === orderId) {
+                    setSelectedOrder(response.data || null);
+                }
+            } else {
+                toast.error(response.message || 'Không thể hoàn thành đơn hàng');
+            }
+        } catch (error) {
+            console.error('Error completing order:', error);
+            toast.error('Có lỗi xảy ra khi hoàn thành đơn hàng');
+        }
+    };
+
+    // Handle cancel order
+    const handleCancelOrder = async (orderId: string) => {
+        if (!confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) {
+            return;
+        }
+
+        try {
+            const response = await orderService.cancelOrder(orderId);
+            if (response.success) {
+                toast.success('Đã hủy đơn hàng thành công!');
+                loadOrders(currentPage - 1);
+                if (selectedOrder?.orderId === orderId) {
+                    setSelectedOrder(response.data || null);
+                }
+            } else {
+                toast.error(response.message || 'Không thể hủy đơn hàng');
+            }
+        } catch (error) {
+            console.error('Error canceling order:', error);
+            toast.error('Có lỗi xảy ra khi hủy đơn hàng');
+        }
     };
 
     return (
@@ -176,14 +267,20 @@ const AdminOrder: React.FC = () => {
                                 <DropdownMenuTrigger asChild>
                                     <Button
                                         variant="outline"
-                                        className="w-40 border border-gray-300 bg-gray-50 text-gray-900 hover:bg-gray-100 rounded-md flex items-center justify-between"
+                                        className="w-44 border border-gray-300 bg-gray-50 text-gray-900 hover:bg-gray-100 rounded-md flex items-center justify-between"
                                     >
                                         <div className="flex items-center">
                                             {statusFilter === 'all'
                                                 ? 'Tất cả'
                                                 : statusFilter === '0'
                                                 ? 'Đã hủy'
-                                                : 'Hoàn thành'}
+                                                : statusFilter === '1'
+                                                ? 'Chờ xác nhận'
+                                                : statusFilter === '2'
+                                                ? 'Đã xác nhận'
+                                                : statusFilter === '3'
+                                                ? 'Đang giao'
+                                                : 'Giao thành công'}
                                         </div>
                                     </Button>
                                 </DropdownMenuTrigger>
@@ -204,28 +301,58 @@ const AdminOrder: React.FC = () => {
                                         onClick={() => setStatusFilter('1')}
                                         className="cursor-pointer hover:bg-gray-100"
                                     >
-                                        Đã hoàn thành
+                                        Chờ xác nhận
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        onClick={() => setStatusFilter('2')}
+                                        className="cursor-pointer hover:bg-gray-100"
+                                    >
+                                        Đã xác nhận
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        onClick={() => setStatusFilter('3')}
+                                        className="cursor-pointer hover:bg-gray-100"
+                                    >
+                                        Đang giao
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        onClick={() => setStatusFilter('4')}
+                                        className="cursor-pointer hover:bg-gray-100"
+                                    >
+                                        Giao thành công
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
                     </div>
                 </div>                {/* Stats */}
-                <div className="mb-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="mb-3 grid grid-cols-1 md:grid-cols-5 gap-3">
                     <div className="bg-white p-3 rounded-lg shadow-sm border">
                         <div className="text-sm text-gray-600">Tổng đơn hàng</div>
                         <div className="text-2xl font-bold text-gray-900">{totalItems}</div>
                     </div>
                     <div className="bg-white p-3 rounded-lg shadow-sm border">
-                        <div className="text-sm text-gray-600">Đã hoàn thành</div>
-                        <div className="text-2xl font-bold text-green-600">
+                        <div className="text-sm text-gray-600">Chờ xác nhận</div>
+                        <div className="text-2xl font-bold text-yellow-600">
                             {orders.filter((o) => o.status === 1).length}
                         </div>
                     </div>
                     <div className="bg-white p-3 rounded-lg shadow-sm border">
-                        <div className="text-sm text-gray-600">Đã hủy</div>
-                        <div className="text-2xl font-bold text-red-600">
-                            {orders.filter((o) => o.status === 0).length}
+                        <div className="text-sm text-gray-600">Đã xác nhận</div>
+                        <div className="text-2xl font-bold text-blue-600">
+                            {orders.filter((o) => o.status === 2).length}
+                        </div>
+                    </div>
+                    <div className="bg-white p-3 rounded-lg shadow-sm border">
+                        <div className="text-sm text-gray-600">Đang giao</div>
+                        <div className="text-2xl font-bold text-purple-600">
+                            {orders.filter((o) => o.status === 3).length}
+                        </div>
+                    </div>
+                    <div className="bg-white p-3 rounded-lg shadow-sm border">
+                        <div className="text-sm text-gray-600">Thành công</div>
+                        <div className="text-2xl font-bold text-green-600">
+                            {orders.filter((o) => o.status === 4).length}
                         </div>
                     </div>
                 </div>
@@ -538,8 +665,42 @@ const AdminOrder: React.FC = () => {
                         </div>
                     )}
 
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsViewDialogOpen(false)} className="rounded-none">
+                    <DialogFooter className="flex justify-between items-center">
+                        <div className="flex gap-2">
+                            {selectedOrder && selectedOrder.status === 1 && (
+                                <>
+                                    <Button
+                                        onClick={() => handleConfirmOrder(selectedOrder.orderId)}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                                    >
+                                        ✓ Xác nhận đơn
+                                    </Button>
+                                    <Button
+                                        onClick={() => handleCancelOrder(selectedOrder.orderId)}
+                                        variant="destructive"
+                                    >
+                                        ✕ Hủy đơn
+                                    </Button>
+                                </>
+                            )}
+                            {selectedOrder && selectedOrder.status === 2 && (
+                                <Button
+                                    onClick={() => handleStartDelivery(selectedOrder.orderId)}
+                                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                                >
+                                    🚚 Bắt đầu giao hàng
+                                </Button>
+                            )}
+                            {selectedOrder && selectedOrder.status === 3 && (
+                                <Button
+                                    onClick={() => handleCompleteOrder(selectedOrder.orderId)}
+                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                >
+                                    ✓ Hoàn thành
+                                </Button>
+                            )}
+                        </div>
+                        <Button variant="outline" onClick={() => setIsViewDialogOpen(false)} className="rounded-md">
                             Đóng
                         </Button>
                     </DialogFooter>

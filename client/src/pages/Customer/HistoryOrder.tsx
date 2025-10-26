@@ -80,11 +80,15 @@ const HistoryReceipt: React.FC = () => {
     const getStatusColor = (status: number) => {
         switch (status) {
             case 0:
-                return 'bg-red-600 text-white border-red-600'; // Huy
+                return 'bg-red-600 text-white border-red-600'; // Đã hủy
             case 1:
-                return 'bg-blue-600 text-white border-blue-600'; // Dang van chuyen
+                return 'bg-yellow-600 text-white border-yellow-600'; // Chờ xác nhận
             case 2:
-                return 'bg-green-600 text-white border-green-600'; // Da hoan thanh
+                return 'bg-blue-600 text-white border-blue-600'; // Đã xác nhận
+            case 3:
+                return 'bg-purple-600 text-white border-purple-600'; // Đang giao
+            case 4:
+                return 'bg-green-600 text-white border-green-600'; // Đã giao (hoàn thành)
             default:
                 return 'bg-gray-600 text-white border-gray-600';
         }
@@ -95,35 +99,13 @@ const HistoryReceipt: React.FC = () => {
             case 0:
                 return 'Đã hủy';
             case 1:
-                return 'Đang vận chuyển';
-            case 2:
-                return 'Đã hoàn thành';
-            default:
-                return 'Không xác định';
-        }
-    };
-
-    const getShippingStatusColor = (status: number) => {
-        switch (status) {
-            case 0:
-                return 'bg-yellow-100 text-yellow-800 border-yellow-300'; // Chờ xác nhận
-            case 1:
-                return 'bg-blue-100 text-blue-800 border-blue-300'; // Đang vận chuyển
-            case 2:
-                return 'bg-green-100 text-green-800 border-green-300'; // Đã giao hàng
-            default:
-                return 'bg-gray-100 text-gray-800 border-gray-300';
-        }
-    };
-
-    const getShippingStatusText = (status: number) => {
-        switch (status) {
-            case 0:
                 return 'Chờ xác nhận';
-            case 1:
-                return 'Đang vận chuyển';
             case 2:
-                return 'Đã giao hàng';
+                return 'Đã xác nhận';
+            case 3:
+                return 'Đang giao';
+            case 4:
+                return 'Đã giao';
             default:
                 return 'Không xác định';
         }
@@ -141,13 +123,18 @@ const HistoryReceipt: React.FC = () => {
     };
 
     const getProgressStep = (status: number) => {
+        // Map order status to progress step (1-4)
         switch (status) {
             case 0:
-                return 0; // Huy
+                return 0; // Đã hủy - không hiển thị progress
             case 1:
-                return 2; // Dang van chuyen
+                return 1; // Chờ xác nhận - step 1
             case 2:
-                return 4; // Da hoan thanh
+                return 2; // Đã xác nhận - step 2
+            case 3:
+                return 3; // Đang giao - step 3
+            case 4:
+                return 4; // Đã giao (hoàn thành) - step 4
             default:
                 return 0;
         }
@@ -157,13 +144,13 @@ const HistoryReceipt: React.FC = () => {
         if (currentStep >= targetStep) {
             switch (targetStep) {
                 case 1:
-                    return 'bg-yellow-500';
+                    return 'bg-yellow-500'; // Chờ xác nhận
                 case 2:
-                    return 'bg-blue-500';
+                    return 'bg-blue-500'; // Đã xác nhận
                 case 3:
-                    return 'bg-purple-500';
+                    return 'bg-purple-500'; // Đang giao
                 case 4:
-                    return 'bg-green-500';
+                    return 'bg-green-500'; // Đã giao
                 default:
                     return 'bg-green-500';
             }
@@ -174,11 +161,15 @@ const HistoryReceipt: React.FC = () => {
     const getCurrentStatusColor = (status: number) => {
         switch (status) {
             case 0:
-                return 'bg-red-500'; // Huy
+                return 'bg-red-500'; // Đã hủy
             case 1:
-                return 'bg-blue-500'; // Dang van chuyen
+                return 'bg-yellow-500'; // Chờ xác nhận
             case 2:
-                return 'bg-green-500'; // Da hoan thanh
+                return 'bg-blue-500'; // Đã xác nhận
+            case 3:
+                return 'bg-purple-500'; // Đang giao
+            case 4:
+                return 'bg-green-500'; // Đã giao
             default:
                 return 'bg-gray-500';
         }
@@ -635,11 +626,6 @@ const HistoryReceipt: React.FC = () => {
                                                                 <h3 className="font-semibold text-gray-900">
                                                                     Thông tin giao hàng
                                                                 </h3>
-                                                                {order.shipping.status !== undefined && (
-                                                                    <Badge className={`${getShippingStatusColor(order.shipping.status)} rounded-none text-xs`}>
-                                                                        {getShippingStatusText(order.shipping.status)}
-                                                                    </Badge>
-                                                                )}
                                                             </div>
                                                             <div className="space-y-3">
                                                                 {/* Receiver Name */}
@@ -732,11 +718,6 @@ const HistoryReceipt: React.FC = () => {
                                             </div>
                                             <h3 className="font-bold text-blue-900 text-lg">Thông tin giao hàng</h3>
                                         </div>
-                                        {selectedOrder.shipping.status !== undefined && (
-                                            <Badge className={`${getShippingStatusColor(selectedOrder.shipping.status)} rounded-none text-xs px-3 py-1`}>
-                                                {getShippingStatusText(selectedOrder.shipping.status)}
-                                            </Badge>
-                                        )}
                                     </div>
                                     <div className="space-y-4">
                                         <div className="bg-white p-4  border border-blue-100">

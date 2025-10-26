@@ -60,6 +60,24 @@ export function mapBackendOrderToFrontend(o: any): OrderResponse {
     return 0;
   })();
 
+  // Safely parse date - handle null/undefined/invalid dates
+  const parseDate = (dateValue: any): string => {
+    if (!dateValue) {
+      return new Date().toISOString();
+    }
+    try {
+      const date = new Date(dateValue);
+      if (isNaN(date.getTime())) {
+        console.warn('Invalid date value:', dateValue, 'using current date');
+        return new Date().toISOString();
+      }
+      return date.toISOString();
+    } catch (error) {
+      console.error('Error parsing date:', dateValue, error);
+      return new Date().toISOString();
+    }
+  };
+
   const orderDetails: OrderDetailResponse[] = (o?.orderItems || o?.orderDetails || []).map((it: any) => ({
     orderDetailId: it.orderDetailId || it.orderItemId,
     productId: it.productId,
@@ -74,7 +92,7 @@ export function mapBackendOrderToFrontend(o: any): OrderResponse {
     orderId: o.orderId,
     accountId: o.accountId,
     accountName: o.accountName,
-    orderDate: (o.createdAt ? new Date(o.createdAt).toISOString() : new Date().toISOString()),
+    orderDate: parseDate(o.createdAt),
     status: o.status ?? 0,
     paymentMethod: paymentMethodFromBackend,
     totalAmount: o.totalAmount ?? 0,
@@ -105,9 +123,13 @@ export const orderService = {
       
       const response = await axiosInstance.post(API.CREATE_ORDER, request);
       
-      console.log('✅ Order created successfully:', response.data);
+      console.log('✅ Order created successfully - Raw response:', response.data);
+      console.log('📅 createdAt value:', response.data?.createdAt);
+      console.log('📅 createdAt type:', typeof response.data?.createdAt);
       
       const mapped = response.data ? mapBackendOrderToFrontend(response.data) : undefined;
+      
+      console.log('✅ Mapped order:', mapped);
       
       return {
         success: true,
@@ -202,13 +224,67 @@ export const orderService = {
       const response = await axiosInstance.put(API.CANCEL_ORDER(orderId));
       return {
         success: true,
-        data: response.data
+        data: mapBackendOrderToFrontend(response.data)
       };
     } catch (error: any) {
       console.error('Error canceling order:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể hủy đơn hàng'
+      };
+    }
+  },
+
+  // Confirm order (Admin: status 1 -> 2)
+  confirmOrder: async (orderId: string): Promise<{ success: boolean; data?: OrderResponse; message?: string }> => {
+    try {
+      const response = await axiosInstance.put(API.CONFIRM_ORDER(orderId));
+      return {
+        success: true,
+        data: mapBackendOrderToFrontend(response.data),
+        message: 'Đã xác nhận đơn hàng thành công'
+      };
+    } catch (error: any) {
+      console.error('Error confirming order:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Không thể xác nhận đơn hàng'
+      };
+    }
+  },
+
+  // Start delivery (Admin: status 2 -> 3)
+  startDelivery: async (orderId: string): Promise<{ success: boolean; data?: OrderResponse; message?: string }> => {
+    try {
+      const response = await axiosInstance.put(API.START_DELIVERY(orderId));
+      return {
+        success: true,
+        data: mapBackendOrderToFrontend(response.data),
+        message: 'Đã bắt đầu giao hàng'
+      };
+    } catch (error: any) {
+      console.error('Error starting delivery:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Không thể bắt đầu giao hàng'
+      };
+    }
+  },
+
+  // Complete order (Customer/Admin: status 3 -> 4)
+  completeOrder: async (orderId: string): Promise<{ success: boolean; data?: OrderResponse; message?: string }> => {
+    try {
+      const response = await axiosInstance.put(API.COMPLETE_ORDER(orderId));
+      return {
+        success: true,
+        data: mapBackendOrderToFrontend(response.data),
+        message: 'Đã hoàn thành đơn hàng'
+      };
+    } catch (error: any) {
+      console.error('Error completing order:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Không thể hoàn thành đơn hàng'
       };
     }
   },
