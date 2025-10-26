@@ -24,4 +24,15 @@ public interface ShippingRepository extends JpaRepository<Shipping, String> {
     // Find shippings by account id
     @Query("SELECT s FROM Shipping s WHERE s.account.accountId = :accountId")
     List<Shipping> findByAccountAccountId(@Param("accountId") String accountId);
+    
+    // Filter by status
+    Page<Shipping> findByStatus(int status, Pageable pageable);
+    
+    // Search methods
+    Page<Shipping> findByShippingIdContainingIgnoreCaseOrReceiverNameContainingIgnoreCaseOrReceiverPhoneContaining(
+            String shippingId, String receiverName, String receiverPhone, Pageable pageable);
+    
+    // Combined search and filter
+    Page<Shipping> findByShippingIdContainingIgnoreCaseAndStatusOrReceiverNameContainingIgnoreCaseAndStatusOrReceiverPhoneContainingAndStatus(
+            String shippingId, int status1, String receiverName, int status2, String receiverPhone, int status3, Pageable pageable);
 }
