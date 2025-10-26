@@ -25,6 +25,10 @@ public interface ShippingRepository extends JpaRepository<Shipping, String> {
     @Query("SELECT s FROM Shipping s WHERE s.account.accountId = :accountId")
     List<Shipping> findByAccountAccountId(@Param("accountId") String accountId);
     
+    // Find shipping by order id
+    @Query("SELECT s FROM Shipping s WHERE s.order.orderId = :orderId")
+    Shipping findByOrderOrderId(@Param("orderId") String orderId);
+    
     // Filter by status
     Page<Shipping> findByStatus(int status, Pageable pageable);
     

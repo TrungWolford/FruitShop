@@ -181,9 +181,12 @@ public class OrderController {
     @PutMapping("/{orderId}/confirm")
     public ResponseEntity<OrderResponse> confirmOrder(@PathVariable String orderId) {
         try {
+            System.out.println("🔔 Confirming order: " + orderId);
             OrderResponse order = orderService.confirmOrder(orderId);
             return ResponseEntity.ok(order);
         } catch (RuntimeException e) {
+            System.err.println("❌ Error confirming order: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
     }
@@ -192,9 +195,12 @@ public class OrderController {
     @PutMapping("/{orderId}/start-delivery")
     public ResponseEntity<OrderResponse> startDelivery(@PathVariable String orderId) {
         try {
+            System.out.println("🔔 Starting delivery for order: " + orderId);
             OrderResponse order = orderService.startDelivery(orderId);
             return ResponseEntity.ok(order);
         } catch (RuntimeException e) {
+            System.err.println("❌ Error starting delivery: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
     }
