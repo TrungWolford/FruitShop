@@ -14,8 +14,8 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '../../components/ui/dropdowns/dropdown-menu';
-import { orderService } from '../../services/shippingService';
-import type { OrderResponse } from '../../services/shippingService';
+import { orderService } from '../../services/orderService';
+import type { OrderResponse } from '../../services/orderService';
 
 const HistoryReceipt: React.FC = () => {
     const navigate = useNavigate();
@@ -635,9 +635,11 @@ const HistoryReceipt: React.FC = () => {
                                                                 <h3 className="font-semibold text-gray-900">
                                                                     Thông tin giao hàng
                                                                 </h3>
-                                                                <Badge className={`${getShippingStatusColor(order.shipping.status)} rounded-none text-xs`}>
-                                                                    {getShippingStatusText(order.shipping.status)}
-                                                                </Badge>
+                                                                {order.shipping.status !== undefined && (
+                                                                    <Badge className={`${getShippingStatusColor(order.shipping.status)} rounded-none text-xs`}>
+                                                                        {getShippingStatusText(order.shipping.status)}
+                                                                    </Badge>
+                                                                )}
                                                             </div>
                                                             <div className="space-y-3">
                                                                 {/* Receiver Name */}
@@ -730,9 +732,11 @@ const HistoryReceipt: React.FC = () => {
                                             </div>
                                             <h3 className="font-bold text-blue-900 text-lg">Thông tin giao hàng</h3>
                                         </div>
-                                        <Badge className={`${getShippingStatusColor(selectedOrder.shipping.status)} rounded-none text-xs px-3 py-1`}>
-                                            {getShippingStatusText(selectedOrder.shipping.status)}
-                                        </Badge>
+                                        {selectedOrder.shipping.status !== undefined && (
+                                            <Badge className={`${getShippingStatusColor(selectedOrder.shipping.status)} rounded-none text-xs px-3 py-1`}>
+                                                {getShippingStatusText(selectedOrder.shipping.status)}
+                                            </Badge>
+                                        )}
                                     </div>
                                     <div className="space-y-4">
                                         <div className="bg-white p-4  border border-blue-100">
