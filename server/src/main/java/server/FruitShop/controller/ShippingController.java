@@ -57,7 +57,8 @@ public class ShippingController {
             s.setCity(request.getCity());
             s.setShippingFee(request.getShippingFee());
             s.setShippedAt(request.getShippedAt());
-            s.setStatus(request.getStatus());
+            // Set default status = 0 (Chờ xác nhận) when creating new shipping
+            s.setStatus(0);
 
             if (request.getAccountId() != null) {
                 Optional<Account> accountOpt = accountRepository.findById(request.getAccountId());
