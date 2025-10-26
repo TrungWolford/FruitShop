@@ -292,6 +292,105 @@ export const orderService = {
         message: error.response?.data?.message || 'Không thể tải đơn hàng'
       };
     }
+  },
+
+  // Search orders by keyword (orderId or accountName)
+  searchOrders: async (
+    keyword: string, 
+    page: number = 0, 
+    size: number = 10
+  ): Promise<{ success: boolean; data?: OrderResponse[]; message?: string }> => {
+    try {
+      const response = await axiosInstance.get(API.SEARCH_ORDERS, {
+        params: { keyword, page, size }
+      });
+      
+      let orders: OrderResponse[] = [];
+      
+      if (response.data && response.data.content) {
+        orders = response.data.content.map((o: any) => mapBackendOrderToFrontend(o));
+      } else if (Array.isArray(response.data)) {
+        orders = response.data.map((o: any) => mapBackendOrderToFrontend(o));
+      }
+      
+      return {
+        success: true,
+        data: orders
+      };
+    } catch (error: any) {
+      console.error('Error searching orders:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Không thể tìm kiếm đơn hàng'
+      };
+    }
+  },
+
+  // Filter orders by status
+  filterOrdersByStatus: async (
+    status: number, 
+    page: number = 0, 
+    size: number = 10
+  ): Promise<{ success: boolean; data?: OrderResponse[]; message?: string }> => {
+    try {
+      const response = await axiosInstance.get(API.FILTER_ORDERS, {
+        params: { status, page, size }
+      });
+      
+      let orders: OrderResponse[] = [];
+      
+      if (response.data && response.data.content) {
+        orders = response.data.content.map((o: any) => mapBackendOrderToFrontend(o));
+      } else if (Array.isArray(response.data)) {
+        orders = response.data.map((o: any) => mapBackendOrderToFrontend(o));
+      }
+      
+      return {
+        success: true,
+        data: orders
+      };
+    } catch (error: any) {
+      console.error('Error filtering orders:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Không thể lọc đơn hàng'
+      };
+    }
+  },
+
+  // Search and filter orders (combined)
+  searchAndFilterOrders: async (
+    keyword: string | null,
+    status: number | null,
+    page: number = 0,
+    size: number = 10
+  ): Promise<{ success: boolean; data?: OrderResponse[]; message?: string }> => {
+    try {
+      const params: any = { page, size };
+      if (keyword) params.keyword = keyword;
+      if (status !== null) params.status = status;
+
+      const response = await axiosInstance.get(API.SEARCH_AND_FILTER_ORDERS, { params });
+      
+      let orders: OrderResponse[] = [];
+      
+      if (response.data && response.data.content) {
+        orders = response.data.content.map((o: any) => mapBackendOrderToFrontend(o));
+      } else if (Array.isArray(response.data)) {
+        orders = response.data.map((o: any) => mapBackendOrderToFrontend(o));
+      }
+      
+      return {
+        success: true,
+        data: orders
+      };
+    } catch (error: any) {
+      console.error('Error searching and filtering orders:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Không thể tìm kiếm và lọc đơn hàng'
+      };
+    }
   }
 };
 

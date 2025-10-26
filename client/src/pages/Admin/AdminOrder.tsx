@@ -42,22 +42,31 @@ const AdminOrder: React.FC = () => {
     const loadOrders = async (page: number = 0) => {
         try {
             setLoading(true);
-            const response = await orderService.getAllOrders(page, itemsPerPage);
+            let response;
+
+            // Use search and filter API
+            if (searchTerm.trim() && statusFilter !== 'all') {
+                // Both search and filter
+                const status = parseInt(statusFilter);
+                response = await orderService.searchAndFilterOrders(searchTerm.trim(), status, page, itemsPerPage);
+            } else if (searchTerm.trim()) {
+                // Only search
+                response = await orderService.searchOrders(searchTerm.trim(), page, itemsPerPage);
+            } else if (statusFilter !== 'all') {
+                // Only filter
+                const status = parseInt(statusFilter);
+                response = await orderService.filterOrdersByStatus(status, page, itemsPerPage);
+            } else {
+                // No search or filter
+                response = await orderService.getAllOrders(page, itemsPerPage);
+            }
 
             console.log('🔍 Backend Response:', response);
 
             if (response.success && response.data) {
-                let filteredOrders = response.data;
-
-                // Apply status filter locally if needed
-                if (statusFilter !== 'all') {
-                    const status = parseInt(statusFilter);
-                    filteredOrders = filteredOrders.filter((order: OrderResponse) => order.status === status);
-                }
-
-                setOrders(filteredOrders);
-                setTotalItems(filteredOrders.length);
-                setTotalPages(Math.ceil(filteredOrders.length / itemsPerPage));
+                setOrders(response.data);
+                setTotalItems(response.data.length);
+                setTotalPages(Math.ceil(response.data.length / itemsPerPage));
             } else {
                 toast.error('Không thể tải danh sách đơn hàng');
                 setOrders([]);
@@ -73,7 +82,7 @@ const AdminOrder: React.FC = () => {
 
     useEffect(() => {
         loadOrders(currentPage - 1);
-    }, [currentPage, statusFilter]);
+    }, [currentPage, statusFilter, searchTerm]);
 
     // Format price
     const formatPrice = (price: number) => {
@@ -128,14 +137,6 @@ const AdminOrder: React.FC = () => {
         setSelectedOrder(order);
         setIsViewDialogOpen(true);
     };
-
-    // Filter orders by search term
-    const filteredOrders = orders.filter((order) => {
-        const matchesSearch =
-            order.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (order.accountName && order.accountName.toLowerCase().includes(searchTerm.toLowerCase()));
-        return matchesSearch;
-    });
 
     // Get payment method text
     const getPaymentMethodText = (method: number) => {
@@ -289,7 +290,7 @@ const AdminOrder: React.FC = () => {
                                             </TableCell>
                                         </TableRow>
                                     ))
-                                ) : filteredOrders.length === 0 ? (
+                                ) : orders.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={6} className="text-center py-12 text-gray-500">
                                             <Package className="w-16 h-16 mx-auto mb-3 text-gray-400" />
@@ -298,7 +299,7 @@ const AdminOrder: React.FC = () => {
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    filteredOrders.map((order, index) => (
+                                    orders.map((order, index) => (
                                         <TableRow
                                             key={order.orderId}
                                             className={`transition-all duration-200 cursor-pointer ${
