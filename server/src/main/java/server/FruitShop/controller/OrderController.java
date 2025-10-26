@@ -150,4 +150,50 @@ public class OrderController {
             return ResponseEntity.badRequest().build();
         }
     }
+
+    // @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/search")
+    public ResponseEntity<Page<OrderResponse>> searchOrders(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<OrderResponse> orders = orderService.searchOrders(keyword, pageable);
+            return ResponseEntity.ok(orders);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    // @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/filter")
+    public ResponseEntity<Page<OrderResponse>> filterOrdersByStatus(
+            @RequestParam int status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<OrderResponse> orders = orderService.filterOrdersByStatus(status, pageable);
+            return ResponseEntity.ok(orders);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    // @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/search-filter")
+    public ResponseEntity<Page<OrderResponse>> searchAndFilterOrders(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<OrderResponse> orders = orderService.searchAndFilterOrders(keyword, status, pageable);
+            return ResponseEntity.ok(orders);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
 }

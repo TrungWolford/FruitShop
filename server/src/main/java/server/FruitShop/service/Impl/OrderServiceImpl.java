@@ -315,4 +315,60 @@ public class OrderServiceImpl implements OrderService {
                 .map(OrderItemResponse::fromEntity)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public Page<OrderResponse> searchOrders(String keyword, Pageable pageable) {
+        // Search by orderId or accountName
+        Page<Order> ordersPage = orderRepository.findByOrderIdContainingIgnoreCaseOrAccountAccountNameContainingIgnoreCase(
+                keyword, keyword, pageable);
+        
+        List<OrderResponse> responses = ordersPage.getContent().stream()
+                .map(OrderResponse::fromEntity)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(responses, pageable, ordersPage.getTotalElements());
+    }
+
+    @Override
+    public Page<OrderResponse> filterOrdersByStatus(int status, Pageable pageable) {
+        Page<Order> ordersPage = orderRepository.findByStatus(status, pageable);
+        
+        List<OrderResponse> responses = ordersPage.getContent().stream()
+                .map(OrderResponse::fromEntity)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(responses, pageable, ordersPage.getTotalElements());
+    }
+
+    @Override
+    public Page<OrderResponse> searchAndFilterOrders(String keyword, Integer status, Pageable pageable) {
+        Page<Order> ordersPage;
+        
+        if (keyword != null && !keyword.trim().isEmpty() && status != null) {
+            // Both search and filter
+            ordersPage = orderRepository.findByOrderIdContainingIgnoreCaseAndStatusOrAccountAccountNameContainingIgnoreCaseAndStatus(
+                    keyword, status, keyword, status, pageable);
+        } else if (keyword != null && !keyword.trim().isEmpty()) {
+            // Only search
+            ordersPage = orderRepository.findByOrderIdContainingIgnoreCaseOrAccountAccountNameContainingIgnoreCase(
+                    keyword, keyword, pageable);
+        } else if (status != null) {
+            // Only filter
+            ordersPage = orderRepository.findByStatus(status, pageable);
+        } else {
+            // No filter or search
+            ordersPage = orderRepository.findAll(pageable);
+        }
+        
+        List<OrderResponse> responses = ordersPage.getContent().stream()
+                .map(OrderResponse::fromEntity)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(responses, pageable, ordersPage.getTotalElements());
+    }
+
+    @Override
+    public List<OrderItemResponse> getOrderItems(String orderId) {
+        return getOrderDetailsByOrderId(orderId);
+    }
 }

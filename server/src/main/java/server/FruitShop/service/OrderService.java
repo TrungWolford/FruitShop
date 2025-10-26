@@ -27,7 +27,11 @@ public interface OrderService {
     // Filter and search
     Page<OrderResponse> getOrdersByStatus(int status, Pageable pageable);
     Page<OrderResponse> getOrdersByDateRange(String startDate, String endDate, Pageable pageable);
+    Page<OrderResponse> searchOrders(String keyword, Pageable pageable);
+    Page<OrderResponse> filterOrdersByStatus(int status, Pageable pageable);
+    Page<OrderResponse> searchAndFilterOrders(String keyword, Integer status, Pageable pageable);
 
     // OrderItem operations
+    List<OrderItemResponse> getOrderItems(String orderId);
     List<OrderItemResponse> getOrderDetailsByOrderId(String orderId);
 }

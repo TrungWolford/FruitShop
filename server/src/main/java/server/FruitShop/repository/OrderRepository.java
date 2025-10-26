@@ -14,4 +14,12 @@ public interface OrderRepository extends JpaRepository<Order, String> {
     List<Order> findByAccountAccountId(String accountId);
     Page<Order> findByStatus(int status, Pageable pageable);
     Page<Order> findByCreatedAtBetween(Date startDate, Date endDate, Pageable pageable);
+    
+    // Search methods
+    Page<Order> findByOrderIdContainingIgnoreCaseOrAccountAccountNameContainingIgnoreCase(
+            String orderId, String accountName, Pageable pageable);
+    
+    // Combined search and filter
+    Page<Order> findByOrderIdContainingIgnoreCaseAndStatusOrAccountAccountNameContainingIgnoreCaseAndStatus(
+            String orderId, int status1, String accountName, int status2, Pageable pageable);
 }
