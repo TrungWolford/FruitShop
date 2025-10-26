@@ -67,10 +67,13 @@ export const API = {
   DELETE_ORDER: (orderId: string) => `/order/${orderId}`, // DELETE /api/order/{orderId} (Admin only)
   GET_ORDERS_BY_ACCOUNT: (accountId: string) => `/order/account/${accountId}`, // GET /api/order/account/{accountId} (Customer only)
   CANCEL_ORDER: (orderId: string) => `/order/${orderId}/cancel`, // PUT /api/order/{orderId}/cancel (Customer only)
+  COMPLETE_ORDER: (orderId: string) => `/order/${orderId}/complete`, // PUT /api/order/{orderId}/complete (Customer confirms delivery)
+  CONFIRM_ORDER: (orderId: string) => `/order/${orderId}/confirm`, // PUT /api/order/{orderId}/confirm (Admin confirms order)
+  START_DELIVERY: (orderId: string) => `/order/${orderId}/start-delivery`, // PUT /api/order/{orderId}/start-delivery (Admin starts delivery)
+  UPDATE_ORDER_STATUS: (orderId: string) => `/order/${orderId}/update-status`, // PUT /api/order/{orderId}/update-status?status=xxx (Admin only)
   GET_ORDER_DETAILS: (orderId: string) => `/order/${orderId}/details`, // GET /api/order/{orderId}/details
   FILTER_ORDERS_BY_STATUS: '/order/status', // GET /api/order/status?status=xxx&page=0&size=10 (Admin only)
   FILTER_ORDERS_BY_DATE: '/order/date-range', // GET /api/order/date-range?startDate=xxx&endDate=xxx&page=0&size=10 (Admin only)
-  UPDATE_ORDER_STATUS: (orderId: string) => `/order/${orderId}/status`, // PUT /api/order/{orderId}/status (Admin only)
   SEARCH_ORDERS: '/order/search', // GET /api/order/search?keyword=xxx&page=0&size=10 (Admin only)
   FILTER_ORDERS: '/order/filter', // GET /api/order/filter?status=xxx&page=0&size=10 (Admin only)
   SEARCH_AND_FILTER_ORDERS: '/order/search-filter', // GET /api/order/search-filter?keyword=xxx&status=xxx&page=0&size=10 (Admin only)
@@ -100,6 +103,10 @@ export const API = {
   DELETE_SHIPPING: (shippingId: string) => `/shipping/${shippingId}`, // DELETE /api/shipping/{shippingId}
   GET_SHIPPING_BY_ORDER: (orderId: string) => `/shipping/order/${orderId}`, // GET /api/shipping/order/{orderId}
   GET_SHIPPING_BY_ACCOUNT: (accountId: string) => `/shipping/account/${accountId}`, // GET /api/shipping/account/{accountId}
+  UPDATE_SHIPPING_STATUS: (shippingId: string) => `/shipping/${shippingId}/status`, // PUT /api/shipping/{shippingId}/status
+  SEARCH_SHIPPINGS: '/shipping/search', // GET /api/shipping/search?keyword=xxx&page=0&size=10
+  FILTER_SHIPPINGS: '/shipping/filter', // GET /api/shipping/filter?status=xxx&page=0&size=10
+  SEARCH_AND_FILTER_SHIPPINGS: '/shipping/search-filter', // GET /api/shipping/search-filter?keyword=xxx&status=xxx&page=0&size=10
 
   // Ratings - Theo RatingController.java
   GET_ALL_RATINGS: '/rating', // GET /api/rating?page=0&size=10
