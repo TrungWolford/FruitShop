@@ -110,8 +110,9 @@ public class OrderServiceImpl implements OrderService {
         Shipping savedShippingClone = shippingRepository.save(shippingClone);
         order.setShipping(savedShippingClone);
     order.setPayment(paymentEntity);
-        order.setStatus(1); // Dang van chuyen
+        order.setStatus(1); // Chờ xác nhận (Customer vừa tạo đơn)
         order.setTotalAmount(0);
+        order.setCreatedAt(new Date());
 
     Order savedOrder = orderRepository.save(order);
 
@@ -230,6 +231,19 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public OrderResponse updateOrderStatus(String orderId, int newStatus) {
+        Optional<Order> orderOptional = orderRepository.findById(orderId);
+        if (orderOptional.isEmpty()) {
+            throw new RuntimeException("Order not found with id: " + orderId);
+        }
+
+        Order order = orderOptional.get();
+        order.setStatus(newStatus);
+        Order savedOrder = orderRepository.save(order);
+        return OrderResponse.fromEntity(savedOrder);
+    }
+
+    @Override
     public OrderResponse cancelOrder(String orderId) {
         Optional<Order> orderOptional = orderRepository.findById(orderId);
         if (orderOptional.isEmpty()) {
@@ -238,9 +252,9 @@ public class OrderServiceImpl implements OrderService {
 
         Order order = orderOptional.get();
 
-        // Only allow cancellation if order is not completed
-        if (order.getStatus() == 2) {
-            throw new RuntimeException("Cannot cancel completed order");
+        // Only allow cancellation if order is pending (status = 1)
+        if (order.getStatus() != 1) {
+            throw new RuntimeException("Can only cancel orders with status 'Chờ xác nhận'");
         }
 
         // Restore product stock
@@ -250,8 +264,78 @@ public class OrderServiceImpl implements OrderService {
             productRepository.save(product);
         });
 
-        order.setStatus(0); // Cancelled
+        order.setStatus(0); // Đã hủy
         Order savedOrder = orderRepository.save(order);
+        
+        // Cancel shipping if exists
+        if (order.getShipping() != null) {
+            Shipping shipping = order.getShipping();
+            shipping.setStatus(0); // Đã hủy
+            shippingRepository.save(shipping);
+        }
+        
+        return OrderResponse.fromEntity(savedOrder);
+    }
+
+    @Override
+    public OrderResponse confirmOrder(String orderId) {
+        Optional<Order> orderOptional = orderRepository.findById(orderId);
+        if (orderOptional.isEmpty()) {
+            throw new RuntimeException("Order not found with id: " + orderId);
+        }
+
+        Order order = orderOptional.get();
+
+        // Only allow confirmation if order is pending (status = 1)
+        if (order.getStatus() != 1) {
+            throw new RuntimeException("Can only confirm orders with status 'Chờ xác nhận'");
+        }
+
+        // Update order status to "Đã xác nhận"
+        order.setStatus(2);
+        Order savedOrder = orderRepository.save(order);
+
+        // Create or update shipping with status "Đang chuẩn bị"
+        if (order.getShipping() != null) {
+            Shipping shipping = order.getShipping();
+            shipping.setStatus(1); // Đang chuẩn bị
+            shipping.setOrder(order);
+            shippingRepository.save(shipping);
+        } else {
+            throw new RuntimeException("Shipping information not found for this order");
+        }
+
+        return OrderResponse.fromEntity(savedOrder);
+    }
+
+    @Override
+    public OrderResponse startDelivery(String orderId) {
+        Optional<Order> orderOptional = orderRepository.findById(orderId);
+        if (orderOptional.isEmpty()) {
+            throw new RuntimeException("Order not found with id: " + orderId);
+        }
+
+        Order order = orderOptional.get();
+
+        // Only allow delivery start if order is confirmed (status = 2)
+        if (order.getStatus() != 2) {
+            throw new RuntimeException("Can only start delivery for confirmed orders");
+        }
+
+        // Update order status to "Đang giao"
+        order.setStatus(3);
+        Order savedOrder = orderRepository.save(order);
+
+        // Update shipping status to "Đang giao"
+        if (order.getShipping() != null) {
+            Shipping shipping = order.getShipping();
+            shipping.setStatus(2); // Đang giao
+            shipping.setShippedAt(new Date()); // Set thời gian bắt đầu giao
+            shippingRepository.save(shipping);
+        } else {
+            throw new RuntimeException("Shipping information not found for this order");
+        }
+
         return OrderResponse.fromEntity(savedOrder);
     }
 
@@ -264,13 +348,22 @@ public class OrderServiceImpl implements OrderService {
 
         Order order = orderOptional.get();
 
-        // Only allow completion if order is not cancelled
-        if (order.getStatus() == 0) {
-            throw new RuntimeException("Cannot complete cancelled order");
+        // Only allow completion if order is being delivered (status = 3)
+        if (order.getStatus() != 3) {
+            throw new RuntimeException("Can only complete orders that are being delivered");
         }
 
-        order.setStatus(2); // Completed
+        // Update order status to "Giao thành công"
+        order.setStatus(4);
         Order savedOrder = orderRepository.save(order);
+
+        // Update shipping status to "Giao thành công" - this is done by customer
+        if (order.getShipping() != null) {
+            Shipping shipping = order.getShipping();
+            shipping.setStatus(3); // Giao thành công
+            shippingRepository.save(shipping);
+        }
+
         return OrderResponse.fromEntity(savedOrder);
     }
 

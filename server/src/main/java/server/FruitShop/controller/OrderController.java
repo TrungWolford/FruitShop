@@ -57,24 +57,14 @@ public class OrderController {
         }
     }
 
-    // Public endpoints - anyone can access
-    @GetMapping("/{orderId}")
-    public ResponseEntity<OrderResponse> getOrderById(@PathVariable String orderId) {
+    // @PreAuthorize("hasRole('CUSTOMER')")
+    @PutMapping("/{orderId}/complete")
+    public ResponseEntity<OrderResponse> completeOrder(@PathVariable String orderId) {
         try {
-            OrderResponse order = orderService.getOrderById(orderId);
+            OrderResponse order = orderService.completeOrder(orderId);
             return ResponseEntity.ok(order);
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @GetMapping("/{orderId}/details")
-    public ResponseEntity<List<OrderItemResponse>> getOrderDetailsByOrderId(@PathVariable String orderId) {
-        try {
-            List<OrderItemResponse> orderDetails = orderService.getOrderDetailsByOrderId(orderId);
-            return ResponseEntity.ok(orderDetails);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().build();
         }
     }
 
@@ -111,17 +101,6 @@ public class OrderController {
         Pageable pageable = PageRequest.of(page, size);
         Page<OrderResponse> orders = orderService.getAllOrders(pageable);
         return ResponseEntity.ok(orders);
-    }
-
-    // @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{orderId}/complete")
-    public ResponseEntity<OrderResponse> completeOrder(@PathVariable String orderId) {
-        try {
-            OrderResponse order = orderService.completeOrder(orderId);
-            return ResponseEntity.ok(order);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
     }
 
     // @PreAuthorize("hasRole('ADMIN')")
@@ -192,6 +171,42 @@ public class OrderController {
             Pageable pageable = PageRequest.of(page, size);
             Page<OrderResponse> orders = orderService.searchAndFilterOrders(keyword, status, pageable);
             return ResponseEntity.ok(orders);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    // Admin endpoints for order status management
+    // @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{orderId}/confirm")
+    public ResponseEntity<OrderResponse> confirmOrder(@PathVariable String orderId) {
+        try {
+            OrderResponse order = orderService.confirmOrder(orderId);
+            return ResponseEntity.ok(order);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    // @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{orderId}/start-delivery")
+    public ResponseEntity<OrderResponse> startDelivery(@PathVariable String orderId) {
+        try {
+            OrderResponse order = orderService.startDelivery(orderId);
+            return ResponseEntity.ok(order);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    // @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{orderId}/update-status")
+    public ResponseEntity<OrderResponse> updateOrderStatus(
+            @PathVariable String orderId,
+            @RequestParam int status) {
+        try {
+            OrderResponse order = orderService.updateOrderStatus(orderId, status);
+            return ResponseEntity.ok(order);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
         }

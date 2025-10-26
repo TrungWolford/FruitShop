@@ -21,8 +21,11 @@ public interface OrderService {
     Page<OrderResponse> getAllOrders(Pageable pageable);
 
     // Order status operations
+    OrderResponse updateOrderStatus(String orderId, int newStatus);
     OrderResponse cancelOrder(String orderId);
-    OrderResponse completeOrder(String orderId);
+    OrderResponse confirmOrder(String orderId); // Admin xác nhận đơn hàng (status 1 -> 2) và tạo Shipping
+    OrderResponse startDelivery(String orderId); // Admin bắt đầu giao hàng (status 2 -> 3)
+    OrderResponse completeOrder(String orderId); // Khách hàng xác nhận đã nhận hàng (status 3 -> 4)
 
     // Filter and search
     Page<OrderResponse> getOrdersByStatus(int status, Pageable pageable);

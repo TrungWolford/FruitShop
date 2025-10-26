@@ -20,8 +20,7 @@ public class Order {
     @JoinColumn(name = "accountid")
     private Account account;
 
-    @OneToOne
-    @JoinColumn(name = "shippingid", unique = true)
+    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
     private Shipping shipping;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
@@ -29,7 +28,8 @@ public class Order {
 
     private Date createdAt;
 
-    private int status; //0: Huy, 1: Dang van chuyen, 2: Da hoan thanh
+    // Status: 1 = Chờ xác nhận, 2 = Đã xác nhận, 3 = Đang giao, 4 = Giao thành công, 0 = Đã hủy
+    private int status;
 
     @OneToOne
     @JoinColumn(name = "paymentid")
