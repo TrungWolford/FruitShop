@@ -9,10 +9,12 @@ import { Label } from '../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { useAppSelector } from '../../hooks/redux';
 import { cartService } from '../../services/cartService';
-import { shippingService, orderService } from '../../services/shippingService';
+import { shippingService } from '../../services/shippingService';
+import { orderService } from '../../services/orderService';
 import { accountService } from '../../services/adminAccountService';
 import { productService } from '../../services/productService';
-import type { CreateShippingRequest, CreateOrderRequest, ShippingResponse } from '../../services/shippingService';
+import type { CreateShippingRequest, ShippingResponse } from '../../services/shippingService';
+import type { CreateOrderRequest } from '../../services/orderService';
 import type { CartItem as CartItemType } from '../../types/cart';
 import { toast } from 'sonner';
 
