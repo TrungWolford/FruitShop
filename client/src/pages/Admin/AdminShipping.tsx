@@ -21,111 +21,14 @@ import {
     DropdownMenuTrigger,
 } from '../../components/ui/dropdowns/dropdown-menu';
 import { Search, Truck, ChevronLeft, ChevronRight, Eye, User, Phone, MapPin, Package } from 'lucide-react';
-
-// Mock Shipping Response Type
-export interface ShippingResponse {
-    shippingId: string;
-    orderId?: string;
-    accountId: string;
-    accountName?: string;
-    receiverName: string;
-    receiverPhone: string;
-    receiverAddress: string;
-    city: string;
-    shippingFee?: number;
-    shippedAt?: string;
-    status: number; // 0: Chờ xác nhận, 1: Đang vận chuyển, 2: Đã giao hàng
-}
-
-// Mock Shipping Service
-const mockShippingService = {
-    getAllShippings: async (
-        _page: number = 0,
-        _size: number = 10
-    ): Promise<{ success: boolean; data?: ShippingResponse[]; message?: string }> => {
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        // Mock data
-        const mockData: ShippingResponse[] = [
-            {
-                shippingId: 'SH001',
-                orderId: 'ORD001',
-                accountId: 'ACC001',
-                accountName: 'Nguyễn Văn A',
-                receiverName: 'Nguyễn Văn A',
-                receiverPhone: '0901234567',
-                receiverAddress: '123 Lê Lợi',
-                city: 'TP. Hồ Chí Minh',
-                shippingFee: 30000,
-                shippedAt: '2025-01-15T10:30:00',
-                status: 2,
-            },
-            {
-                shippingId: 'SH002',
-                orderId: 'ORD002',
-                accountId: 'ACC002',
-                accountName: 'Trần Thị B',
-                receiverName: 'Trần Thị B',
-                receiverPhone: '0912345678',
-                receiverAddress: '456 Nguyễn Huệ',
-                city: 'Hà Nội',
-                shippingFee: 25000,
-                shippedAt: '2025-01-16T14:20:00',
-                status: 1,
-            },
-            {
-                shippingId: 'SH003',
-                orderId: 'ORD003',
-                accountId: 'ACC003',
-                accountName: 'Lê Văn C',
-                receiverName: 'Lê Văn C',
-                receiverPhone: '0923456789',
-                receiverAddress: '789 Trần Hưng Đạo',
-                city: 'Đà Nẵng',
-                shippingFee: 35000,
-                shippedAt: '2025-01-17T09:15:00',
-                status: 0,
-            },
-            {
-                shippingId: 'SH004',
-                orderId: 'ORD004',
-                accountId: 'ACC004',
-                accountName: 'Phạm Thị D',
-                receiverName: 'Phạm Thị D',
-                receiverPhone: '0934567890',
-                receiverAddress: '321 Hai Bà Trưng',
-                city: 'TP. Hồ Chí Minh',
-                shippingFee: 30000,
-                shippedAt: '2025-01-18T16:45:00',
-                status: 1,
-            },
-            {
-                shippingId: 'SH005',
-                orderId: 'ORD005',
-                accountId: 'ACC005',
-                accountName: 'Hoàng Văn E',
-                receiverName: 'Hoàng Văn E',
-                receiverPhone: '0945678901',
-                receiverAddress: '654 Lý Thường Kiệt',
-                city: 'Cần Thơ',
-                shippingFee: 40000,
-                shippedAt: '2025-01-19T11:30:00',
-                status: 2,
-            },
-        ];
-
-        return {
-            success: true,
-            data: mockData,
-        };
-    },
-};
+import { shippingService } from '../../services/shippingService';
+import type { ShippingResponse } from '../../services/shippingService';
 
 const AdminShipping: React.FC = () => {
     const [shippings, setShippings] = useState<ShippingResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
     const [selectedShipping, setSelectedShipping] = useState<ShippingResponse | null>(null);
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
     const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -136,36 +39,52 @@ const AdminShipping: React.FC = () => {
     const [totalItems, setTotalItems] = useState(0);
     const itemsPerPage = 10;
 
-    // Load shippings from backend
+    // Debounce search term
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm);
+            setCurrentPage(1); // Reset to first page when search changes
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    // Load shippings from backend with search and filter
     const loadShippings = async (page: number = 0) => {
         try {
             setLoading(true);
-            const response = await mockShippingService.getAllShippings(page, itemsPerPage);
+            
+            // Prepare parameters for search and filter
+            const keyword = debouncedSearchTerm.trim() || null;
+            const status = statusFilter !== 'all' ? parseInt(statusFilter) : null;
+
+            // Call backend API with search and filter
+            const response = await shippingService.searchAndFilterShippings(
+                keyword,
+                status,
+                page,
+                itemsPerPage
+            );
 
             console.log('🔍 Backend Response:', response);
 
             if (response.success && response.data) {
-                let filteredShippings = response.data;
-
-                // Apply status filter locally if needed
-                if (statusFilter !== 'all') {
-                    const status = parseInt(statusFilter);
-                    filteredShippings = filteredShippings.filter(
-                        (shipping: ShippingResponse) => shipping.status === status
-                    );
-                }
-
-                setShippings(filteredShippings);
-                setTotalItems(filteredShippings.length);
-                setTotalPages(Math.ceil(filteredShippings.length / itemsPerPage));
+                setShippings(response.data);
+                // Use pagination metadata from backend
+                setTotalItems(response.totalElements || response.data.length);
+                setTotalPages(response.totalPages || Math.ceil((response.totalElements || response.data.length) / itemsPerPage));
             } else {
-                toast.error('Không thể tải danh sách vận chuyển');
+                toast.error(response.message || 'Không thể tải danh sách vận chuyển');
                 setShippings([]);
+                setTotalItems(0);
+                setTotalPages(1);
             }
         } catch (error) {
             console.error('Error loading shippings:', error);
             toast.error('Có lỗi xảy ra khi tải vận chuyển');
             setShippings([]);
+            setTotalItems(0);
+            setTotalPages(1);
         } finally {
             setLoading(false);
         }
@@ -173,7 +92,7 @@ const AdminShipping: React.FC = () => {
 
     useEffect(() => {
         loadShippings(currentPage - 1);
-    }, [currentPage, statusFilter]);
+    }, [currentPage, statusFilter, debouncedSearchTerm]);
 
     // Format price
     const formatPrice = (price: number) => {
@@ -224,14 +143,11 @@ const AdminShipping: React.FC = () => {
         setIsViewDialogOpen(true);
     };
 
-    // Filter shippings by search term
-    const filteredShippings = shippings.filter((shipping) => {
-        const matchesSearch =
-            shipping.shippingId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (shipping.receiverName && shipping.receiverName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (shipping.receiverPhone && shipping.receiverPhone.includes(searchTerm));
-        return matchesSearch;
-    });
+    // Handle status filter change
+    const handleStatusFilterChange = (newStatus: string) => {
+        setStatusFilter(newStatus);
+        setCurrentPage(1); // Reset to first page when filter changes
+    };
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -281,25 +197,25 @@ const AdminShipping: React.FC = () => {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent className="bg-white border-gray-200 shadow-lg">
                                     <DropdownMenuItem
-                                        onClick={() => setStatusFilter('all')}
+                                        onClick={() => handleStatusFilterChange('all')}
                                         className="cursor-pointer hover:bg-gray-100"
                                     >
                                         Tất cả trạng thái
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
-                                        onClick={() => setStatusFilter('0')}
+                                        onClick={() => handleStatusFilterChange('0')}
                                         className="cursor-pointer hover:bg-gray-100"
                                     >
                                         Chờ xác nhận
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
-                                        onClick={() => setStatusFilter('1')}
+                                        onClick={() => handleStatusFilterChange('1')}
                                         className="cursor-pointer hover:bg-gray-100"
                                     >
                                         Đang vận chuyển
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
-                                        onClick={() => setStatusFilter('2')}
+                                        onClick={() => handleStatusFilterChange('2')}
                                         className="cursor-pointer hover:bg-gray-100"
                                     >
                                         Đã giao hàng
@@ -400,7 +316,7 @@ const AdminShipping: React.FC = () => {
                                             </TableCell>
                                         </TableRow>
                                     ))
-                                ) : filteredShippings.length === 0 ? (
+                                ) : shippings.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={7} className="text-center py-12 text-gray-500">
                                             <Truck className="w-16 h-16 mx-auto mb-3 text-gray-400" />
@@ -409,7 +325,7 @@ const AdminShipping: React.FC = () => {
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    filteredShippings.map((shipping, index) => (
+                                    shippings.map((shipping: ShippingResponse, index: number) => (
                                         <TableRow
                                             key={shipping.shippingId}
                                             className={`transition-all duration-200 cursor-pointer ${
