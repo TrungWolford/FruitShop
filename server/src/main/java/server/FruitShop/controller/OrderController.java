@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import server.FruitShop.dto.request.Order.CreateOrderRequest;
 import server.FruitShop.dto.request.Order.UpdateOrderRequest;
-import server.FruitShop.dto.response.Order.OrderItemResponse;
 import server.FruitShop.dto.response.Order.OrderResponse;
 import server.FruitShop.service.OrderService;
 
@@ -98,9 +97,15 @@ public class OrderController {
     public ResponseEntity<Page<OrderResponse>> getAllOrders(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<OrderResponse> orders = orderService.getAllOrders(pageable);
-        return ResponseEntity.ok(orders);
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<OrderResponse> orders = orderService.getAllOrders(pageable);
+            return ResponseEntity.ok(orders);
+        } catch (Exception e) {
+            System.err.println("❌ Error in getAllOrders: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     // @PreAuthorize("hasRole('ADMIN')")
