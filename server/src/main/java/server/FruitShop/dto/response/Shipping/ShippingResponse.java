@@ -13,6 +13,7 @@ public class ShippingResponse {
     private String receiverPhone;
     private String receiverAddress;
     private String city;
+    private String shipperName;
     private long shippingFee;
     private Date shippedAt;
     private int status;
@@ -26,6 +27,7 @@ public class ShippingResponse {
         response.setReceiverPhone(shipping.getReceiverPhone());
         response.setReceiverAddress(shipping.getReceiverAddress());
         response.setCity(shipping.getCity());
+        response.setShipperName(shipping.getShipperName());
         response.setShippingFee(shipping.getShippingFee());
         response.setShippedAt(shipping.getShippedAt());
         response.setStatus(shipping.getStatus());

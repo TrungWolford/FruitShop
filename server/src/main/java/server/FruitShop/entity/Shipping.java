@@ -29,6 +29,8 @@ public class Shipping {
 
     private String city;
 
+    private String shipperName;
+
     private long shippingFee;
 
     private Date shippedAt;

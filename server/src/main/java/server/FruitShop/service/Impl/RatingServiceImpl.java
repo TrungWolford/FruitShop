@@ -32,58 +32,104 @@ public class RatingServiceImpl implements RatingService {
 
     @Override
     public Page<RatingResponse> getAllRating(Pageable pageable) {
-        return ratingRepository.findAll(pageable)
-                .map(RatingResponse::fromEntity);
+        try {
+            Page<Rating> ratingsPage = ratingRepository.findAll(pageable);
+            if (ratingsPage == null || ratingsPage.isEmpty()) {
+                return Page.empty(pageable);
+            }
+            return ratingsPage.map(RatingResponse::fromEntity);
+        } catch (Exception e) {
+            System.err.println("Error fetching all ratings: " + e.getMessage());
+            e.printStackTrace();
+            return Page.empty(pageable);
+        }
     }
 
     @Override
     public Page<RatingDetailResponse> getAllRatingDetailed(Pageable pageable) {
-        return ratingRepository.findAll(pageable)
-                .map(RatingDetailResponse::fromEntity);
+        try {
+            Page<Rating> ratingsPage = ratingRepository.findAll(pageable);
+            if (ratingsPage == null || ratingsPage.isEmpty()) {
+                return Page.empty(pageable);
+            }
+            return ratingsPage.map(RatingDetailResponse::fromEntity);
+        } catch (Exception e) {
+            System.err.println("Error fetching all detailed ratings: " + e.getMessage());
+            e.printStackTrace();
+            return Page.empty(pageable);
+        }
     }
 
     @Override
     public Page<RatingDetailResponse> getRatingsByAccountId(String accountId, Pageable pageable) {
-        Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new RuntimeException("Account not found with id: " + accountId));
+        try {
+            // Validate account exists
+            accountRepository.findById(accountId)
+                    .orElseThrow(() -> new RuntimeException("Account not found with id: " + accountId));
 
-        String id = account.getAccountId();
-
-        return ratingRepository.findByAccountAccountId(pageable, id)
-                .map(RatingDetailResponse::fromEntity);
+            Page<Rating> ratingsPage = ratingRepository.findByAccountAccountId(pageable, accountId);
+            if (ratingsPage == null || ratingsPage.isEmpty()) {
+                return Page.empty(pageable);
+            }
+            return ratingsPage.map(RatingDetailResponse::fromEntity);
+        } catch (RuntimeException e) {
+            throw e; // Re-throw validation errors
+        } catch (Exception e) {
+            System.err.println("Error fetching ratings for accountId " + accountId + ": " + e.getMessage());
+            e.printStackTrace();
+            return Page.empty(pageable);
+        }
     }
 
     @Override
     public Page<RatingDetailResponse> getRatingsByProductId(String productId, Pageable pageable) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
+        try {
+            // Validate product exists
+            productRepository.findById(productId)
+                    .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
 
-        String id = product.getProductId();
-
-        // Only return active ratings (status = 1)
-        return ratingRepository.findByProductProductIdAndStatus(pageable, id, 1)
-                .map(RatingDetailResponse::fromEntity);
+            // Only return active ratings (status = 1)
+            Page<Rating> ratingsPage = ratingRepository.findByProductProductIdAndStatus(pageable, productId, 1);
+            if (ratingsPage == null || ratingsPage.isEmpty()) {
+                return Page.empty(pageable);
+            }
+            return ratingsPage.map(RatingDetailResponse::fromEntity);
+        } catch (RuntimeException e) {
+            throw e; // Re-throw validation errors
+        } catch (Exception e) {
+            System.err.println("Error fetching ratings for productId " + productId + ": " + e.getMessage());
+            e.printStackTrace();
+            return Page.empty(pageable);
+        }
     }
 
     @Override
     public RatingDetailResponse getRatingsByAccountIdAndProductId(String accountId, String productId) {
-        // Validate account exists
-        Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new RuntimeException("Account not found with id: " + accountId));
+        try {
+            // Validate account exists
+            accountRepository.findById(accountId)
+                    .orElseThrow(() -> new RuntimeException("Account not found with id: " + accountId));
 
-        // Validate product exists
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
+            // Validate product exists
+            productRepository.findById(productId)
+                    .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
 
-        // Find rating by account and product
-        Rating savedRating = ratingRepository.findByAccountAccountIdAndProductProductId(accountId, productId);
-        
-        // Return null if rating doesn't exist (user hasn't rated this product yet)
-        if (savedRating == null) {
+            // Find rating by account and product
+            Rating savedRating = ratingRepository.findByAccountAccountIdAndProductProductId(accountId, productId);
+            
+            // Return null if rating doesn't exist (user hasn't rated this product yet)
+            if (savedRating == null) {
+                return null;
+            }
+            
+            return RatingDetailResponse.fromEntity(savedRating);
+        } catch (RuntimeException e) {
+            throw e; // Re-throw validation errors
+        } catch (Exception e) {
+            System.err.println("Error fetching rating for accountId " + accountId + " and productId " + productId + ": " + e.getMessage());
+            e.printStackTrace();
             return null;
         }
-        
-        return RatingDetailResponse.fromEntity(savedRating);
     }
 
     @Override
@@ -158,31 +204,43 @@ public class RatingServiceImpl implements RatingService {
 
     @Override
     public double calculateRatingStarByProductId(String productId) {
-        // Validate product exists
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
+        try {
+            // Validate product exists
+            productRepository.findById(productId)
+                    .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
 
-        // Get all ratings for this product (only active ones with status = 1)
-        List<Rating> ratings = ratingRepository.findByProductProductId(productId);
-        
-        // Filter only active ratings
-        List<Rating> activeRatings = ratings.stream()
-                .filter(rating -> rating.getStatus() == 1)
-                .toList();
+            // Get all ratings for this product (only active ones with status = 1)
+            List<Rating> ratings = ratingRepository.findByProductProductId(productId);
+            
+            if (ratings == null || ratings.isEmpty()) {
+                return 0.0;
+            }
+            
+            // Filter only active ratings
+            List<Rating> activeRatings = ratings.stream()
+                    .filter(rating -> rating.getStatus() == 1)
+                    .toList();
 
-        // If no ratings found, return 0
-        if (activeRatings.isEmpty()) {
+            // If no ratings found, return 0
+            if (activeRatings.isEmpty()) {
+                return 0.0;
+            }
+
+            // Calculate average rating
+            double totalStars = activeRatings.stream()
+                    .mapToDouble(Rating::getRatingStar)
+                    .sum();
+
+            double averageRating = totalStars / activeRatings.size();
+
+            // Round to 1 decimal place
+            return Math.round(averageRating * 10.0) / 10.0;
+        } catch (RuntimeException e) {
+            throw e; // Re-throw validation errors
+        } catch (Exception e) {
+            System.err.println("Error calculating rating for productId " + productId + ": " + e.getMessage());
+            e.printStackTrace();
             return 0.0;
         }
-
-        // Calculate average rating
-        double totalStars = activeRatings.stream()
-                .mapToDouble(Rating::getRatingStar)
-                .sum();
-
-        double averageRating = totalStars / activeRatings.size();
-
-        // Round to 1 decimal place
-        return Math.round(averageRating * 10.0) / 10.0;
     }
 }

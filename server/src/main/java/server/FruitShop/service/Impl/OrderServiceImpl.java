@@ -215,20 +215,64 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<OrderResponse> getOrdersByAccountId(String accountId) {
-        List<Order> orders = orderRepository.findByAccountAccountId(accountId);
-        return orders.stream()
-                .map(OrderResponse::fromEntity)
-                .collect(Collectors.toList());
+        try {
+            List<Order> orders = orderRepository.findByAccountAccountId(accountId);
+            
+            if (orders.isEmpty()) {
+                System.out.println("ℹ️ No orders found for accountId: " + accountId);
+                return List.of();
+            }
+            
+            return orders.stream()
+                    .map(order -> {
+                        try {
+                            return OrderResponse.fromEntity(order);
+                        } catch (Exception e) {
+                            System.err.println("❌ Error mapping order " + order.getOrderId() + ": " + e.getMessage());
+                            e.printStackTrace();
+                            return null;
+                        }
+                    })
+                    .filter(response -> response != null)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            System.err.println("❌ Error in getOrdersByAccountId: " + e.getMessage());
+            e.printStackTrace();
+            return List.of();
+        }
     }
 
     @Override
     public Page<OrderResponse> getAllOrders(Pageable pageable) {
-        Page<Order> ordersPage = orderRepository.findAll(pageable);
-        List<OrderResponse> responses = ordersPage.getContent().stream()
-                .map(OrderResponse::fromEntity)
-                .collect(Collectors.toList());
+        try {
+            Page<Order> ordersPage = orderRepository.findAll(pageable);
+            
+            // Handle empty page
+            if (ordersPage.isEmpty()) {
+                System.out.println("ℹ️ No orders found in database");
+                return Page.empty(pageable);
+            }
+            
+            List<OrderResponse> responses = ordersPage.getContent().stream()
+                    .map(order -> {
+                        try {
+                            return OrderResponse.fromEntity(order);
+                        } catch (Exception e) {
+                            System.err.println("❌ Error mapping order " + order.getOrderId() + ": " + e.getMessage());
+                            e.printStackTrace();
+                            return null;
+                        }
+                    })
+                    .filter(response -> response != null)
+                    .collect(Collectors.toList());
 
-        return new PageImpl<>(responses, pageable, ordersPage.getTotalElements());
+            return new PageImpl<>(responses, pageable, ordersPage.getTotalElements());
+        } catch (Exception e) {
+            System.err.println("❌ Error in getAllOrders: " + e.getMessage());
+            e.printStackTrace();
+            // Return empty page instead of throwing exception
+            return Page.empty(pageable);
+        }
     }
 
     @Override
@@ -382,12 +426,33 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Page<OrderResponse> getOrdersByStatus(int status, Pageable pageable) {
-        Page<Order> ordersPage = orderRepository.findByStatus(status, pageable);
-        List<OrderResponse> responses = ordersPage.getContent().stream()
-                .map(OrderResponse::fromEntity)
-                .collect(Collectors.toList());
+        try {
+            Page<Order> ordersPage = orderRepository.findByStatus(status, pageable);
+            
+            if (ordersPage.isEmpty()) {
+                System.out.println("ℹ️ No orders found with status: " + status);
+                return Page.empty(pageable);
+            }
+            
+            List<OrderResponse> responses = ordersPage.getContent().stream()
+                    .map(order -> {
+                        try {
+                            return OrderResponse.fromEntity(order);
+                        } catch (Exception e) {
+                            System.err.println("❌ Error mapping order " + order.getOrderId() + ": " + e.getMessage());
+                            e.printStackTrace();
+                            return null;
+                        }
+                    })
+                    .filter(response -> response != null)
+                    .collect(Collectors.toList());
 
-        return new PageImpl<>(responses, pageable, ordersPage.getTotalElements());
+            return new PageImpl<>(responses, pageable, ordersPage.getTotalElements());
+        } catch (Exception e) {
+            System.err.println("❌ Error in getOrdersByStatus: " + e.getMessage());
+            e.printStackTrace();
+            return Page.empty(pageable);
+        }
     }
 
     @Override
@@ -398,13 +463,33 @@ public class OrderServiceImpl implements OrderService {
             Date end = dateFormat.parse(endDate);
 
             Page<Order> ordersPage = orderRepository.findByCreatedAtBetween(start, end, pageable);
+            
+            if (ordersPage.isEmpty()) {
+                System.out.println("ℹ️ No orders found between " + startDate + " and " + endDate);
+                return Page.empty(pageable);
+            }
+            
             List<OrderResponse> responses = ordersPage.getContent().stream()
-                    .map(OrderResponse::fromEntity)
+                    .map(order -> {
+                        try {
+                            return OrderResponse.fromEntity(order);
+                        } catch (Exception e) {
+                            System.err.println("❌ Error mapping order " + order.getOrderId() + ": " + e.getMessage());
+                            e.printStackTrace();
+                            return null;
+                        }
+                    })
+                    .filter(response -> response != null)
                     .collect(Collectors.toList());
 
             return new PageImpl<>(responses, pageable, ordersPage.getTotalElements());
         } catch (ParseException e) {
+            System.err.println("❌ Invalid date format: " + e.getMessage());
             throw new RuntimeException("Invalid date format. Use yyyy-MM-dd");
+        } catch (Exception e) {
+            System.err.println("❌ Error in getOrdersByDateRange: " + e.getMessage());
+            e.printStackTrace();
+            return Page.empty(pageable);
         }
     }
 
@@ -424,15 +509,35 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Page<OrderResponse> searchOrders(String keyword, Pageable pageable) {
-        // Search by orderId or accountName
-        Page<Order> ordersPage = orderRepository.findByOrderIdContainingIgnoreCaseOrAccountAccountNameContainingIgnoreCase(
-                keyword, keyword, pageable);
-        
-        List<OrderResponse> responses = ordersPage.getContent().stream()
-                .map(OrderResponse::fromEntity)
-                .collect(Collectors.toList());
+        try {
+            // Search by orderId or accountName
+            Page<Order> ordersPage = orderRepository.findByOrderIdContainingIgnoreCaseOrAccountAccountNameContainingIgnoreCase(
+                    keyword, keyword, pageable);
+            
+            if (ordersPage.isEmpty()) {
+                System.out.println("ℹ️ No orders found with keyword: " + keyword);
+                return Page.empty(pageable);
+            }
+            
+            List<OrderResponse> responses = ordersPage.getContent().stream()
+                    .map(order -> {
+                        try {
+                            return OrderResponse.fromEntity(order);
+                        } catch (Exception e) {
+                            System.err.println("❌ Error mapping order " + order.getOrderId() + ": " + e.getMessage());
+                            e.printStackTrace();
+                            return null;
+                        }
+                    })
+                    .filter(response -> response != null)
+                    .collect(Collectors.toList());
 
-        return new PageImpl<>(responses, pageable, ordersPage.getTotalElements());
+            return new PageImpl<>(responses, pageable, ordersPage.getTotalElements());
+        } catch (Exception e) {
+            System.err.println("❌ Error in searchOrders: " + e.getMessage());
+            e.printStackTrace();
+            return Page.empty(pageable);
+        }
     }
 
     @Override

@@ -11,6 +11,7 @@ public class ShippingRequest {
     private String receiverPhone;
     private String receiverAddress;
     private String city;
+    private String shipperName;
     private long shippingFee;
     private Date shippedAt;
     private int status;

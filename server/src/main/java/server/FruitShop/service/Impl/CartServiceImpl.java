@@ -38,8 +38,14 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public CartResponse getCartByAccountId(String accountId) {
-        Optional<Cart> cartOptional = cartRepository.findByAccountAccountId(accountId);
-        return cartOptional.map(cart -> CartResponse.fromEntity(cart)).orElse(null);
+        try {
+            Optional<Cart> cartOptional = cartRepository.findByAccountAccountId(accountId);
+            return cartOptional.map(cart -> CartResponse.fromEntity(cart)).orElse(null);
+        } catch (Exception e) {
+            System.err.println("Error fetching cart for accountId " + accountId + ": " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @Override
@@ -130,20 +136,30 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public List<CartItemResponse> getCartItemsByAccountId(String accountId) {
-        System.out.println("📦 GetCartItemsByAccountId called for: " + accountId);
-        Optional<Cart> cartOptional = cartRepository.findByAccountAccountId(accountId);
-        if (cartOptional.isPresent()) {
-            List<CartItem> items = cartOptional.get().getItems();
-            System.out.println("📦 Found cart with " + items.size() + " items");
-            for (CartItem item : items) {
-                System.out.println("📦 Cart item: " + item.getCartItemId() + " - Product: " + item.getProduct().getProductId() + " - Quantity: " + item.getQuantity());
+        try {
+            System.out.println("📦 GetCartItemsByAccountId called for: " + accountId);
+            Optional<Cart> cartOptional = cartRepository.findByAccountAccountId(accountId);
+            if (cartOptional.isPresent()) {
+                List<CartItem> items = cartOptional.get().getItems();
+                if (items == null || items.isEmpty()) {
+                    System.out.println("📦 Cart found but no items");
+                    return List.of();
+                }
+                System.out.println("📦 Found cart with " + items.size() + " items");
+                for (CartItem item : items) {
+                    System.out.println("📦 Cart item: " + item.getCartItemId() + " - Product: " + item.getProduct().getProductId() + " - Quantity: " + item.getQuantity());
+                }
+                return items.stream()
+                        .map(CartItemResponse::fromEntity)
+                        .collect(Collectors.toList());
             }
-            return items.stream()
-                    .map(CartItemResponse::fromEntity)
-                    .collect(Collectors.toList());
+            System.out.println("📦 No cart found for accountId: " + accountId);
+            return List.of();
+        } catch (Exception e) {
+            System.err.println("Error fetching cart items for accountId " + accountId + ": " + e.getMessage());
+            e.printStackTrace();
+            return List.of();
         }
-        System.out.println("📦 No cart found for accountId: " + accountId);
-        return List.of();
     }
 
     @Override

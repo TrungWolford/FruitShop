@@ -36,32 +36,39 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Page<ProductResponse> getAllProduct(Pageable pageable) {
-        Page<Product> productsPage = productRepository.findAll(pageable);
+        try {
+            Page<Product> productsPage = productRepository.findAll(pageable);
+            
+            if (productsPage == null || productsPage.isEmpty()) {
+                return new PageImpl<>(List.of(), pageable, 0); // Return empty page
+            }
 
-        List<String> productIds = productsPage.getContent().stream()
-                .map(Product::getProductId)
-                .toList();
+            List<String> productIds = productsPage.getContent().stream()
+                    .map(Product::getProductId)
+                    .toList();
 
-        List<Product> productsWithCategories = productRepository.findByIdsWithCategories(productIds);
+            List<Product> productsWithCategories = productRepository.findByIdsWithCategories(productIds);
 
-        // Tạo map để lookup nhanh
-        Map<String, Product> productMap = productsWithCategories.stream()
-                .collect(Collectors.toMap(Product::getProductId, Function.identity()));
+            // Tạo map để lookup nhanh
+            Map<String, Product> productMap = productsWithCategories.stream()
+                    .collect(Collectors.toMap(Product::getProductId, Function.identity()));
 
-        // Map page content với categories và đảm bảo collections được load
-        List<ProductResponse> responses = productsPage.getContent().stream()
-                .map(product -> {
-                    Product productWithCat = productMap.getOrDefault(product.getProductId(), product);
+            // Map page content với categories và đảm bảo collections được load
+            List<ProductResponse> responses = productsPage.getContent().stream()
+                    .map(product -> {
+                        Product productWithCat = productMap.getOrDefault(product.getProductId(), product);
+                        ProductResponse response = ProductResponse.fromEntity(productWithCat);
+                        return response;
+                    })
+                    .collect(Collectors.toList());
 
-
-                    ProductResponse response = ProductResponse.fromEntity(productWithCat);
-
-                    return response;
-                })
-                .collect(Collectors.toList());
-
-        // Tạo lại Page với responses
-        return new PageImpl<>(responses, pageable, productsPage.getTotalElements());
+            // Tạo lại Page với responses
+            return new PageImpl<>(responses, pageable, productsPage.getTotalElements());
+        } catch (Exception e) {
+            System.err.println("Error fetching all products: " + e.getMessage());
+            e.printStackTrace();
+            return new PageImpl<>(List.of(), pageable, 0); // Return empty page on error
+        }
     }
 
     @Override
@@ -271,80 +278,114 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Page<ProductResponse> filterProduct(List<String> categoryId, Pageable pageable, Integer status, long minPrice, long maxPrice) {
-        Page<Product> productsPage;
+        try {
+            Page<Product> productsPage;
 
-        // Nếu có cả categoryId và status
-        if (categoryId != null && !categoryId.isEmpty() && status != null) {
-            productsPage = productRepository.findProductsByCategoryIdsAndStatusAndInRangePrice(categoryId, status, minPrice, maxPrice, pageable);
+            // Nếu có cả categoryId và status
+            if (categoryId != null && !categoryId.isEmpty() && status != null) {
+                productsPage = productRepository.findProductsByCategoryIdsAndStatusAndInRangePrice(categoryId, status, minPrice, maxPrice, pageable);
+            }
+            // Nếu chỉ có status
+            else if (status != null) {
+                productsPage = productRepository.findProductsByCategoryStatusAndInRangePrice(status, minPrice, maxPrice, pageable);
+            }
+            // Nếu chỉ có categoryId
+            else if (categoryId != null && !categoryId.isEmpty()) {
+                productsPage = productRepository.findProductsByCategoryIdsAndInRangePrice(categoryId, minPrice, maxPrice, pageable);
+            }
+            // Nếu không có gì thì return tất cả với price filter
+            else {
+                productsPage = productRepository.findAllByPriceRange(minPrice, maxPrice, pageable);
+            }
+
+            if (productsPage == null || productsPage.isEmpty()) {
+                return new PageImpl<>(List.of(), pageable, 0);
+            }
+
+            List<String> productIds = productsPage.getContent().stream()
+                    .map(Product::getProductId)
+                    .toList();
+
+            List<Product> productsWithCategories = productRepository.findByIdsWithCategories(productIds);
+
+            Map<String, Product> productMap = productsWithCategories.stream()
+                    .collect(Collectors.toMap(Product::getProductId, Function.identity()));
+
+            // Map page content với categories và đảm bảo collections được load
+            List<ProductResponse> responses = productsPage.getContent().stream()
+                    .map(product -> {
+                        Product productWithCat = productMap.getOrDefault(product.getProductId(), product);
+                        return ProductResponse.fromEntity(productWithCat);
+                    })
+                    .collect(Collectors.toList());
+
+            // Tạo lại Page với responses
+            return new PageImpl<>(responses, pageable, productsPage.getTotalElements());
+        } catch (Exception e) {
+            System.err.println("Error filtering products: " + e.getMessage());
+            e.printStackTrace();
+            return new PageImpl<>(List.of(), pageable, 0);
         }
-        // Nếu chỉ có status
-        else if (status != null) {
-            productsPage = productRepository.findProductsByCategoryStatusAndInRangePrice(status, minPrice, maxPrice, pageable);
-        }
-        // Nếu chỉ có categoryId
-        else if (categoryId != null && !categoryId.isEmpty()) {
-            productsPage = productRepository.findProductsByCategoryIdsAndInRangePrice(categoryId, minPrice, maxPrice, pageable);
-        }
-        // Nếu không có gì thì return tất cả với price filter
-        else {
-            productsPage = productRepository.findAllByPriceRange(minPrice, maxPrice, pageable);
-        }
-
-        List<String> productIds = productsPage.getContent().stream()
-                .map(Product::getProductId)
-                .toList();
-
-        List<Product> productsWithCategories = productRepository.findByIdsWithCategories(productIds);
-
-        Map<String, Product> productMap = productsWithCategories.stream()
-                .collect(Collectors.toMap(Product::getProductId, Function.identity()));
-
-        // Map page content với categories và đảm bảo collections được load
-        List<ProductResponse> responses = productsPage.getContent().stream()
-                .map(product -> {
-                    Product productWithCat = productMap.getOrDefault(product.getProductId(), product);
-                    return ProductResponse.fromEntity(productWithCat);
-                })
-                .collect(Collectors.toList());
-
-        // Tạo lại Page với responses
-        return new PageImpl<>(responses, pageable, productsPage.getTotalElements());
     }
 
     @Override
     public Page<ProductResponse> searchProduct(String keywords, Double minPrice, Double maxPrice, Pageable pageable) {
-        Page<Product> products = productRepository.findByProductName(keywords, pageable);
-        
-        // Filter by price if provided
-        if (minPrice != null || maxPrice != null) {
-            List<Product> filteredProducts = products.getContent().stream()
-                    .filter(product -> {
-                        boolean matchMin = minPrice == null || product.getPrice() >= minPrice;
-                        boolean matchMax = maxPrice == null || product.getPrice() <= maxPrice;
-                        return matchMin && matchMax;
-                    })
-                    .toList();
+        try {
+            Page<Product> products = productRepository.findByProductName(keywords, pageable);
             
-            // Create new Page with filtered results
-            int start = (int) pageable.getOffset();
-            int end = Math.min((start + pageable.getPageSize()), filteredProducts.size());
-            List<Product> pageContent = filteredProducts.subList(start, end);
+            if (products == null || products.isEmpty()) {
+                return new PageImpl<>(List.of(), pageable, 0);
+            }
             
-            return new org.springframework.data.domain.PageImpl<>(
-                    pageContent.stream().map(ProductResponse::fromEntity).toList(),
-                    pageable,
-                    filteredProducts.size()
-            );
+            // Filter by price if provided
+            if (minPrice != null || maxPrice != null) {
+                List<Product> filteredProducts = products.getContent().stream()
+                        .filter(product -> {
+                            boolean matchMin = minPrice == null || product.getPrice() >= minPrice;
+                            boolean matchMax = maxPrice == null || product.getPrice() <= maxPrice;
+                            return matchMin && matchMax;
+                        })
+                        .toList();
+                
+                if (filteredProducts.isEmpty()) {
+                    return new PageImpl<>(List.of(), pageable, 0);
+                }
+                
+                // Create new Page with filtered results
+                int start = (int) pageable.getOffset();
+                int end = Math.min((start + pageable.getPageSize()), filteredProducts.size());
+                List<Product> pageContent = filteredProducts.subList(start, end);
+                
+                return new org.springframework.data.domain.PageImpl<>(
+                        pageContent.stream().map(ProductResponse::fromEntity).toList(),
+                        pageable,
+                        filteredProducts.size()
+                );
+            }
+            
+            return products.map(ProductResponse::fromEntity);
+        } catch (Exception e) {
+            System.err.println("Error searching products with keyword '" + keywords + "': " + e.getMessage());
+            e.printStackTrace();
+            return new PageImpl<>(List.of(), pageable, 0);
         }
-        
-        return products.map(ProductResponse::fromEntity);
     }
 
     @Override
     public List<ProductResponse> getTopSoldProduct() {
-        return productRepository.findTop10ByOrderByStockAsc().stream()
-                .map(ProductResponse::fromEntity)
-                .toList();
+        try {
+            List<Product> topProducts = productRepository.findTop10ByOrderByStockAsc();
+            if (topProducts == null || topProducts.isEmpty()) {
+                return List.of();
+            }
+            return topProducts.stream()
+                    .map(ProductResponse::fromEntity)
+                    .toList();
+        } catch (Exception e) {
+            System.err.println("Error fetching top sold products: " + e.getMessage());
+            e.printStackTrace();
+            return List.of();
+        }
     }
 
     // Method to cleanup duplicate images for a product

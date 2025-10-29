@@ -36,6 +36,7 @@ public class ShippingServiceImpl implements ShippingService {
             shipping.setReceiverPhone(request.getReceiverPhone());
             shipping.setReceiverAddress(request.getReceiverAddress());
             shipping.setCity(request.getCity());
+            shipping.setShipperName(request.getShipperName());
             shipping.setShippingFee(request.getShippingFee());
             shipping.setShippedAt(request.getShippedAt());
             // Set default status = 0 (Chờ xác nhận) when creating new shipping
@@ -78,6 +79,7 @@ public class ShippingServiceImpl implements ShippingService {
         shipping.setReceiverPhone(request.getReceiverPhone());
         shipping.setReceiverAddress(request.getReceiverAddress());
         shipping.setCity(request.getCity());
+        shipping.setShipperName(request.getShipperName());
         shipping.setShippingFee(request.getShippingFee());
         shipping.setShippedAt(request.getShippedAt());
         shipping.setStatus(request.getStatus());
@@ -103,27 +105,54 @@ public class ShippingServiceImpl implements ShippingService {
 
     @Override
     public List<ShippingResponse> getAllShippings() {
-        List<Shipping> shippings = shippingRepository.findAll();
-        return shippings.stream()
-                .map(ShippingResponse::fromEntity)
-                .collect(Collectors.toList());
+        try {
+            List<Shipping> shippings = shippingRepository.findAll();
+            if (shippings == null || shippings.isEmpty()) {
+                return List.of(); // Return empty list instead of null
+            }
+            return shippings.stream()
+                    .map(ShippingResponse::fromEntity)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            System.err.println("Error fetching all shippings: " + e.getMessage());
+            e.printStackTrace();
+            return List.of(); // Return empty list on error
+        }
     }
 
     @Override
     public Page<ShippingResponse> getAllShippingsPaginated(Pageable pageable) {
-        Page<Shipping> shippingsPage = shippingRepository.findAll(pageable);
-        List<ShippingResponse> responses = shippingsPage.getContent().stream()
-                .map(ShippingResponse::fromEntity)
-                .collect(Collectors.toList());
-        return new PageImpl<>(responses, pageable, shippingsPage.getTotalElements());
+        try {
+            Page<Shipping> shippingsPage = shippingRepository.findAll(pageable);
+            if (shippingsPage == null || shippingsPage.isEmpty()) {
+                return new PageImpl<>(List.of(), pageable, 0); // Return empty page
+            }
+            List<ShippingResponse> responses = shippingsPage.getContent().stream()
+                    .map(ShippingResponse::fromEntity)
+                    .collect(Collectors.toList());
+            return new PageImpl<>(responses, pageable, shippingsPage.getTotalElements());
+        } catch (Exception e) {
+            System.err.println("Error fetching shippings paginated: " + e.getMessage());
+            e.printStackTrace();
+            return new PageImpl<>(List.of(), pageable, 0); // Return empty page on error
+        }
     }
 
     @Override
     public List<ShippingResponse> getShippingsByAccountId(String accountId) {
-        List<Shipping> shippings = shippingRepository.findByAccountAccountId(accountId);
-        return shippings.stream()
-                .map(ShippingResponse::fromEntity)
-                .collect(Collectors.toList());
+        try {
+            List<Shipping> shippings = shippingRepository.findByAccountAccountId(accountId);
+            if (shippings == null || shippings.isEmpty()) {
+                return List.of(); // Return empty list
+            }
+            return shippings.stream()
+                    .map(ShippingResponse::fromEntity)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            System.err.println("Error fetching shippings for accountId " + accountId + ": " + e.getMessage());
+            e.printStackTrace();
+            return List.of(); // Return empty list on error
+        }
     }
 
     @Override
@@ -142,50 +171,79 @@ public class ShippingServiceImpl implements ShippingService {
 
     @Override
     public Page<ShippingResponse> getShippingsByStatus(int status, Pageable pageable) {
-        Page<Shipping> shippingsPage = shippingRepository.findByStatus(status, pageable);
-        List<ShippingResponse> responses = shippingsPage.getContent().stream()
-                .map(ShippingResponse::fromEntity)
-                .collect(Collectors.toList());
-        return new PageImpl<>(responses, pageable, shippingsPage.getTotalElements());
+        try {
+            Page<Shipping> shippingsPage = shippingRepository.findByStatus(status, pageable);
+            if (shippingsPage == null || shippingsPage.isEmpty()) {
+                return new PageImpl<>(List.of(), pageable, 0);
+            }
+            List<ShippingResponse> responses = shippingsPage.getContent().stream()
+                    .map(ShippingResponse::fromEntity)
+                    .collect(Collectors.toList());
+            return new PageImpl<>(responses, pageable, shippingsPage.getTotalElements());
+        } catch (Exception e) {
+            System.err.println("Error fetching shippings by status " + status + ": " + e.getMessage());
+            e.printStackTrace();
+            return new PageImpl<>(List.of(), pageable, 0);
+        }
     }
 
     @Override
     public Page<ShippingResponse> searchShippings(String keyword, Pageable pageable) {
-        // Search by shippingId, receiverName, or receiverPhone
-        Page<Shipping> shippingsPage = shippingRepository.findByShippingIdContainingIgnoreCaseOrReceiverNameContainingIgnoreCaseOrReceiverPhoneContaining(
-                keyword, keyword, keyword, pageable);
-        
-        List<ShippingResponse> responses = shippingsPage.getContent().stream()
-                .map(ShippingResponse::fromEntity)
-                .collect(Collectors.toList());
-        
-        return new PageImpl<>(responses, pageable, shippingsPage.getTotalElements());
+        try {
+            // Search by shippingId, receiverName, or receiverPhone
+            Page<Shipping> shippingsPage = shippingRepository.findByShippingIdContainingIgnoreCaseOrReceiverNameContainingIgnoreCaseOrReceiverPhoneContaining(
+                    keyword, keyword, keyword, pageable);
+            
+            if (shippingsPage == null || shippingsPage.isEmpty()) {
+                return new PageImpl<>(List.of(), pageable, 0);
+            }
+            
+            List<ShippingResponse> responses = shippingsPage.getContent().stream()
+                    .map(ShippingResponse::fromEntity)
+                    .collect(Collectors.toList());
+            
+            return new PageImpl<>(responses, pageable, shippingsPage.getTotalElements());
+        } catch (Exception e) {
+            System.err.println("Error searching shippings with keyword '" + keyword + "': " + e.getMessage());
+            e.printStackTrace();
+            return new PageImpl<>(List.of(), pageable, 0);
+        }
     }
 
     @Override
     public Page<ShippingResponse> searchAndFilterShippings(String keyword, Integer status, Pageable pageable) {
-        Page<Shipping> shippingsPage;
-        
-        if (keyword != null && !keyword.trim().isEmpty() && status != null) {
-            // Both search and filter
-            shippingsPage = shippingRepository.findByShippingIdContainingIgnoreCaseAndStatusOrReceiverNameContainingIgnoreCaseAndStatusOrReceiverPhoneContainingAndStatus(
-                    keyword, status, keyword, status, keyword, status, pageable);
-        } else if (keyword != null && !keyword.trim().isEmpty()) {
-            // Only search
-            shippingsPage = shippingRepository.findByShippingIdContainingIgnoreCaseOrReceiverNameContainingIgnoreCaseOrReceiverPhoneContaining(
-                    keyword, keyword, keyword, pageable);
-        } else if (status != null) {
-            // Only filter
-            shippingsPage = shippingRepository.findByStatus(status, pageable);
-        } else {
-            // No filter or search
-            shippingsPage = shippingRepository.findAll(pageable);
+        try {
+            Page<Shipping> shippingsPage;
+            
+            if (keyword != null && !keyword.trim().isEmpty() && status != null) {
+                // Both search and filter
+                shippingsPage = shippingRepository.findByShippingIdContainingIgnoreCaseAndStatusOrReceiverNameContainingIgnoreCaseAndStatusOrReceiverPhoneContainingAndStatus(
+                        keyword, status, keyword, status, keyword, status, pageable);
+            } else if (keyword != null && !keyword.trim().isEmpty()) {
+                // Only search
+                shippingsPage = shippingRepository.findByShippingIdContainingIgnoreCaseOrReceiverNameContainingIgnoreCaseOrReceiverPhoneContaining(
+                        keyword, keyword, keyword, pageable);
+            } else if (status != null) {
+                // Only filter
+                shippingsPage = shippingRepository.findByStatus(status, pageable);
+            } else {
+                // No filter or search
+                shippingsPage = shippingRepository.findAll(pageable);
+            }
+            
+            if (shippingsPage == null || shippingsPage.isEmpty()) {
+                return new PageImpl<>(List.of(), pageable, 0);
+            }
+            
+            List<ShippingResponse> responses = shippingsPage.getContent().stream()
+                    .map(ShippingResponse::fromEntity)
+                    .collect(Collectors.toList());
+            
+            return new PageImpl<>(responses, pageable, shippingsPage.getTotalElements());
+        } catch (Exception e) {
+            System.err.println("Error searching and filtering shippings: " + e.getMessage());
+            e.printStackTrace();
+            return new PageImpl<>(List.of(), pageable, 0);
         }
-        
-        List<ShippingResponse> responses = shippingsPage.getContent().stream()
-                .map(ShippingResponse::fromEntity)
-                .collect(Collectors.toList());
-        
-        return new PageImpl<>(responses, pageable, shippingsPage.getTotalElements());
     }
 }
