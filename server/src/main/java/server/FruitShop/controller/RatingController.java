@@ -24,14 +24,16 @@ public class RatingController {
     /**
      * Get all ratings with pagination
      * GET /api/rating?page=0&size=10
+     * Returns RatingDetailResponse with full account and product info for admin
      */
     @GetMapping
-    public ResponseEntity<Page<RatingResponse>> getAllRatings(
+    public ResponseEntity<Page<RatingDetailResponse>> getAllRatings(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         
         Pageable pageable = PageRequest.of(page, size);
-        Page<RatingResponse> ratings = ratingService.getAllRating(pageable);
+        // Use a new method that returns detailed responses
+        Page<RatingDetailResponse> ratings = ratingService.getAllRatingDetailed(pageable);
         return ResponseEntity.ok(ratings);
     }
 

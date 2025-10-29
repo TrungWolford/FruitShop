@@ -37,6 +37,12 @@ public class RatingServiceImpl implements RatingService {
     }
 
     @Override
+    public Page<RatingDetailResponse> getAllRatingDetailed(Pageable pageable) {
+        return ratingRepository.findAll(pageable)
+                .map(RatingDetailResponse::fromEntity);
+    }
+
+    @Override
     public Page<RatingDetailResponse> getRatingsByAccountId(String accountId, Pageable pageable) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new RuntimeException("Account not found with id: " + accountId));

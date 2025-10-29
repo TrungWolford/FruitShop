@@ -9,6 +9,7 @@ import server.FruitShop.dto.response.Rating.RatingDetailResponse;
 
 public interface RatingService {
     Page<RatingResponse> getAllRating(Pageable pageable);
+    Page<RatingDetailResponse> getAllRatingDetailed(Pageable pageable);
     Page<RatingDetailResponse> getRatingsByAccountId(String accountId, Pageable pageable);
     Page<RatingDetailResponse> getRatingsByProductId(String productId, Pageable pageable);
     RatingDetailResponse getRatingsByAccountIdAndProductId(String accountId, String productId);
