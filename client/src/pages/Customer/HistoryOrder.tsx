@@ -18,6 +18,7 @@ import { orderService } from '../../services/orderService';
 import type { OrderResponse } from '../../services/orderService';
 import { ratingService } from '../../services/ratingService';
 import type { CreateRatingRequest } from '../../types/rating';
+import { toast } from 'sonner';
 
 const HistoryReceipt: React.FC = () => {
     const navigate = useNavigate();
@@ -40,6 +41,9 @@ const HistoryReceipt: React.FC = () => {
     const [ratingStars, setRatingStars] = useState(5);
     const [ratingComment, setRatingComment] = useState('');
     const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+    
+    // Track rated products: Map<productId, boolean>
+    const [ratedProducts, setRatedProducts] = useState<Map<string, boolean>>(new Map());
 
     // Fetch orders từ API
     const fetchOrders = async () => {
@@ -68,6 +72,9 @@ const HistoryReceipt: React.FC = () => {
                 });
 
                 setOrders(response.data);
+                
+                // Check which products have been rated
+                await checkRatedProducts(response.data);
             } else {
                 console.error('Failed to fetch orders:', response.message);
                 setOrders([]);
@@ -78,6 +85,35 @@ const HistoryReceipt: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    // Check which products the user has already rated
+    const checkRatedProducts = async (orders: OrderResponse[]) => {
+        if (!user?.accountId) return;
+
+        const ratedMap = new Map<string, boolean>();
+        
+        // Get all unique product IDs from all orders
+        const productIds = new Set<string>();
+        orders.forEach(order => {
+            order.orderDetails.forEach(detail => {
+                productIds.add(detail.productId);
+            });
+        });
+
+        // Check each product
+        for (const productId of productIds) {
+            try {
+                await ratingService.getRatingByAccountAndProduct(user.accountId, productId);
+                // If no error, rating exists
+                ratedMap.set(productId, true);
+            } catch (error) {
+                // If error (404), rating doesn't exist
+                ratedMap.set(productId, false);
+            }
+        }
+
+        setRatedProducts(ratedMap);
     };
 
     // Lọc đơn hàng theo search và status
@@ -257,11 +293,24 @@ const HistoryReceipt: React.FC = () => {
             };
 
             await ratingService.createRating(ratingData);
-            alert('Đánh giá của bạn đã được gửi thành công!');
+            
+            // Update rated products map
+            setRatedProducts(prev => {
+                const newMap = new Map(prev);
+                newMap.set(selectedProductForRating.productId, true);
+                return newMap;
+            });
+            
+            toast.success('Đánh giá của bạn đã được gửi thành công!', {
+                duration: 3000,
+            });
+            
             handleCloseRatingDialog();
         } catch (error) {
             console.error('Error submitting rating:', error);
-            alert('Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại!');
+            toast.error('Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại!', {
+                duration: 3000,
+            });
         } finally {
             setIsSubmittingRating(false);
         }
@@ -639,21 +688,32 @@ const HistoryReceipt: React.FC = () => {
                                                                                 </p>
                                                                                 {/* Rating button for completed orders */}
                                                                                 {order.status === 4 && detail && (
-                                                                                    <Button
-                                                                                        onClick={(e) => {
-                                                                                            e.stopPropagation();
-                                                                                            handleOpenRatingDialog(
-                                                                                                detail.productId,
-                                                                                                detail.productName,
-                                                                                                detail.productImages?.[0],
-                                                                                            );
-                                                                                        }}
-                                                                                        size="sm"
-                                                                                        className="mt-2 bg-amber-500 hover:bg-amber-600 text-white text-xs"
-                                                                                    >
-                                                                                        <Star className="w-3 h-3 mr-1" />
-                                                                                        Đánh giá
-                                                                                    </Button>
+                                                                                    ratedProducts.get(detail.productId) ? (
+                                                                                        <Button
+                                                                                            size="sm"
+                                                                                            className="mt-2 bg-gray-400 text-white text-xs cursor-not-allowed"
+                                                                                            disabled
+                                                                                        >
+                                                                                            <Star className="w-3 h-3 mr-1 fill-white" />
+                                                                                            Đã đánh giá
+                                                                                        </Button>
+                                                                                    ) : (
+                                                                                        <Button
+                                                                                            onClick={(e) => {
+                                                                                                e.stopPropagation();
+                                                                                                handleOpenRatingDialog(
+                                                                                                    detail.productId,
+                                                                                                    detail.productName,
+                                                                                                    detail.productImages?.[0],
+                                                                                                );
+                                                                                            }}
+                                                                                            size="sm"
+                                                                                            className="mt-2 bg-amber-500 hover:bg-amber-600 text-white text-xs"
+                                                                                        >
+                                                                                            <Star className="w-3 h-3 mr-1" />
+                                                                                            Đánh giá
+                                                                                        </Button>
+                                                                                    )
                                                                                 )}
                                                                             </div>
                                                                             <div className="text-right">
@@ -893,21 +953,32 @@ const HistoryReceipt: React.FC = () => {
                                                 </p>
                                                 {/* Rating button for completed orders in detail modal */}
                                                 {selectedOrder.status === 4 && (
-                                                    <Button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleOpenRatingDialog(
-                                                                detail.productId,
-                                                                detail.productName,
-                                                                detail.productImages?.[0],
-                                                            );
-                                                        }}
-                                                        size="sm"
-                                                        className="mt-2 bg-amber-500 hover:bg-amber-600 text-white text-xs"
-                                                    >
-                                                        <Star className="w-3 h-3 mr-1" />
-                                                        Đánh giá
-                                                    </Button>
+                                                    ratedProducts.get(detail.productId) ? (
+                                                        <Button
+                                                            size="sm"
+                                                            className="mt-2 bg-gray-400 text-white text-xs cursor-not-allowed"
+                                                            disabled
+                                                        >
+                                                            <Star className="w-3 h-3 mr-1 fill-white" />
+                                                            Đã đánh giá
+                                                        </Button>
+                                                    ) : (
+                                                        <Button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleOpenRatingDialog(
+                                                                    detail.productId,
+                                                                    detail.productName,
+                                                                    detail.productImages?.[0],
+                                                                );
+                                                            }}
+                                                            size="sm"
+                                                            className="mt-2 bg-amber-500 hover:bg-amber-600 text-white text-xs"
+                                                        >
+                                                            <Star className="w-3 h-3 mr-1" />
+                                                            Đánh giá
+                                                        </Button>
+                                                    )
                                                 )}
                                             </div>
                                             <div className="text-right">
