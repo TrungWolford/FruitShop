@@ -7,7 +7,7 @@ import { Button } from '../../components/ui/Button/Button';
 import { Input } from '../../components/ui/input';
 import { Badge } from '../../components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { Search, Package, CheckCircle, ChevronDown, Truck, User, Phone, MapPin } from 'lucide-react';
+import { Search, Package, CheckCircle, ChevronDown, Truck, User, Phone, MapPin, Star, X } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -16,6 +16,8 @@ import {
 } from '../../components/ui/dropdowns/dropdown-menu';
 import { orderService } from '../../services/orderService';
 import type { OrderResponse } from '../../services/orderService';
+import { ratingService } from '../../services/ratingService';
+import type { CreateRatingRequest } from '../../types/rating';
 
 const HistoryReceipt: React.FC = () => {
     const navigate = useNavigate();
@@ -27,6 +29,17 @@ const HistoryReceipt: React.FC = () => {
     const [showOrderDetail, setShowOrderDetail] = useState(false);
     const [orders, setOrders] = useState<OrderResponse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+
+    // Rating dialog states
+    const [showRatingDialog, setShowRatingDialog] = useState(false);
+    const [selectedProductForRating, setSelectedProductForRating] = useState<{
+        productId: string;
+        productName: string;
+        productImage?: string;
+    } | null>(null);
+    const [ratingStars, setRatingStars] = useState(5);
+    const [ratingComment, setRatingComment] = useState('');
+    const [isSubmittingRating, setIsSubmittingRating] = useState(false);
 
     // Fetch orders từ API
     const fetchOrders = async () => {
@@ -215,6 +228,43 @@ const HistoryReceipt: React.FC = () => {
 
     const handleOrderClick = (order: OrderResponse) => {
         handleViewOrderDetail(order);
+    };
+
+    const handleOpenRatingDialog = (productId: string, productName: string, productImage?: string) => {
+        setSelectedProductForRating({ productId, productName, productImage });
+        setRatingStars(5);
+        setRatingComment('');
+        setShowRatingDialog(true);
+    };
+
+    const handleCloseRatingDialog = () => {
+        setShowRatingDialog(false);
+        setSelectedProductForRating(null);
+        setRatingStars(5);
+        setRatingComment('');
+    };
+
+    const handleSubmitRating = async () => {
+        if (!user?.accountId || !selectedProductForRating) return;
+
+        setIsSubmittingRating(true);
+        try {
+            const ratingData: CreateRatingRequest = {
+                accountId: user.accountId,
+                productId: selectedProductForRating.productId,
+                comment: ratingComment,
+                ratingStar: ratingStars,
+            };
+
+            await ratingService.createRating(ratingData);
+            alert('Đánh giá của bạn đã được gửi thành công!');
+            handleCloseRatingDialog();
+        } catch (error) {
+            console.error('Error submitting rating:', error);
+            alert('Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại!');
+        } finally {
+            setIsSubmittingRating(false);
+        }
     };
 
     useEffect(() => {
@@ -587,6 +637,24 @@ const HistoryReceipt: React.FC = () => {
                                                                                         detail?.unitPrice || 0,
                                                                                     )}
                                                                                 </p>
+                                                                                {/* Rating button for completed orders */}
+                                                                                {order.status === 4 && detail && (
+                                                                                    <Button
+                                                                                        onClick={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            handleOpenRatingDialog(
+                                                                                                detail.productId,
+                                                                                                detail.productName,
+                                                                                                detail.productImages?.[0],
+                                                                                            );
+                                                                                        }}
+                                                                                        size="sm"
+                                                                                        className="mt-2 bg-amber-500 hover:bg-amber-600 text-white text-xs"
+                                                                                    >
+                                                                                        <Star className="w-3 h-3 mr-1" />
+                                                                                        Đánh giá
+                                                                                    </Button>
+                                                                                )}
                                                                             </div>
                                                                             <div className="text-right">
                                                                                 <p className="font-semibold text-gray-900 text-sm">
@@ -823,6 +891,24 @@ const HistoryReceipt: React.FC = () => {
                                                 <p className="text-sm text-gray-600">
                                                     {detail.quantity} x {formatPrice(detail.unitPrice)}
                                                 </p>
+                                                {/* Rating button for completed orders in detail modal */}
+                                                {selectedOrder.status === 4 && (
+                                                    <Button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleOpenRatingDialog(
+                                                                detail.productId,
+                                                                detail.productName,
+                                                                detail.productImages?.[0],
+                                                            );
+                                                        }}
+                                                        size="sm"
+                                                        className="mt-2 bg-amber-500 hover:bg-amber-600 text-white text-xs"
+                                                    >
+                                                        <Star className="w-3 h-3 mr-1" />
+                                                        Đánh giá
+                                                    </Button>
+                                                )}
                                             </div>
                                             <div className="text-right">
                                                 <p className="font-semibold">{formatPrice(detail.totalPrice)}</p>
@@ -831,6 +917,114 @@ const HistoryReceipt: React.FC = () => {
                                     ))}
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Rating Dialog */}
+            {showRatingDialog && selectedProductForRating && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-bold text-gray-900">Đánh giá sản phẩm</h2>
+                            <button
+                                onClick={handleCloseRatingDialog}
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        {/* Product Info */}
+                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg mb-6">
+                            <div className="relative w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                                {selectedProductForRating.productImage ? (
+                                    <img
+                                        src={getImageUrl(selectedProductForRating.productImage)}
+                                        alt={selectedProductForRating.productName}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            const target = e.target as HTMLImageElement;
+                                            target.style.display = 'none';
+                                            const fallback = target.nextElementSibling as HTMLElement;
+                                            if (fallback) fallback.classList.remove('hidden');
+                                        }}
+                                    />
+                                ) : null}
+                                <div className={`${selectedProductForRating.productImage ? 'hidden' : ''} absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-100 to-blue-200`}>
+                                    <Package className="w-6 h-6 text-blue-500" />
+                                </div>
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="font-semibold text-gray-900">
+                                    {selectedProductForRating.productName}
+                                </h3>
+                            </div>
+                        </div>
+
+                        {/* Star Rating */}
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Đánh giá của bạn
+                            </label>
+                            <div className="flex gap-2 justify-center">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                        key={star}
+                                        onClick={() => setRatingStars(star)}
+                                        className="transition-transform hover:scale-110 focus:outline-none"
+                                    >
+                                        <Star
+                                            className={`w-10 h-10 ${
+                                                star <= ratingStars
+                                                    ? 'fill-yellow-400 text-yellow-400'
+                                                    : 'text-gray-300'
+                                            }`}
+                                        />
+                                    </button>
+                                ))}
+                            </div>
+                            <p className="text-center text-sm text-gray-600 mt-2">
+                                {ratingStars === 1 && 'Rất không hài lòng'}
+                                {ratingStars === 2 && 'Không hài lòng'}
+                                {ratingStars === 3 && 'Bình thường'}
+                                {ratingStars === 4 && 'Hài lòng'}
+                                {ratingStars === 5 && 'Rất hài lòng'}
+                            </p>
+                        </div>
+
+                        {/* Comment */}
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Nhận xét của bạn
+                            </label>
+                            <textarea
+                                value={ratingComment}
+                                onChange={(e) => setRatingComment(e.target.value)}
+                                placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."
+                                rows={4}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                            />
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-3">
+                            <Button
+                                onClick={handleCloseRatingDialog}
+                                variant="outline"
+                                className="flex-1"
+                                disabled={isSubmittingRating}
+                            >
+                                Hủy
+                            </Button>
+                            <Button
+                                onClick={handleSubmitRating}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                                disabled={isSubmittingRating || !ratingComment.trim()}
+                            >
+                                {isSubmittingRating ? 'Đang gửi...' : 'Gửi đánh giá'}
+                            </Button>
                         </div>
                     </div>
                 </div>
