@@ -34,7 +34,7 @@ import { cartService } from '../../services/cartService';
 import { ratingService } from '../../services/ratingService';
 import { toast } from 'sonner';
 import type { Product } from '../../types/product';
-import type { Rating, CreateRatingRequest } from '../../types/rating';
+import type { Rating } from '../../types/rating';
 
 const ProductDetail: React.FC = () => {
     const { productName } = useParams<{ productName: string }>();
@@ -54,16 +54,10 @@ const ProductDetail: React.FC = () => {
     const [totalPages, setTotalPages] = useState(0);
     const [totalRatings, setTotalRatings] = useState(0);
     const [userRating, setUserRating] = useState<Rating | null>(null);
-    const [isWritingReview, setIsWritingReview] = useState(false);
-    const [isSubmittingRating, setIsSubmittingRating] = useState(false);
     const [isEditingRating, setIsEditingRating] = useState(false);
     const [isUpdatingRating, setIsUpdatingRating] = useState(false);
     const [averageRating, setAverageRating] = useState<number>(0);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-    const [newRating, setNewRating] = useState({
-        ratingStar: 5,
-        comment: ''
-    });
     const [editRating, setEditRating] = useState({
         ratingStar: 5,
         comment: ''
@@ -244,64 +238,6 @@ const ProductDetail: React.FC = () => {
             console.log('⚠️ User has NOT rated this product (userRating is null)');
         }
     }, [userRating]);
-
-    // Handle rating submission
-    const handleSubmitRating = async () => {
-        if (!isAuthenticated || !user || !product) {
-            toast.error('Vui lòng đăng nhập để đánh giá sản phẩm');
-            return;
-        }
-
-        if (!newRating.comment.trim()) {
-            toast.error('Vui lòng nhập nội dung đánh giá');
-            return;
-        }
-
-        setIsSubmittingRating(true);
-        
-        try {
-            const ratingData: CreateRatingRequest = {
-                accountId: user.accountId,
-                productId: product.productId,
-                comment: newRating.comment,
-                ratingStar: newRating.ratingStar
-            };
-
-            const response = await ratingService.createRating(ratingData);
-            
-            console.log('📤 Create rating response:', response);
-            console.log('- response.success:', response.success);
-            console.log('- response.data:', response.data);
-            
-            // Backend trả về trực tiếp RatingResponse, không có wrapper
-            // Check nếu có ratingId là thành công
-            const isSuccess = response.success === true || (response as any).ratingId;
-            
-            if (isSuccess) {
-                console.log('✅ Rating created successfully, showing toast...');
-                
-                // Hiển thị thông báo thành công
-                toast.success('Đánh giá của bạn đã được gửi thành công!', {
-                    duration: 2000,
-                });
-                
-                console.log('✅ Toast called');
-                
-                // Reload page sau khi gửi thành công
-                setTimeout(() => {
-                    window.location.reload();
-                }, 2000);
-            } else {
-                toast.error(response.message || 'Không thể gửi đánh giá. Vui lòng thử lại!');
-                setIsSubmittingRating(false);
-            }
-        } catch (error: any) {
-            console.error('Error submitting rating:', error);
-            const errorMessage = error.response?.data?.message || 'Đã xảy ra lỗi khi gửi đánh giá';
-            toast.error(errorMessage);
-            setIsSubmittingRating(false);
-        }
-    };
 
     // Handle rating update
     const handleUpdateRating = async () => {
@@ -1042,61 +978,7 @@ const ProductDetail: React.FC = () => {
                                         <span className="text-gray-600">({totalRatings} đánh giá)</span>
                                     </div>
                                 </div>
-                                {isAuthenticated && !userRating && (
-                                    <Button
-                                        onClick={() => setIsWritingReview(!isWritingReview)}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white"
-                                    >
-                                        Viết đánh giá
-                                    </Button>
-                                )}
                             </div>
-
-                            {/* Write Review Form */}
-                            {isWritingReview && !userRating && (
-                                <div className="bg-gray-50 p-6 rounded-lg mb-6">
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Viết đánh giá của bạn</h3>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Đánh giá của bạn
-                                            </label>
-                                            {renderStars(newRating.ratingStar, true, (star) => setNewRating({ ...newRating, ratingStar: star }))}
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Nhận xét
-                                            </label>
-                                            <textarea
-                                                value={newRating.comment}
-                                                onChange={(e) => setNewRating({ ...newRating, comment: e.target.value })}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                                                rows={4}
-                                                placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."
-                                            />
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <Button
-                                                onClick={handleSubmitRating}
-                                                disabled={isSubmittingRating}
-                                                className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                                            >
-                                                {isSubmittingRating ? 'Đang gửi...' : 'Gửi đánh giá'}
-                                            </Button>
-                                            <Button
-                                                onClick={() => {
-                                                    setIsWritingReview(false);
-                                                    setNewRating({ ratingStar: 5, comment: '' });
-                                                }}
-                                                disabled={isSubmittingRating}
-                                                className="bg-gray-200 hover:bg-gray-300 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                            >
-                                                Hủy
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
 
                             {/* User's Existing Review */}
                             {(() => {
