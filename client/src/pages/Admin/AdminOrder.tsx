@@ -23,6 +23,8 @@ import {
 import { Search, Package, ChevronLeft, ChevronRight, Eye, Truck, User, Phone, MapPin } from 'lucide-react';
 import { orderService } from '../../services/orderService';
 import type { OrderResponse } from '../../services/orderService';
+import { shippingService } from '../../services/shippingService';
+import type { CreateShippingRequest } from '../../services/shippingService';
 
 const AdminOrder: React.FC = () => {
     const [orders, setOrders] = useState<OrderResponse[]>([]);
@@ -31,6 +33,11 @@ const AdminOrder: React.FC = () => {
     const [selectedOrder, setSelectedOrder] = useState<OrderResponse | null>(null);
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
     const [statusFilter, setStatusFilter] = useState<string>('all');
+
+    // Shipper dialog state
+    const [isShipperDialogOpen, setIsShipperDialogOpen] = useState(false);
+    const [shipperName, setShipperName] = useState('');
+    const [isCreatingShipping, setIsCreatingShipping] = useState(false);
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
@@ -134,9 +141,10 @@ const AdminOrder: React.FC = () => {
         if (status === undefined) return <Badge className="bg-gray-100 text-gray-800 rounded-none">N/A</Badge>;
 
         const statusConfig: Record<number, { text: string; color: string }> = {
-            0: { text: 'Chờ xác nhận', color: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
-            1: { text: 'Đang vận chuyển', color: 'bg-blue-100 text-blue-800 border-blue-300' },
-            2: { text: 'Đã giao hàng', color: 'bg-green-100 text-green-800 border-green-300' },
+            0: { text: 'Đã hủy', color: 'bg-red-100 text-red-800 border-red-300' },
+            1: { text: 'Đang chuẩn bị', color: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
+            2: { text: 'Đang giao', color: 'bg-blue-100 text-blue-800 border-blue-300' },
+            3: { text: 'Đã giao', color: 'bg-green-100 text-green-800 border-green-300' },
         };
 
         const config = statusConfig[status] || { text: 'Không xác định', color: 'bg-gray-100 text-gray-800 border-gray-300' };
@@ -174,13 +182,71 @@ const AdminOrder: React.FC = () => {
     };
 
     // Handle start delivery (status 2 -> 3)
-    const handleStartDelivery = async (orderId: string) => {
+    const handleStartDelivery = async () => {
+        // Open dialog to input shipper name
+        setIsShipperDialogOpen(true);
+    };
+
+    // Handle create shipping and start delivery
+    const handleCreateShippingAndStartDelivery = async () => {
+        if (!selectedOrder) return;
+
+        if (!shipperName.trim()) {
+            toast.error('Vui lòng nhập tên người giao hàng!');
+            return;
+        }
+
         try {
-            const response = await orderService.startDelivery(orderId);
+            setIsCreatingShipping(true);
+
+            // Check if shipping already exists
+            if (selectedOrder.shipping) {
+                // Update existing shipping with shipper name
+                const updateResponse = await shippingService.updateShipping(selectedOrder.shipping.shippingId, {
+                    receiverName: selectedOrder.shipping.receiverName,
+                    receiverPhone: selectedOrder.shipping.receiverPhone,
+                    receiverAddress: selectedOrder.shipping.receiverAddress,
+                    city: selectedOrder.shipping.city,
+                    shipperName: shipperName.trim(),
+                    shippingFee: selectedOrder.shipping.shippingFee,
+                });
+
+                if (!updateResponse.success) {
+                    toast.error('Không thể cập nhật thông tin giao hàng');
+                    return;
+                }
+            } else {
+                // Create new shipping
+                const shippingRequest: CreateShippingRequest = {
+                    accountId: selectedOrder.accountId,
+                    receiverName: selectedOrder.accountName || 'Khách hàng',
+                    receiverPhone: '',
+                    receiverAddress: '',
+                    city: '',
+                    shipperName: shipperName.trim(),
+                    shippingFee: 0,
+                };
+
+                const createResponse = await shippingService.createShipping(shippingRequest);
+                if (!createResponse.success) {
+                    toast.error('Không thể tạo thông tin giao hàng');
+                    return;
+                }
+            }
+
+            // Start delivery (update order status to 3)
+            const response = await orderService.startDelivery(selectedOrder.orderId);
             if (response.success) {
+                // Update shipping status to 2 (Đang giao)
+                if (selectedOrder.shipping?.shippingId) {
+                    await shippingService.updateShippingStatus(selectedOrder.shipping.shippingId, 2);
+                }
+                
                 toast.success('Đã bắt đầu giao hàng!');
+                setIsShipperDialogOpen(false);
+                setShipperName('');
                 loadOrders(currentPage - 1);
-                if (selectedOrder?.orderId === orderId) {
+                if (selectedOrder?.orderId) {
                     setSelectedOrder(response.data || null);
                 }
             } else {
@@ -189,6 +255,8 @@ const AdminOrder: React.FC = () => {
         } catch (error) {
             console.error('Error starting delivery:', error);
             toast.error('Có lỗi xảy ra khi bắt đầu giao hàng');
+        } finally {
+            setIsCreatingShipping(false);
         }
     };
 
@@ -197,6 +265,12 @@ const AdminOrder: React.FC = () => {
         try {
             const response = await orderService.completeOrder(orderId);
             if (response.success) {
+                // Update shipping status to 3 (Đã giao)
+                const order = orders.find(o => o.orderId === orderId);
+                if (order?.shipping?.shippingId) {
+                    await shippingService.updateShippingStatus(order.shipping.shippingId, 3);
+                }
+                
                 toast.success('Đã hoàn thành đơn hàng!');
                 loadOrders(currentPage - 1);
                 if (selectedOrder?.orderId === orderId) {
@@ -435,10 +509,13 @@ const AdminOrder: React.FC = () => {
                                         >
                                             <TableCell className="px-4 py-3 text-center">
                                                 <div className="flex justify-center">
-                                                    <div className="px-2 py-1 bg-amber-100 rounded flex items-center gap-1.5">
+                                                    <div 
+                                                        className="px-2 py-1 bg-amber-100 rounded flex items-center gap-1.5 cursor-pointer hover:bg-amber-200 transition-colors"
+                                                        title={order.orderId}
+                                                    >
                                                         <Package className="w-3.5 h-3.5 text-amber-600" />
                                                         <span className="text-xs font-bold text-amber-600">
-                                                            #{order.orderId.substring(0, 8)}
+                                                            #{order.orderId.length > 8 ? order.orderId.substring(0, 8) + '...' : order.orderId}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -522,8 +599,16 @@ const AdminOrder: React.FC = () => {
             <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle className="text-2xl">
-                            Chi tiết đơn hàng #{selectedOrder?.orderId.substring(0, 8)}
+                        <DialogTitle className="text-2xl flex items-center gap-2">
+                            <span>Chi tiết đơn hàng</span>
+                            <span 
+                                className="text-amber-600 cursor-pointer hover:text-amber-700"
+                                title={selectedOrder?.orderId}
+                            >
+                                #{selectedOrder?.orderId && selectedOrder.orderId.length > 8 
+                                    ? selectedOrder.orderId.substring(0, 8) + '...' 
+                                    : selectedOrder?.orderId}
+                            </span>
                         </DialogTitle>
                         <DialogDescription>Thông tin chi tiết về đơn hàng</DialogDescription>
                     </DialogHeader>
@@ -532,6 +617,12 @@ const AdminOrder: React.FC = () => {
                         <div className="space-y-6">
                             {/* Order Info Grid */}
                             <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-gray-50 p-4 rounded-none">
+                                    <p className="text-sm text-gray-600 mb-1">Mã đơn hàng</p>
+                                    <p className="font-semibold text-amber-600" title={selectedOrder.orderId}>
+                                        #{selectedOrder.orderId}
+                                    </p>
+                                </div>
                                 <div className="bg-gray-50 p-4 rounded-none">
                                     <p className="text-sm text-gray-600 mb-1">Ngày đặt hàng</p>
                                     <p className="font-semibold">{formatDate(selectedOrder.orderDate)}</p>
@@ -543,6 +634,12 @@ const AdminOrder: React.FC = () => {
                                 <div className="bg-gray-50 p-4 rounded-none">
                                     <p className="text-sm text-gray-600 mb-1">Phương thức thanh toán</p>
                                     <p className="font-semibold">{getPaymentMethodText(selectedOrder.paymentMethod)}</p>
+                                </div>
+                                <div className="bg-gray-50 p-4 rounded-none">
+                                    <p className="text-sm text-gray-600 mb-1">Số lượng sản phẩm</p>
+                                    <p className="font-semibold text-blue-600">
+                                        {selectedOrder.totalItems || selectedOrder.orderDetails?.length || 0} sản phẩm
+                                    </p>
                                 </div>
                                 <div className="bg-gray-50 p-4 rounded-none">
                                     <p className="text-sm text-gray-600 mb-1">Tổng tiền</p>
@@ -561,6 +658,9 @@ const AdminOrder: React.FC = () => {
                                 <div className="bg-gray-50 p-4 rounded-none space-y-2">
                                     <p>
                                         <strong>Tên:</strong> {selectedOrder.accountName}
+                                    </p>
+                                    <p>
+                                        <strong>ID:</strong> <span className="text-gray-600 text-sm">{selectedOrder.accountId}</span>
                                     </p>
                                 </div>
                             </div>
@@ -600,6 +700,25 @@ const AdminOrder: React.FC = () => {
                                                 </p>
                                             </div>
                                         </div>
+                                        {selectedOrder.shipping.shipperName && (
+                                            <div className="flex items-start gap-3">
+                                                <Truck className="w-5 h-5 text-purple-600 mt-0.5" />
+                                                <div>
+                                                    <p className="text-sm text-gray-600">Người giao hàng</p>
+                                                    <p className="font-semibold text-purple-700">{selectedOrder.shipping.shipperName}</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {selectedOrder.shipping.shippedAt && (
+                                            <div className="flex items-start gap-3 pt-3 border-t">
+                                                <div>
+                                                    <p className="text-sm text-gray-600">Ngày giao hàng</p>
+                                                    <p className="font-semibold">
+                                                        {formatDate(selectedOrder.shipping.shippedAt)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
                                         {selectedOrder.shipping.shippingFee && (
                                             <div className="flex items-start gap-3 pt-3 border-t">
                                                 <div>
@@ -617,7 +736,10 @@ const AdminOrder: React.FC = () => {
                             {/* Order Items */}
                             {selectedOrder.orderDetails && selectedOrder.orderDetails.length > 0 && (
                                 <div>
-                                    <h3 className="font-semibold text-lg mb-3">Sản phẩm đã đặt</h3>
+                                    <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                                        <Package className="w-5 h-5 text-amber-600" />
+                                        Sản phẩm đã đặt ({selectedOrder.orderDetails.length})
+                                    </h3>
                                     <div className="border rounded-none overflow-hidden">
                                         <table className="w-full">
                                             <thead className="bg-gray-100">
@@ -639,7 +761,30 @@ const AdminOrder: React.FC = () => {
                                             <tbody>
                                                 {selectedOrder.orderDetails.map((detail, index) => (
                                                     <tr key={index} className="border-t hover:bg-gray-50">
-                                                        <td className="px-4 py-3">{detail.productName || 'N/A'}</td>
+                                                        <td className="px-4 py-3">
+                                                            <div className="flex items-center gap-3">
+                                                                {/* Product Image */}
+                                                                {detail.productImages && detail.productImages.length > 0 ? (
+                                                                    <img
+                                                                        src={`/products/${detail.productImages[0]}`}
+                                                                        alt={detail.productName}
+                                                                        className="w-12 h-12 object-cover rounded border"
+                                                                        onError={(e) => {
+                                                                            const target = e.target as HTMLImageElement;
+                                                                            target.src = '/placeholder.png';
+                                                                        }}
+                                                                    />
+                                                                ) : (
+                                                                    <div className="w-12 h-12 bg-gray-200 rounded border flex items-center justify-center">
+                                                                        <Package className="w-6 h-6 text-gray-400" />
+                                                                    </div>
+                                                                )}
+                                                                <div>
+                                                                    <p className="font-medium">{detail.productName || 'N/A'}</p>
+                                                                    <p className="text-xs text-gray-500">ID: {detail.productId}</p>
+                                                                </div>
+                                                            </div>
+                                                        </td>
                                                         <td className="px-4 py-3 text-right">{detail.quantity}</td>
                                                         <td className="px-4 py-3 text-right">
                                                             {formatPrice(detail.unitPrice)}
@@ -685,7 +830,7 @@ const AdminOrder: React.FC = () => {
                             )}
                             {selectedOrder && selectedOrder.status === 2 && (
                                 <Button
-                                    onClick={() => handleStartDelivery(selectedOrder.orderId)}
+                                    onClick={() => handleStartDelivery()}
                                     className="bg-purple-600 hover:bg-purple-700 text-white"
                                 >
                                     🚚 Bắt đầu giao hàng
@@ -702,6 +847,94 @@ const AdminOrder: React.FC = () => {
                         </div>
                         <Button variant="outline" onClick={() => setIsViewDialogOpen(false)} className="rounded-md">
                             Đóng
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Shipper Dialog */}
+            <Dialog open={isShipperDialogOpen} onOpenChange={setIsShipperDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Truck className="w-5 h-5 text-purple-600" />
+                            Bắt đầu giao hàng
+                        </DialogTitle>
+                        <DialogDescription>
+                            Nhập tên người giao hàng để bắt đầu quá trình giao hàng
+                        </DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="space-y-4 py-4">
+                        {/* Order Info */}
+                        {selectedOrder && (
+                            <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Mã đơn hàng:</span>
+                                    <span className="font-semibold">#{selectedOrder.orderId}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Khách hàng:</span>
+                                    <span className="font-semibold">{selectedOrder.accountName}</span>
+                                </div>
+                                {selectedOrder.shipping && (
+                                    <>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-600">Người nhận:</span>
+                                            <span className="font-semibold">{selectedOrder.shipping.receiverName}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-600">Địa chỉ:</span>
+                                            <span className="font-semibold text-right max-w-xs">{selectedOrder.shipping.receiverAddress}, {selectedOrder.shipping.city}</span>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Shipper Name Input */}
+                        <div className="space-y-2">
+                            <label htmlFor="shipperName" className="text-sm font-medium text-gray-700">
+                                Tên người giao hàng <span className="text-red-500">*</span>
+                            </label>
+                            <Input
+                                id="shipperName"
+                                value={shipperName}
+                                onChange={(e) => setShipperName(e.target.value)}
+                                placeholder="Nhập tên người giao hàng..."
+                                className="w-full"
+                                disabled={isCreatingShipping}
+                            />
+                        </div>
+                    </div>
+
+                    <DialogFooter className="gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setIsShipperDialogOpen(false);
+                                setShipperName('');
+                            }}
+                            disabled={isCreatingShipping}
+                        >
+                            Hủy
+                        </Button>
+                        <Button
+                            onClick={handleCreateShippingAndStartDelivery}
+                            className="bg-purple-600 hover:bg-purple-700 text-white"
+                            disabled={isCreatingShipping || !shipperName.trim()}
+                        >
+                            {isCreatingShipping ? (
+                                <>
+                                    <span className="animate-spin mr-2">⏳</span>
+                                    Đang xử lý...
+                                </>
+                            ) : (
+                                <>
+                                    <Truck className="w-4 h-4 mr-2" />
+                                    Bắt đầu giao hàng
+                                </>
+                            )}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

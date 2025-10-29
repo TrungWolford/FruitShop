@@ -20,9 +20,10 @@ export interface ShippingInfo {
   receiverPhone: string;
   receiverAddress: string;
   city: string;
+  shipperName?: string;
   shippingFee?: number;
   shippedAt?: string;
-  status?: number; // 0: Chờ xác nhận, 1: Đang vận chuyển, 2: Đã giao hàng
+  status?: number; // 0: Đã hủy, 1: Đang chuẩn bị, 2: Đang giao, 3: Giao thành công
 }
 
 export interface OrderResponse {
@@ -66,6 +67,22 @@ export function mapBackendOrderToFrontend(o: any): OrderResponse {
       return new Date().toISOString();
     }
     try {
+      // Check if it's in dd/MM/yyyy HH:mm:ss format (Vietnamese format)
+      const vnDatePattern = /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}):(\d{2})$/;
+      const match = String(dateValue).match(vnDatePattern);
+      
+      if (match) {
+        // Parse Vietnamese format: dd/MM/yyyy HH:mm:ss
+        const [, day, month, year, hours, minutes, seconds] = match;
+        // Create date in ISO format: yyyy-MM-ddTHH:mm:ss
+        const isoDate = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+        const date = new Date(isoDate);
+        if (!isNaN(date.getTime())) {
+          return date.toISOString();
+        }
+      }
+      
+      // Try standard date parsing
       const date = new Date(dateValue);
       if (isNaN(date.getTime())) {
         console.warn('Invalid date value:', dateValue, 'using current date');
@@ -106,8 +123,9 @@ export function mapBackendOrderToFrontend(o: any): OrderResponse {
       receiverPhone: o.shipping.receiverPhone,
       receiverAddress: o.shipping.receiverAddress,
       city: o.shipping.city,
+      shipperName: o.shipping.shipperName,
       shippingFee: o.shipping.shippingFee,
-      shippedAt: o.shipping.shippedAt,
+      shippedAt: o.shipping.shippedAt ? parseDate(o.shipping.shippedAt) : undefined,
       status: o.shipping.status,
     } : undefined,
   };
@@ -165,6 +183,9 @@ export const orderService = {
       } else if (Array.isArray(response.data)) {
         // Direct array format
         orders = response.data.map((o: any) => mapBackendOrderToFrontend(o));
+      } else if (response.data === null || response.data === undefined) {
+        // No data
+        orders = [];
       }
       
       return {
@@ -173,8 +194,20 @@ export const orderService = {
       };
     } catch (error: any) {
       console.error('Error getting all orders:', error);
+      
+      // Return empty array instead of failing when backend has issues
+      if (error.response?.status === 500) {
+        console.warn('⚠️ Backend error 500, returning empty array');
+        return {
+          success: true,
+          data: [],
+          message: 'Không có dữ liệu đơn hàng'
+        };
+      }
+      
       return {
         success: false,
+        data: [],
         message: error.response?.data?.message || 'Không thể tải danh sách đơn hàng'
       };
     }

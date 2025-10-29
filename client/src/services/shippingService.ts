@@ -11,6 +11,7 @@ export interface CreateShippingRequest {
   receiverPhone: string;
   receiverAddress: string;
   city: string;
+  shipperName?: string;
   shippingFee?: number;
 }
 
@@ -19,6 +20,7 @@ export interface UpdateShippingRequest {
   receiverPhone: string;
   receiverAddress: string;
   city: string;
+  shipperName?: string;
   shippingFee?: number;
 }
 
@@ -31,9 +33,10 @@ export interface ShippingResponse {
   receiverPhone: string;
   receiverAddress: string;
   city: string;
+  shipperName?: string;
   shippingFee?: number;
   shippedAt?: string;
-  status: number; // 0: Chờ xác nhận, 1: Đang vận chuyển, 2: Đã giao hàng
+  status: number; // 0: Đã hủy, 1: Đang chuẩn bị, 2: Đang giao, 3: Giao thành công
 }
 
 export interface ShippingPageResponse {

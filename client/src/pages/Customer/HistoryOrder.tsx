@@ -468,8 +468,9 @@ const HistoryReceipt: React.FC = () => {
                                                 <div className="flex flex-col lg:flex-row lg:items-center gap-4 flex-1">
                                                     <div className="flex-1">
                                                         <CardTitle
-                                                            className="text-lg font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+                                                            className="text-lg font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors truncate"
                                                             onClick={() => handleOrderClick(order)}
+                                                            title={order.orderId}
                                                         >
                                                             #{order.orderId}
                                                         </CardTitle>
@@ -807,7 +808,9 @@ const HistoryReceipt: React.FC = () => {
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white  p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold">Chi tiết đơn hàng #{selectedOrder.orderId}</h2>
+                            <h2 className="text-xl font-bold truncate" title={selectedOrder.orderId}>
+                                Chi tiết đơn hàng #{selectedOrder.orderId}
+                            </h2>
                             <Button onClick={handleCloseOrderDetail} variant="outline" size="sm">
                                 Đóng
                             </Button>
