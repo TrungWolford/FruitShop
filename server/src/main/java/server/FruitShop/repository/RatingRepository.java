@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import server.FruitShop.entity.Rating;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface RatingRepository extends JpaRepository<Rating, String> {
@@ -17,8 +18,12 @@ public interface RatingRepository extends JpaRepository<Rating, String> {
     // Find ratings by productId and status (for active/visible ratings only)
     Page<Rating> findByProductProductIdAndStatus(Pageable pageable, String productId, Integer status);
     
-    Rating findByAccountAccountIdAndProductProductId(String accountId, String productId);
+    // Find all ratings by account and product (can return multiple ratings)
+    List<Rating> findByAccountAccountIdAndProductProductId(String accountId, String productId);
     
     // Find all ratings by productId without pagination
     List<Rating> findByProductProductId(String productId);
+    
+    // Find rating by orderItem's orderDetailId (each orderItem can have only 1 rating)
+    Optional<Rating> findByOrderItemOrderDetailId(String orderDetailId);
 }

@@ -13,6 +13,8 @@ import server.FruitShop.dto.response.Rating.RatingResponse;
 import server.FruitShop.dto.response.Rating.RatingDetailResponse;
 import server.FruitShop.service.RatingService;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/rating")
 @CrossOrigin(origins = "*")
@@ -68,16 +70,17 @@ public class RatingController {
     }
 
     /**
-     * Get rating by account ID and product ID
+     * Get ratings by account ID and product ID
+     * Returns list of all ratings (can be multiple if user purchased and rated multiple times)
      * GET /api/rating/account/{accountId}/product/{productId}
      */
     @GetMapping("/account/{accountId}/product/{productId}")
-    public ResponseEntity<RatingDetailResponse> getRatingByAccountAndProduct(
+    public ResponseEntity<List<RatingDetailResponse>> getRatingByAccountAndProduct(
             @PathVariable String accountId,
             @PathVariable String productId) {
         
-        RatingDetailResponse rating = ratingService.getRatingsByAccountIdAndProductId(accountId, productId);
-        return ResponseEntity.ok(rating);
+        List<RatingDetailResponse> ratings = ratingService.getRatingsByAccountIdAndProductId(accountId, productId);
+        return ResponseEntity.ok(ratings);
     }
 
     /**

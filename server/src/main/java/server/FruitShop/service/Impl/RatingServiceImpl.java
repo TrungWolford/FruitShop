@@ -9,9 +9,11 @@ import server.FruitShop.dto.request.Rating.UpdateRatingRequest;
 import server.FruitShop.dto.response.Rating.RatingResponse;
 import server.FruitShop.dto.response.Rating.RatingDetailResponse;
 import server.FruitShop.entity.Account;
+import server.FruitShop.entity.OrderItem;
 import server.FruitShop.entity.Product;
 import server.FruitShop.entity.Rating;
 import server.FruitShop.repository.AccountRepository;
+import server.FruitShop.repository.OrderItemRepository;
 import server.FruitShop.repository.ProductRepository;
 import server.FruitShop.repository.RatingRepository;
 import server.FruitShop.service.RatingService;
@@ -29,6 +31,9 @@ public class RatingServiceImpl implements RatingService {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private OrderItemRepository orderItemRepository;
 
     @Override
     public Page<RatingResponse> getAllRating(Pageable pageable) {
@@ -104,7 +109,7 @@ public class RatingServiceImpl implements RatingService {
     }
 
     @Override
-    public RatingDetailResponse getRatingsByAccountIdAndProductId(String accountId, String productId) {
+    public List<RatingDetailResponse> getRatingsByAccountIdAndProductId(String accountId, String productId) {
         try {
             // Validate account exists
             accountRepository.findById(accountId)
@@ -114,56 +119,80 @@ public class RatingServiceImpl implements RatingService {
             productRepository.findById(productId)
                     .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
 
-            // Find rating by account and product
-            Rating savedRating = ratingRepository.findByAccountAccountIdAndProductProductId(accountId, productId);
+            // Find all ratings by account and product (can return multiple)
+            List<Rating> ratings = ratingRepository.findByAccountAccountIdAndProductProductId(accountId, productId);
             
-            // Return null if rating doesn't exist (user hasn't rated this product yet)
-            if (savedRating == null) {
-                return null;
+            // Return empty list if no ratings exist
+            if (ratings == null || ratings.isEmpty()) {
+                return List.of();
             }
             
-            return RatingDetailResponse.fromEntity(savedRating);
+            // Convert to response list
+            return ratings.stream()
+                    .map(RatingDetailResponse::fromEntity)
+                    .toList();
         } catch (RuntimeException e) {
             throw e; // Re-throw validation errors
         } catch (Exception e) {
-            System.err.println("Error fetching rating for accountId " + accountId + " and productId " + productId + ": " + e.getMessage());
+            System.err.println("Error fetching ratings for accountId " + accountId + " and productId " + productId + ": " + e.getMessage());
             e.printStackTrace();
-            return null;
+            return List.of();
         }
     }
 
     @Override
     public RatingResponse createRating(CreateRatingRequest request) {
-        // Validate account exists
-        Account account = accountRepository.findById(request.getAccountId())
-                .orElseThrow(() -> new RuntimeException("Account not found with id: " + request.getAccountId()));
+        try {
+            // Validate account exists
+            Account account = accountRepository.findById(request.getAccountId())
+                    .orElseThrow(() -> new RuntimeException("Account not found with id: " + request.getAccountId()));
 
-        // Validate product exists
-        Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new RuntimeException("Product not found with id: " + request.getProductId()));
+            // Validate product exists
+            Product product = productRepository.findById(request.getProductId())
+                    .orElseThrow(() -> new RuntimeException("Product not found with id: " + request.getProductId()));
 
-        // Check if user has already rated this product
-        Rating existingRating = ratingRepository.findByAccountAccountIdAndProductProductId(
-            request.getAccountId(), 
-            request.getProductId()
-        );
-        
-        if (existingRating != null) {
-            throw new RuntimeException("You have already rated this product. Please update your existing rating instead.");
+            // Validate orderItem exists if provided
+            OrderItem orderItem = null;
+            if (request.getOrderItemId() != null && !request.getOrderItemId().isEmpty()) {
+                orderItem = orderItemRepository.findById(request.getOrderItemId())
+                        .orElseThrow(() -> new RuntimeException("OrderItem not found with id: " + request.getOrderItemId()));
+                
+                // Verify this orderItem belongs to this account
+                if (!orderItem.getOrder().getAccount().getAccountId().equals(request.getAccountId())) {
+                    throw new RuntimeException("OrderItem does not belong to this account");
+                }
+                
+                // Verify this orderItem is for this product
+                if (!orderItem.getProduct().getProductId().equals(request.getProductId())) {
+                    throw new RuntimeException("OrderItem is not for this product");
+                }
+                
+                // Check if this orderItem already has a rating
+                if (ratingRepository.findByOrderItemOrderDetailId(request.getOrderItemId()).isPresent()) {
+                    throw new RuntimeException("This order item has already been rated");
+                }
+            }
+
+            // Create new rating
+            Rating rating = new Rating();
+            rating.setAccount(account);
+            rating.setProduct(product);
+            rating.setOrderItem(orderItem); // Link to specific order item
+            rating.setComment(request.getComment());
+            rating.setRatingStar(request.getRatingStar());
+            rating.setStatus(1); // Default status is active
+
+            // Save rating
+            Rating savedRating = ratingRepository.save(rating);
+
+            return RatingResponse.fromEntity(savedRating);
+        } catch (RuntimeException e) {
+            throw e; // Re-throw validation errors
+        } catch (Exception e) {
+            System.err.println("Error creating rating: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to create rating: " + e.getMessage(), e);
         }
-
-        // Create new rating
-        Rating rating = new Rating();
-        rating.setAccount(account);
-        rating.setProduct(product);
-        rating.setComment(request.getComment());
-        rating.setRatingStar(request.getRatingStar());
-        rating.setStatus(1); // Default status is active
-
-        // Save rating
-        Rating savedRating = ratingRepository.save(rating);
-
-        return RatingResponse.fromEntity(savedRating);
     }
 
     @Override

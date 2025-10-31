@@ -10,6 +10,7 @@ public class RatingResponse {
     private String ratingId;
     private String accountId;
     private String productId;
+    private String orderItemId; // Link to specific order item
     private String comment;
     private int status;
     private double ratingStar;
@@ -21,6 +22,7 @@ public class RatingResponse {
         response.setRatingId(rating.getRatingId());
         response.setAccountId(rating.getAccount().getAccountId());
         response.setProductId(rating.getProduct().getProductId());
+        response.setOrderItemId(rating.getOrderItem() != null ? rating.getOrderItem().getOrderDetailId() : null);
         response.setComment(rating.getComment());
         response.setStatus(rating.getStatus());
         response.setRatingStar(rating.getRatingStar());

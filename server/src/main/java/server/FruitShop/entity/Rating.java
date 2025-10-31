@@ -23,6 +23,10 @@ public class Rating {
     @JoinColumn(name = "product_id")
     private Product product;
 
+    @ManyToOne
+    @JoinColumn(name = "order_item_id")
+    private OrderItem orderItem;
+
     private String comment;
 
     private double ratingStar;
