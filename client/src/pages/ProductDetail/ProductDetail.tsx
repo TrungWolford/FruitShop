@@ -203,21 +203,23 @@ const ProductDetail: React.FC = () => {
                     productId: product.productId
                 });
                 
-                const response = await ratingService.getRatingByAccountAndProduct(user.accountId, product.productId);
+                const ratings = await ratingService.getRatingByAccountAndProduct(user.accountId, product.productId);
                 
-                console.log('📦 Response from getRatingByAccountAndProduct:', response);
+                console.log('📦 Response from getRatingByAccountAndProduct:', ratings);
                 
-                if (response.success && response.data) {
-                    console.log('✅ User rating found:', response.data);
-                    setUserRating(response.data);
+                if (ratings && ratings.length > 0) {
+                    // Get the most recent rating (last one in array)
+                    const mostRecentRating = ratings[ratings.length - 1];
+                    console.log('✅ User has rated this product. Most recent rating:', mostRecentRating);
+                    setUserRating(mostRecentRating);
                 } else {
-                    console.log('⚠️ User has not rated this product yet (no data in response)');
+                    console.log('⚠️ User has not rated this product yet');
                     setUserRating(null);
                 }
             } catch (error: any) {
                 console.log('❌ Error fetching user rating:', error);
                 console.log('Error response:', error.response?.data);
-                // If error is 404 or rating not found, user hasn't rated yet
+                // If error, user hasn't rated yet
                 setUserRating(null);
             }
         };

@@ -117,9 +117,10 @@ const AdminShipping: React.FC = () => {
     // Get shipping status badge
     const getShippingStatusBadge = (status: number) => {
         const statusConfig: Record<number, { text: string; color: string }> = {
-            0: { text: 'Chờ xác nhận', color: 'bg-yellow-700 border-yellow-700' },
-            1: { text: 'Đang vận chuyển', color: 'bg-blue-700 border-blue-700' },
-            2: { text: 'Đã giao hàng', color: 'bg-green-700 border-green-700' },
+            1: { text: 'Chờ xác nhận', color: 'bg-yellow-700 border-yellow-700' },
+            2: { text: 'Đã xác nhận', color: 'bg-orange-700 border-orange-700' },
+            3: { text: 'Đang giao', color: 'bg-blue-700 border-blue-700' },
+            4: { text: 'Đã giao', color: 'bg-green-700 border-green-700' },
         };
 
         const config = statusConfig[status] || {
@@ -182,14 +183,16 @@ const AdminShipping: React.FC = () => {
                                 <DropdownMenuTrigger asChild>
                                     <Button
                                         variant="outline"
-                                        className="w-40 border border-gray-300 bg-gray-50 text-gray-900 hover:bg-gray-100 rounded-md flex items-center justify-between"
+                                        className="w-48 border border-gray-300 bg-gray-50 text-gray-900 hover:bg-gray-100 rounded-md flex items-center justify-between"
                                     >
                                         <div className="flex items-center">
                                             {statusFilter === 'all'
                                                 ? 'Tất cả'
-                                                : statusFilter === '0'
-                                                ? 'Chờ xác nhận'
                                                 : statusFilter === '1'
+                                                ? 'Chờ xác nhận'
+                                                : statusFilter === '2'
+                                                ? 'Đã xác nhận'
+                                                : statusFilter === '3'
                                                 ? 'Đang giao'
                                                 : 'Đã giao'}
                                         </div>
@@ -203,22 +206,28 @@ const AdminShipping: React.FC = () => {
                                         Tất cả trạng thái
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
-                                        onClick={() => handleStatusFilterChange('0')}
+                                        onClick={() => handleStatusFilterChange('1')}
                                         className="cursor-pointer hover:bg-gray-100"
                                     >
                                         Chờ xác nhận
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
-                                        onClick={() => handleStatusFilterChange('1')}
-                                        className="cursor-pointer hover:bg-gray-100"
-                                    >
-                                        Đang vận chuyển
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
                                         onClick={() => handleStatusFilterChange('2')}
                                         className="cursor-pointer hover:bg-gray-100"
                                     >
-                                        Đã giao hàng
+                                        Đã xác nhận
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        onClick={() => handleStatusFilterChange('3')}
+                                        className="cursor-pointer hover:bg-gray-100"
+                                    >
+                                        Đang giao
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        onClick={() => handleStatusFilterChange('4')}
+                                        className="cursor-pointer hover:bg-gray-100"
+                                    >
+                                        Đã giao
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -227,7 +236,7 @@ const AdminShipping: React.FC = () => {
                 </div>
 
                 {/* Stats */}
-                <div className="mb-3 grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div className="mb-3 grid grid-cols-1 md:grid-cols-5 gap-3">
                     <div className="bg-white p-3 rounded-lg shadow-sm border">
                         <div className="text-sm text-gray-600">Tổng vận chuyển</div>
                         <div className="text-2xl font-bold text-gray-900">{totalItems}</div>
@@ -235,19 +244,25 @@ const AdminShipping: React.FC = () => {
                     <div className="bg-white p-3 rounded-lg shadow-sm border">
                         <div className="text-sm text-gray-600">Chờ xác nhận</div>
                         <div className="text-2xl font-bold text-yellow-600">
-                            {shippings.filter((s) => s.status === 0).length}
-                        </div>
-                    </div>
-                    <div className="bg-white p-3 rounded-lg shadow-sm border">
-                        <div className="text-sm text-gray-600">Đang vận chuyển</div>
-                        <div className="text-2xl font-bold text-blue-600">
                             {shippings.filter((s) => s.status === 1).length}
                         </div>
                     </div>
                     <div className="bg-white p-3 rounded-lg shadow-sm border">
-                        <div className="text-sm text-gray-600">Đã giao hàng</div>
-                        <div className="text-2xl font-bold text-green-600">
+                        <div className="text-sm text-gray-600">Đã xác nhận</div>
+                        <div className="text-2xl font-bold text-orange-600">
                             {shippings.filter((s) => s.status === 2).length}
+                        </div>
+                    </div>
+                    <div className="bg-white p-3 rounded-lg shadow-sm border">
+                        <div className="text-sm text-gray-600">Đang giao</div>
+                        <div className="text-2xl font-bold text-blue-600">
+                            {shippings.filter((s) => s.status === 3).length}
+                        </div>
+                    </div>
+                    <div className="bg-white p-3 rounded-lg shadow-sm border">
+                        <div className="text-sm text-gray-600">Đã giao</div>
+                        <div className="text-2xl font-bold text-green-600">
+                            {shippings.filter((s) => s.status === 4).length}
                         </div>
                     </div>
                 </div>

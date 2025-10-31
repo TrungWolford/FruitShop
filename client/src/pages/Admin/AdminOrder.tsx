@@ -23,8 +23,7 @@ import {
 import { Search, Package, ChevronLeft, ChevronRight, Eye, Truck, User, Phone, MapPin } from 'lucide-react';
 import { orderService } from '../../services/orderService';
 import type { OrderResponse } from '../../services/orderService';
-import { shippingService } from '../../services/shippingService';
-import type { CreateShippingRequest } from '../../services/shippingService';
+import shippingService from '../../services/shippingService';
 
 const AdminOrder: React.FC = () => {
     const [orders, setOrders] = useState<OrderResponse[]>([]);
@@ -141,10 +140,10 @@ const AdminOrder: React.FC = () => {
         if (status === undefined) return <Badge className="bg-gray-100 text-gray-800 rounded-none">N/A</Badge>;
 
         const statusConfig: Record<number, { text: string; color: string }> = {
-            0: { text: 'Đã hủy', color: 'bg-red-100 text-red-800 border-red-300' },
-            1: { text: 'Đang chuẩn bị', color: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
-            2: { text: 'Đang giao', color: 'bg-blue-100 text-blue-800 border-blue-300' },
-            3: { text: 'Đã giao', color: 'bg-green-100 text-green-800 border-green-300' },
+            1: { text: 'Chờ xác nhận', color: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
+            2: { text: 'Đã xác nhận', color: 'bg-orange-100 text-orange-800 border-orange-300' },
+            3: { text: 'Đang giao', color: 'bg-blue-100 text-blue-800 border-blue-300' },
+            4: { text: 'Đã giao', color: 'bg-green-100 text-green-800 border-green-300' },
         };
 
         const config = statusConfig[status] || { text: 'Không xác định', color: 'bg-gray-100 text-gray-800 border-gray-300' };
@@ -187,7 +186,7 @@ const AdminOrder: React.FC = () => {
         setIsShipperDialogOpen(true);
     };
 
-    // Handle create shipping and start delivery
+    // Handle start delivery - update shipping status to "Đang giao"
     const handleCreateShippingAndStartDelivery = async () => {
         if (!selectedOrder) return;
 
@@ -199,9 +198,8 @@ const AdminOrder: React.FC = () => {
         try {
             setIsCreatingShipping(true);
 
-            // Check if shipping already exists
+            // Update shipping with shipper name (shipping already exists from createOrder)
             if (selectedOrder.shipping) {
-                // Update existing shipping with shipper name
                 const updateResponse = await shippingService.updateShipping(selectedOrder.shipping.shippingId, {
                     receiverName: selectedOrder.shipping.receiverName,
                     receiverPhone: selectedOrder.shipping.receiverPhone,
@@ -216,32 +214,13 @@ const AdminOrder: React.FC = () => {
                     return;
                 }
             } else {
-                // Create new shipping
-                const shippingRequest: CreateShippingRequest = {
-                    accountId: selectedOrder.accountId,
-                    receiverName: selectedOrder.accountName || 'Khách hàng',
-                    receiverPhone: '',
-                    receiverAddress: '',
-                    city: '',
-                    shipperName: shipperName.trim(),
-                    shippingFee: 0,
-                };
-
-                const createResponse = await shippingService.createShipping(shippingRequest);
-                if (!createResponse.success) {
-                    toast.error('Không thể tạo thông tin giao hàng');
-                    return;
-                }
+                toast.error('Không tìm thấy thông tin giao hàng cho đơn hàng này');
+                return;
             }
 
-            // Start delivery (update order status to 3)
+            // Start delivery - backend will update order status to 3 and shipping status to 3 (Đang giao)
             const response = await orderService.startDelivery(selectedOrder.orderId);
             if (response.success) {
-                // Update shipping status to 2 (Đang giao)
-                if (selectedOrder.shipping?.shippingId) {
-                    await shippingService.updateShippingStatus(selectedOrder.shipping.shippingId, 2);
-                }
-                
                 toast.success('Đã bắt đầu giao hàng!');
                 setIsShipperDialogOpen(false);
                 setShipperName('');
@@ -260,17 +239,12 @@ const AdminOrder: React.FC = () => {
         }
     };
 
-    // Handle complete order (status 3 -> 4) - by customer, but admin can also do it
+    // Handle complete order (status 3 -> 4)
     const handleCompleteOrder = async (orderId: string) => {
         try {
             const response = await orderService.completeOrder(orderId);
             if (response.success) {
-                // Update shipping status to 3 (Đã giao)
-                const order = orders.find(o => o.orderId === orderId);
-                if (order?.shipping?.shippingId) {
-                    await shippingService.updateShippingStatus(order.shipping.shippingId, 3);
-                }
-                
+                // Backend updates shipping status to 4 (Đã giao) in completeOrder
                 toast.success('Đã hoàn thành đơn hàng!');
                 loadOrders(currentPage - 1);
                 if (selectedOrder?.orderId === orderId) {

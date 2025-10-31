@@ -37,13 +37,14 @@ const HistoryReceipt: React.FC = () => {
         productId: string;
         productName: string;
         productImage?: string;
+        orderItemId?: string; // Add orderItemId to link rating to specific order item
     } | null>(null);
     const [ratingStars, setRatingStars] = useState(5);
     const [ratingComment, setRatingComment] = useState('');
     const [isSubmittingRating, setIsSubmittingRating] = useState(false);
     
-    // Track rated products: Map<productId, boolean>
-    const [ratedProducts, setRatedProducts] = useState<Map<string, boolean>>(new Map());
+    // Track rated order items: Map<orderDetailId, boolean>
+    const [ratedOrderItems, setRatedOrderItems] = useState<Map<string, boolean>>(new Map());
 
     // Fetch orders từ API
     const fetchOrders = async () => {
@@ -73,8 +74,8 @@ const HistoryReceipt: React.FC = () => {
 
                 setOrders(response.data);
                 
-                // Check which products have been rated
-                await checkRatedProducts(response.data);
+                // Check which order items have been rated
+                await checkRatedOrderItems(response.data);
             } else {
                 console.error('Failed to fetch orders:', response.message);
                 setOrders([]);
@@ -87,33 +88,67 @@ const HistoryReceipt: React.FC = () => {
         }
     };
 
-    // Check which products the user has already rated
-    const checkRatedProducts = async (orders: OrderResponse[]) => {
+    // Check which order items the user has already rated
+    const checkRatedOrderItems = async (orders: OrderResponse[]) => {
         if (!user?.accountId) return;
 
         const ratedMap = new Map<string, boolean>();
         
-        // Get all unique product IDs from all orders
-        const productIds = new Set<string>();
+        // Get all order items
+        const orderItems = new Map<string, { orderDetailId: string; productId: string }>();
         orders.forEach(order => {
             order.orderDetails.forEach(detail => {
-                productIds.add(detail.productId);
+                orderItems.set(detail.orderDetailId, {
+                    orderDetailId: detail.orderDetailId,
+                    productId: detail.productId
+                });
             });
         });
 
-        // Check each product
+        console.log('📋 Total orderItems:', orderItems.size);
+
+        // Get unique product IDs to fetch their ratings
+        const productIds = new Set<string>(
+            Array.from(orderItems.values()).map(item => item.productId)
+        );
+
+        console.log('📦 Unique products to check:', productIds.size);
+
+        // Check each product and see which orderItems are rated
         for (const productId of productIds) {
             try {
-                await ratingService.getRatingByAccountAndProduct(user.accountId, productId);
-                // If no error, rating exists
-                ratedMap.set(productId, true);
+                const ratings = await ratingService.getRatingByAccountAndProduct(user.accountId, productId);
+                
+                console.log(`✅ Ratings for product ${productId}:`, ratings);
+
+                // Mark orderItems that have ratings
+                if (ratings && Array.isArray(ratings)) {
+                    ratings.forEach(rating => {
+                        if (rating.orderItemId) {
+                            console.log(`⭐ Marking orderItem ${rating.orderItemId} as rated`);
+                            ratedMap.set(rating.orderItemId, true);
+                        } else {
+                            console.warn('⚠️ Rating without orderItemId:', rating);
+                        }
+                    });
+                }
             } catch (error) {
-                // If error (404), rating doesn't exist
-                ratedMap.set(productId, false);
+                // If error, continue to next product
+                console.error(`❌ Error fetching ratings for product ${productId}:`, error);
             }
         }
 
-        setRatedProducts(ratedMap);
+        // Mark all orderItems not in ratedMap as not rated
+        orderItems.forEach((item) => {
+            if (!ratedMap.has(item.orderDetailId)) {
+                ratedMap.set(item.orderDetailId, false);
+            }
+        });
+
+        console.log('📊 Final rated map size:', ratedMap.size);
+        console.log('📊 Rated orderItems:', Array.from(ratedMap.entries()).filter(([_, rated]) => rated));
+
+        setRatedOrderItems(ratedMap);
     };
 
     // Lọc đơn hàng theo search và status
@@ -266,8 +301,8 @@ const HistoryReceipt: React.FC = () => {
         handleViewOrderDetail(order);
     };
 
-    const handleOpenRatingDialog = (productId: string, productName: string, productImage?: string) => {
-        setSelectedProductForRating({ productId, productName, productImage });
+    const handleOpenRatingDialog = (productId: string, productName: string, productImage?: string, orderItemId?: string) => {
+        setSelectedProductForRating({ productId, productName, productImage, orderItemId });
         setRatingStars(5);
         setRatingComment('');
         setShowRatingDialog(true);
@@ -288,24 +323,30 @@ const HistoryReceipt: React.FC = () => {
             const ratingData: CreateRatingRequest = {
                 accountId: user.accountId,
                 productId: selectedProductForRating.productId,
+                orderItemId: selectedProductForRating.orderItemId, // Link to specific order item
                 comment: ratingComment,
                 ratingStar: ratingStars,
             };
 
             await ratingService.createRating(ratingData);
             
-            // Update rated products map
-            setRatedProducts(prev => {
-                const newMap = new Map(prev);
-                newMap.set(selectedProductForRating.productId, true);
-                return newMap;
-            });
+            // Update rated order items map immediately
+            if (selectedProductForRating.orderItemId) {
+                setRatedOrderItems(prev => {
+                    const newMap = new Map(prev);
+                    newMap.set(selectedProductForRating.orderItemId!, true);
+                    return newMap;
+                });
+            }
             
             toast.success('Đánh giá của bạn đã được gửi thành công!', {
                 duration: 3000,
             });
             
             handleCloseRatingDialog();
+            
+            // Reload orders to refresh rating status
+            await fetchOrders();
         } catch (error) {
             console.error('Error submitting rating:', error);
             toast.error('Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại!', {
@@ -689,7 +730,7 @@ const HistoryReceipt: React.FC = () => {
                                                                                 </p>
                                                                                 {/* Rating button for completed orders */}
                                                                                 {order.status === 4 && detail && (
-                                                                                    ratedProducts.get(detail.productId) ? (
+                                                                                    ratedOrderItems.get(detail.orderDetailId) ? (
                                                                                         <Button
                                                                                             size="sm"
                                                                                             className="mt-2 bg-gray-400 text-white text-xs cursor-not-allowed"
@@ -706,6 +747,7 @@ const HistoryReceipt: React.FC = () => {
                                                                                                     detail.productId,
                                                                                                     detail.productName,
                                                                                                     detail.productImages?.[0],
+                                                                                                    detail.orderDetailId, // Pass orderDetailId
                                                                                                 );
                                                                                             }}
                                                                                             size="sm"
@@ -956,7 +998,7 @@ const HistoryReceipt: React.FC = () => {
                                                 </p>
                                                 {/* Rating button for completed orders in detail modal */}
                                                 {selectedOrder.status === 4 && (
-                                                    ratedProducts.get(detail.productId) ? (
+                                                    ratedOrderItems.get(detail.orderDetailId) ? (
                                                         <Button
                                                             size="sm"
                                                             className="mt-2 bg-gray-400 text-white text-xs cursor-not-allowed"
@@ -973,6 +1015,7 @@ const HistoryReceipt: React.FC = () => {
                                                                     detail.productId,
                                                                     detail.productName,
                                                                     detail.productImages?.[0],
+                                                                    detail.orderDetailId, // Pass orderDetailId
                                                                 );
                                                             }}
                                                             size="sm"

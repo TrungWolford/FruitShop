@@ -70,7 +70,7 @@ export const ratingService = {
     },
 
     // Get rating by account and product
-    getRatingByAccountAndProduct: async (accountId: string, productId: string): Promise<Rating> => {
+    getRatingByAccountAndProduct: async (accountId: string, productId: string): Promise<Rating[]> => {
         try {
             const response = await axios.get(`${CONFIG.API_GATEWAY}${API.GET_RATING_BY_ACCOUNT_AND_PRODUCT(accountId, productId)}`);
             console.log('📦 getRatingByAccountAndProduct response:', response.data);

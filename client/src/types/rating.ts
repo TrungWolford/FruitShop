@@ -9,6 +9,7 @@ export interface Rating {
     productId: string;
     productName: string;
   };
+  orderItemId?: string; // Link to specific order item
   comment: string;
   ratingStar: number;
   status: number;
@@ -19,6 +20,7 @@ export interface Rating {
 export interface CreateRatingRequest {
   accountId: string;
   productId: string;
+  orderItemId?: string; // Link rating to specific order item
   comment: string;
   ratingStar: number;
 }
