@@ -56,13 +56,8 @@ public class OrderServiceImpl implements OrderService {
 
         System.out.println("🛒 Account found: " + accountOptional.get().getAccountName());
 
-        // Validate shipping
-        Optional<Shipping> shippingOptional = shippingRepository.findById(request.getShippingId());
-        if (shippingOptional.isEmpty()) {
-            throw new RuntimeException("Shipping not found with id: " + request.getShippingId());
-        }
-
-        System.out.println("🛒 Shipping found: " + shippingOptional.get().getReceiverName());
+        // NOTE: Shipping validation removed - shipping will be created when admin starts delivery
+        // The shippingId in request is just a reference to address template, not used for order
 
         // Validate or create payment
         Payment paymentEntity = null;
@@ -101,22 +96,26 @@ public class OrderServiceImpl implements OrderService {
 
     Order savedOrder = orderRepository.save(order);
 
-        // Now create shipping and link it to the order
-        // Note: In the new schema, Shipping owns the relationship (has the foreign key)
-        Shipping existingShipping = shippingOptional.get();
-        Shipping shippingClone = new Shipping();
-        shippingClone.setOrder(savedOrder); // Link shipping to order
-        shippingClone.setAccount(existingShipping.getAccount());
-        shippingClone.setReceiverName(existingShipping.getReceiverName());
-        shippingClone.setReceiverPhone(existingShipping.getReceiverPhone());
-        shippingClone.setReceiverAddress(existingShipping.getReceiverAddress());
-        shippingClone.setCity(existingShipping.getCity());
-        shippingClone.setShippingFee(existingShipping.getShippingFee());
-        shippingClone.setShippedAt(null); // Will be set when delivery starts
-        shippingClone.setStatus(0); // Status 0 initially, will change to 1 when admin confirms
+        // Create shipping with status "Chờ xác nhận" (1)
+        Shipping shipping = null;
+        Optional<Shipping> shippingTemplateOptional = shippingRepository.findById(request.getShippingId());
+        if (shippingTemplateOptional.isPresent()) {
+            Shipping template = shippingTemplateOptional.get();
+            shipping = new Shipping();
+            shipping.setAccount(accountOptional.get());
+            shipping.setOrder(savedOrder);
+            shipping.setReceiverName(template.getReceiverName());
+            shipping.setReceiverPhone(template.getReceiverPhone());
+            shipping.setReceiverAddress(template.getReceiverAddress());
+            shipping.setCity(template.getCity());
+            shipping.setShippingFee(template.getShippingFee());
+            shipping.setStatus(1); // Chờ xác nhận
+            shipping = shippingRepository.save(shipping);
+            System.out.println("✅ Created shipping with status: 1 (Chờ xác nhận) for order: " + savedOrder.getOrderId());
+        } else {
+            System.err.println("⚠️ Shipping template not found with id: " + request.getShippingId());
+        }
         
-        shippingRepository.save(shippingClone);
-
         // Create order details and calculate total
         long totalAmount = 0;
     List<OrderItem> orderItems = request.getItems().stream()
@@ -346,18 +345,19 @@ public class OrderServiceImpl implements OrderService {
         Order savedOrder = orderRepository.save(order);
         System.out.println("✅ Order status updated to: " + savedOrder.getStatus());
 
-        // Find and update shipping status to "Đang chuẩn bị"
+        // Find and update shipping status to "Đã xác nhận" (2)
         System.out.println("🔍 Looking for shipping with orderId: " + orderId);
         Shipping orderShipping = shippingRepository.findByOrderOrderId(orderId);
         
         if (orderShipping != null) {
-            System.out.println("📦 Found shipping with ID: " + orderShipping.getShippingId() + ", status: " + orderShipping.getStatus());
-            orderShipping.setStatus(1); // Đang chuẩn bị
+            System.out.println("📦 Found shipping with ID: " + orderShipping.getShippingId() + ", current status: " + orderShipping.getStatus());
+            orderShipping.setStatus(2); // Đã xác nhận
             shippingRepository.save(orderShipping);
-            System.out.println("✅ Shipping status updated to: 1 (Đang chuẩn bị)");
+            System.out.println("✅ Shipping status updated to: 2 (Đã xác nhận)");
         } else {
-            System.err.println("❌ Shipping information not found for order: " + orderId);
-            throw new RuntimeException("Shipping information not found for this order");
+            System.err.println("⚠️ Warning: Shipping not found for order: " + orderId);
+            System.err.println("⚠️ Shipping should have been created during order creation");
+            // Don't throw exception - allow order confirmation even if shipping missing
         }
 
         return OrderResponse.fromEntity(savedOrder);
@@ -381,14 +381,17 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(3);
         Order savedOrder = orderRepository.save(order);
 
-        // Find and update shipping status to "Đang giao"
+        // Find and update existing shipping status to "Đang giao" (3)
         Shipping orderShipping = shippingRepository.findByOrderOrderId(orderId);
         
         if (orderShipping != null) {
-            orderShipping.setStatus(2); // Đang giao
+            // Update shipping status to "Đang giao"
+            orderShipping.setStatus(3); // Đang giao
             orderShipping.setShippedAt(new Date()); // Set thời gian bắt đầu giao
             shippingRepository.save(orderShipping);
+            System.out.println("✅ Shipping status updated to: 3 (Đang giao)");
         } else {
+            System.err.println("❌ Shipping not found for order: " + orderId);
             throw new RuntimeException("Shipping information not found for this order");
         }
 
@@ -413,12 +416,13 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(4);
         Order savedOrder = orderRepository.save(order);
 
-        // Find and update shipping status to "Giao thành công"
+        // Find and update shipping status to "Đã giao" (4)
         Shipping orderShipping = shippingRepository.findByOrderOrderId(orderId);
         
         if (orderShipping != null) {
-            orderShipping.setStatus(3); // Giao thành công
+            orderShipping.setStatus(4); // Đã giao
             shippingRepository.save(orderShipping);
+            System.out.println("✅ Shipping status updated to: 4 (Đã giao)");
         }
 
         return OrderResponse.fromEntity(savedOrder);

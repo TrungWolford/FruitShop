@@ -7,12 +7,14 @@ import server.FruitShop.dto.request.Rating.UpdateRatingRequest;
 import server.FruitShop.dto.response.Rating.RatingResponse;
 import server.FruitShop.dto.response.Rating.RatingDetailResponse;
 
+import java.util.List;
+
 public interface RatingService {
     Page<RatingResponse> getAllRating(Pageable pageable);
     Page<RatingDetailResponse> getAllRatingDetailed(Pageable pageable);
     Page<RatingDetailResponse> getRatingsByAccountId(String accountId, Pageable pageable);
     Page<RatingDetailResponse> getRatingsByProductId(String productId, Pageable pageable);
-    RatingDetailResponse getRatingsByAccountIdAndProductId(String accountId, String productId);
+    List<RatingDetailResponse> getRatingsByAccountIdAndProductId(String accountId, String productId);
     RatingResponse createRating(CreateRatingRequest request);
     RatingResponse updateRating(UpdateRatingRequest request, String ratingId);
     RatingResponse changeStatus(String ratingId);
