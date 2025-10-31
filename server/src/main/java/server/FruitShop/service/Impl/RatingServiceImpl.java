@@ -94,7 +94,7 @@ public class RatingServiceImpl implements RatingService {
                     .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
 
             // Only return active ratings (status = 1)
-            Page<Rating> ratingsPage = ratingRepository.findByProductProductIdAndStatus(pageable, productId, 1);
+            Page<Rating> ratingsPage = ratingRepository.findByProductProductIdAndStatus(productId, 1, pageable);
             if (ratingsPage == null || ratingsPage.isEmpty()) {
                 return Page.empty(pageable);
             }
