@@ -1105,33 +1105,65 @@ const ProductDetail: React.FC = () => {
                                 <div className="space-y-4">
                                     {ratings
                                         .filter(rating => rating.ratingId !== userRating?.ratingId)
-                                        .map((rating) => (
-                                        <div key={rating.ratingId} className="bg-white p-6 rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
-                                            <div className="flex items-start gap-4">
-                                                <div className="flex-shrink-0">
-                                                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                                                        <User className="w-6 h-6 text-white" />
-                                                    </div>
-                                                </div>
-                                                <div className="flex-1">
-                                                    <div className="flex items-center justify-between mb-2">
-                                                        <div>
-                                                            <p className="font-semibold text-gray-900">{rating.account?.accountName || 'Khách hàng'}</p>
+                                        .map((rating) => {
+                                            const isOwnRating = user && rating.account?.accountId === user.accountId;
+                                            
+                                            return (
+                                                <div key={rating.ratingId} className="bg-white p-6 rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
+                                                    <div className="flex items-start gap-4">
+                                                        <div className="flex-shrink-0">
+                                                            <div className={`w-12 h-12 ${isOwnRating ? 'bg-blue-600' : 'bg-gradient-to-br from-blue-500 to-purple-600'} rounded-full flex items-center justify-center`}>
+                                                                <User className="w-6 h-6 text-white" />
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <div className="flex items-center gap-2 flex-wrap">
+                                                                    <p className="font-semibold text-gray-900">{rating.account?.accountName || 'Khách hàng'}</p>
+                                                                    {isOwnRating && (
+                                                                        <Badge className="bg-blue-600 text-white">Đánh giá của bạn</Badge>
+                                                                    )}
+                                                                </div>
+                                                                {isOwnRating && (
+                                                                    <div className="flex gap-2 flex-shrink-0 ml-2">
+                                                                        <Button
+                                                                            onClick={() => {
+                                                                                setUserRating(rating);
+                                                                                handleStartEdit();
+                                                                            }}
+                                                                            className="bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 px-3 py-1.5 text-xs font-medium rounded-md shadow-sm"
+                                                                        >
+                                                                            ✏️ Sửa
+                                                                        </Button>
+                                                                        <Button
+                                                                            onClick={() => {
+                                                                                setUserRating(rating);
+                                                                                setShowDeleteDialog(true);
+                                                                            }}
+                                                                            className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-300 px-3 py-1.5 text-xs font-medium rounded-md shadow-sm"
+                                                                        >
+                                                                            🗑️ Xóa
+                                                                        </Button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                             <p className="text-sm text-gray-500">
                                                                 {new Date(rating.createdAt || '').toLocaleDateString('vi-VN', {
                                                                     year: 'numeric',
                                                                     month: 'long',
                                                                     day: 'numeric'
                                                                 })}
+                                                                {rating.updatedAt && rating.updatedAt !== rating.createdAt && (
+                                                                    <span className="ml-2">(Đã chỉnh sửa)</span>
+                                                                )}
                                                             </p>
+                                                            {renderStars(rating.ratingStar)}
+                                                            <p className="text-gray-700 mt-3 leading-relaxed">{rating.comment}</p>
                                                         </div>
                                                     </div>
-                                                    {renderStars(rating.ratingStar)}
-                                                    <p className="text-gray-700 mt-3 leading-relaxed">{rating.comment}</p>
                                                 </div>
-                                            </div>
-                                        </div>
-                                    ))}
+                                            );
+                                        })}
                                 </div>
                             )}
 
