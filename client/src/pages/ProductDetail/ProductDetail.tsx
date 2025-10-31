@@ -1002,9 +1002,12 @@ const ProductDetail: React.FC = () => {
                                                 </div>
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 mb-1">
+                                                <div className="flex items-center gap-2 mb-1 flex-wrap">
                                                     <p className="font-semibold text-gray-900">{userRating.account?.accountName || 'Bạn'}</p>
                                                     <Badge className="bg-blue-600 text-white">Đánh giá của bạn</Badge>
+                                                    {userRating.status === 0 && (
+                                                        <Badge className="bg-red-600 text-white">⚠️ Đã bị ẩn bởi quản trị viên</Badge>
+                                                    )}
                                                 </div>
                                                 <p className="text-sm text-gray-500">
                                                     {new Date(userRating.createdAt || '').toLocaleDateString('vi-VN')}
