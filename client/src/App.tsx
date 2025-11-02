@@ -15,6 +15,8 @@ import AdminShipping from './pages/Admin/AdminShipping';
 import AdminRating from './pages/Admin/AdminRating';
 import CheckoutPage from './pages/Checkout/CheckoutPage';
 import ProductDetail from './pages/ProductDetail/ProductDetail';
+import PaymentPage from './pages/Payment/PaymentPage';
+import OrderSuccessPage from './pages/OrderSuccess/OrderSuccessPage';
 import ErrorBoundary from './components/ErrorBoundary';
 
 const App: React.FC = () => {
@@ -25,6 +27,8 @@ const App: React.FC = () => {
       <Route path="/account/profile" element={<ProfileCustomer />} />
       <Route path="/customer/orders" element={<HistoryReceipt />} />
       <Route path="/checkout" element={<CheckoutPage />} />
+      <Route path="/payment" element={<PaymentPage />} />
+      <Route path="/order-success" element={<OrderSuccessPage />} />
       <Route
         path="/product"
         element={
