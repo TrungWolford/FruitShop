@@ -13,6 +13,7 @@ import { shippingService } from '../../services/shippingService';
 import { orderService } from '../../services/orderService';
 import { accountService } from '../../services/adminAccountService';
 import { productService } from '../../services/productService';
+import { momoService } from '../../services/momoService';
 import type { CreateShippingRequest, ShippingResponse } from '../../services/shippingService';
 import type { CreateOrderRequest } from '../../services/orderService';
 import type { CartItem as CartItemType } from '../../types/cart';
@@ -400,54 +401,102 @@ const CheckoutPage: React.FC = () => {
 
             console.log('Order creation response:', orderResponse);
 
-            if (orderResponse.success) {
-                // Clear cart after successful order
-                console.log('Order created successfully, now clearing cart...');
-                console.log('🧹 Calling clearCart for accountId:', user.accountId);
+            if (orderResponse.success && orderResponse.data) {
+                const orderId = orderResponse.data.orderId;
+                
+                // Check payment method
+                if (shippingData.paymentMethod === 1) {
+                    // Chuyển khoản - Create MoMo payment
+                    console.log('Creating MoMo payment for order:', orderId);
+                    
+                    try {
+                        const momoResponse = await momoService.createPayment(orderId);
+                        
+                        console.log('📥 Full MoMo Response:', momoResponse);
+                        console.log('📥 MoMo Data:', momoResponse.data);
+                        console.log('📥 QR Code URL:', momoResponse.data?.qrCodeUrl);
+                        
+                        if (momoResponse.success && momoResponse.data) {
+                            console.log('✅ MoMo payment created successfully:', momoResponse.data);
+                            
+                            // Navigate to payment page with payment data
+                            navigate('/payment', {
+                                state: {
+                                    orderId: orderId,
+                                    qrCodeUrl: momoResponse.data.qrCodeUrl,
+                                    deeplink: momoResponse.data.deeplink,
+                                    payUrl: momoResponse.data.payUrl,
+                                    amount: calculateTotal(),
+                                }
+                            });
+                        } else {
+                            // MoMo payment creation failed - order should be auto-cancelled by backend
+                            toast.error(momoResponse.message || 'Không thể tạo thanh toán MoMo');
+                            console.error('MoMo payment creation failed:', momoResponse.message);
+                            
+                            // Reload to refresh cart
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 2000);
+                        }
+                    } catch (momoError) {
+                        console.error('Error creating MoMo payment:', momoError);
+                        toast.error('Đã xảy ra lỗi khi tạo thanh toán MoMo. Đơn hàng đã bị hủy.');
+                        
+                        // Reload to refresh cart
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
+                    }
+                } else {
+                    // COD - Clear cart and navigate to orders
+                    console.log('Order created successfully with COD, now clearing cart...');
+                    console.log('🧹 Calling clearCart for accountId:', user.accountId);
 
-                const clearCartResponse = await cartService.clearCart(user.accountId);
-                console.log('🧹 Clear cart response:', clearCartResponse);
+                    const clearCartResponse = await cartService.clearCart(user.accountId);
+                    console.log('🧹 Clear cart response:', clearCartResponse);
 
-                if (clearCartResponse.success) {
-                    console.log('Cart cleared successfully');
-                    toast.success('Đặt hàng thành công! Giỏ hàng đã được xóa.');
+                    if (clearCartResponse.success) {
+                        console.log('Cart cleared successfully');
+                        toast.success('Đặt hàng thành công! Giỏ hàng đã được xóa.');
 
-                    // Dispatch event để Cart component và TopNavigation refresh
-                    console.log('🔔 Dispatching cartUpdated event');
-                    window.dispatchEvent(new CustomEvent('cartUpdated'));
-
-                    console.log('🔔 Dispatching cartItemsUpdated event with empty items');
-                    window.dispatchEvent(
-                        new CustomEvent('cartItemsUpdated', {
-                            detail: { items: [], count: 0 },
-                        }),
-                    );
-
-                    // Dispatch event để đóng Cart modal nếu đang mở
-                    console.log('🔔 Dispatching closeCartModal event');
-                    window.dispatchEvent(new CustomEvent('closeCartModal'));
-
-                    // Dispatch event để refresh order history
-                    console.log('🔔 Dispatching orderCreated event');
-                    window.dispatchEvent(new CustomEvent('orderCreated'));
-
-                    // Force refresh tất cả cart-related components với delay nhỏ
-                    setTimeout(() => {
-                        console.log('🔄 Force refreshing all cart components...');
+                        // Dispatch event để Cart component và TopNavigation refresh
+                        console.log('🔔 Dispatching cartUpdated event');
                         window.dispatchEvent(new CustomEvent('cartUpdated'));
+
+                        console.log('🔔 Dispatching cartItemsUpdated event with empty items');
                         window.dispatchEvent(
                             new CustomEvent('cartItemsUpdated', {
                                 detail: { items: [], count: 0 },
                             }),
                         );
-                    }, 100);
-                } else {
-                    console.error('Failed to clear cart:', clearCartResponse.message);
-                    toast.success('Đặt hàng thành công!');
-                    toast.warning('Không thể xóa giỏ hàng, vui lòng xóa thủ công.');
-                }
 
-                navigate('/customer/orders');
+                        // Dispatch event để đóng Cart modal nếu đang mở
+                        console.log('🔔 Dispatching closeCartModal event');
+                        window.dispatchEvent(new CustomEvent('closeCartModal'));
+
+                        // Dispatch event để refresh order history
+                        console.log('🔔 Dispatching orderCreated event');
+                        window.dispatchEvent(new CustomEvent('orderCreated'));
+
+                        // Force refresh tất cả cart-related components với delay nhỏ
+                        setTimeout(() => {
+                            console.log('🔄 Force refreshing all cart components...');
+                            window.dispatchEvent(new CustomEvent('cartUpdated'));
+                            window.dispatchEvent(
+                                new CustomEvent('cartItemsUpdated', {
+                                    detail: { items: [], count: 0 },
+                                }),
+                            );
+                        }, 100);
+                    } else {
+                        console.error('Failed to clear cart:', clearCartResponse.message);
+                        toast.success('Đặt hàng thành công!');
+                        toast.warning('Không thể xóa giỏ hàng, vui lòng xóa thủ công.');
+                    }
+
+                    navigate('/customer/orders');
+                }
             } else {
                 toast.error(orderResponse.message || 'Không thể tạo đơn hàng');
             }
