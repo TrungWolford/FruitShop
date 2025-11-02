@@ -118,6 +118,12 @@ export const API = {
   UPDATE_RATING: (ratingId: string) => `/rating/${ratingId}`, // PUT /api/rating/{ratingId}
   CHANGE_RATING_STATUS: (ratingId: string) => `/rating/${ratingId}/status`, // PATCH /api/rating/{ratingId}/status
   DELETE_RATING: (ratingId: string) => `/rating/${ratingId}`, // DELETE /api/rating/{ratingId}
+
+  // MoMo Payment - Theo MomoController.java
+  CREATE_MOMO_PAYMENT: '/momo/create-payment', // POST /api/momo/create-payment
+  MOMO_IPN_HANDLER: '/momo/ipn-handler', // POST /api/momo/ipn-handler (called by MoMo)
+  MOMO_RETURN: '/momo/return', // GET /api/momo/return
+  CHECK_MOMO_STATUS: (orderId: string) => `/momo/check-status/${orderId}`, // GET /api/momo/check-status/{orderId}
 } as const;
 
 // HTTP Status Codes
