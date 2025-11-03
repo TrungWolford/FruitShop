@@ -44,50 +44,60 @@ const AdminOrder: React.FC = () => {
     const [totalItems, setTotalItems] = useState(0);
     const itemsPerPage = 10;
 
-    // Load orders from backend
-    const loadOrders = async (page: number = 0) => {
+    // Load orders from backend (without pagination - load all and paginate on frontend)
+    const loadOrders = async () => {
         try {
             setLoading(true);
             let response;
 
-            // Use search and filter API
+            // Use search and filter API - load all data (page=0, size=1000)
+            const largeSize = 1000;
             if (searchTerm.trim() && statusFilter !== 'all') {
                 // Both search and filter
                 const status = parseInt(statusFilter);
-                response = await orderService.searchAndFilterOrders(searchTerm.trim(), status, page, itemsPerPage);
+                response = await orderService.searchAndFilterOrders(searchTerm.trim(), status, 0, largeSize);
             } else if (searchTerm.trim()) {
                 // Only search
-                response = await orderService.searchOrders(searchTerm.trim(), page, itemsPerPage);
+                response = await orderService.searchOrders(searchTerm.trim(), 0, largeSize);
             } else if (statusFilter !== 'all') {
                 // Only filter
                 const status = parseInt(statusFilter);
-                response = await orderService.filterOrdersByStatus(status, page, itemsPerPage);
+                response = await orderService.filterOrdersByStatus(status, 0, largeSize);
             } else {
                 // No search or filter
-                response = await orderService.getAllOrders(page, itemsPerPage);
+                response = await orderService.getAllOrders(0, largeSize);
             }
 
             console.log('🔍 Backend Response:', response);
 
             if (response.success && response.data) {
-                setOrders(response.data);
-                setTotalItems(response.data.length);
-                setTotalPages(Math.ceil(response.data.length / itemsPerPage));
+                const allOrders = response.data;
+                setTotalItems(allOrders.length);
+                setTotalPages(Math.max(1, Math.ceil(allOrders.length / itemsPerPage)));
+                
+                // Paginate on frontend
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                setOrders(allOrders.slice(startIndex, endIndex));
             } else {
                 toast.error('Không thể tải danh sách đơn hàng');
                 setOrders([]);
+                setTotalItems(0);
+                setTotalPages(1);
             }
         } catch (error) {
             console.error('Error loading orders:', error);
             toast.error('Có lỗi xảy ra khi tải đơn hàng');
             setOrders([]);
+            setTotalItems(0);
+            setTotalPages(1);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        loadOrders(currentPage - 1);
+        loadOrders();
     }, [currentPage, statusFilter, searchTerm]);
 
     // Format price
@@ -167,7 +177,7 @@ const AdminOrder: React.FC = () => {
             const response = await orderService.confirmOrder(orderId);
             if (response.success) {
                 toast.success('Đã xác nhận đơn hàng thành công!');
-                loadOrders(currentPage - 1);
+                loadOrders();
                 if (selectedOrder?.orderId === orderId) {
                     setSelectedOrder(response.data || null);
                 }
@@ -224,7 +234,7 @@ const AdminOrder: React.FC = () => {
                 toast.success('Đã bắt đầu giao hàng!');
                 setIsShipperDialogOpen(false);
                 setShipperName('');
-                loadOrders(currentPage - 1);
+                loadOrders();
                 if (selectedOrder?.orderId) {
                     setSelectedOrder(response.data || null);
                 }
@@ -246,7 +256,7 @@ const AdminOrder: React.FC = () => {
             if (response.success) {
                 // Backend updates shipping status to 4 (Đã giao) in completeOrder
                 toast.success('Đã hoàn thành đơn hàng!');
-                loadOrders(currentPage - 1);
+                loadOrders();
                 if (selectedOrder?.orderId === orderId) {
                     setSelectedOrder(response.data || null);
                 }
@@ -269,7 +279,7 @@ const AdminOrder: React.FC = () => {
             const response = await orderService.cancelOrder(orderId);
             if (response.success) {
                 toast.success('Đã hủy đơn hàng thành công!');
-                loadOrders(currentPage - 1);
+                loadOrders();
                 if (selectedOrder?.orderId === orderId) {
                     setSelectedOrder(response.data || null);
                 }
