@@ -181,6 +181,7 @@ public class MomoController {
                     payment.setPaymentStatus(1); // Completed
                     payment.setPaymentDate(new Date());
                     payment.setTransactionId(String.valueOf(transactionId));
+                    payment.setPaymentMethod("Thanh toán thành công"); // Set payment method
                     
                     // Convert amount to BigDecimal
                     long amount = 0;
@@ -192,7 +193,7 @@ public class MomoController {
                     payment.setAmount(BigDecimal.valueOf(amount));
                     
                     paymentRepository.save(payment);
-                    log.info("✅ Payment updated to COMPLETED");
+                    log.info("✅ Payment updated to COMPLETED with method: Thanh toán thành công");
                 }
 
                 // Keep order status as is (don't change order flow)

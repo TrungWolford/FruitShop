@@ -97,9 +97,19 @@ public class MomoService {
 
             log.info("📥 MoMo response - resultCode: {}, message: {}", 
                     response.getResultCode(), response.getMessage());
+            log.info("📥 MoMo response details:");
+            log.info("  - payUrl: {}", response.getPayUrl());
+            log.info("  - deeplink: {}", response.getDeeplink());
+            log.info("  - qrCodeUrl: {}", response.getQrCodeUrl());
+            log.info("  - deeplinkMiniApp: {}", response.getDeeplinkMiniApp());
 
             if (response.isSuccess()) {
-                log.info("✅ MoMo QR created successfully. PayUrl: {}", response.getPayUrl());
+                log.info("✅ MoMo QR created successfully");
+                if (response.getDeeplink() != null) {
+                    log.info("✅ Deeplink available: {}", response.getDeeplink());
+                } else {
+                    log.warn("⚠️ Deeplink is NULL - QR code may not work with MoMo app");
+                }
             } else {
                 log.error("❌ MoMo QR creation failed: {}", response.getErrorMessage());
             }
