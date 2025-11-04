@@ -257,13 +257,35 @@ export const orderService = {
       const response = await axiosInstance.put(API.CANCEL_ORDER(orderId));
       return {
         success: true,
-        data: mapBackendOrderToFrontend(response.data)
+        data: mapBackendOrderToFrontend(response.data),
+        message: 'Đơn hàng đã được hủy thành công'
       };
     } catch (error: any) {
       console.error('Error canceling order:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể hủy đơn hàng'
+      };
+    }
+  },
+
+  // Return order with reason and images
+  returnOrder: async (orderId: string, reason: string, images?: string[]): Promise<{ success: boolean; data?: any; message?: string }> => {
+    try {
+      const response = await axiosInstance.post(`/order/${orderId}/return`, {
+        reason,
+        images: images || []
+      });
+      return {
+        success: true,
+        data: response.data,
+        message: 'Yêu cầu trả hàng đã được gửi thành công'
+      };
+    } catch (error: any) {
+      console.error('Error returning order:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Không thể gửi yêu cầu trả hàng'
       };
     }
   },

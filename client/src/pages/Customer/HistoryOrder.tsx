@@ -7,7 +7,7 @@ import { Button } from '../../components/ui/Button/Button';
 import { Input } from '../../components/ui/input';
 import { Badge } from '../../components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { Search, Package, CheckCircle, ChevronDown, Truck, User, Phone, MapPin, Star, X } from 'lucide-react';
+import { Search, Package, CheckCircle, ChevronDown, Truck, User, Phone, MapPin, Star, X, XCircle, RotateCcw, Upload } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -45,6 +45,13 @@ const HistoryReceipt: React.FC = () => {
     
     // Track rated order items: Map<orderDetailId, boolean>
     const [ratedOrderItems, setRatedOrderItems] = useState<Map<string, boolean>>(new Map());
+
+    // Return order dialog states
+    const [showReturnDialog, setShowReturnDialog] = useState(false);
+    const [selectedOrderForReturn, setSelectedOrderForReturn] = useState<OrderResponse | null>(null);
+    const [returnReason, setReturnReason] = useState('');
+    const [returnImages, setReturnImages] = useState<string[]>([]);
+    const [isSubmittingReturn, setIsSubmittingReturn] = useState(false);
 
     // Fetch orders từ API
     const fetchOrders = async () => {
@@ -357,6 +364,110 @@ const HistoryReceipt: React.FC = () => {
         }
     };
 
+    // Handle cancel order
+    const handleCancelOrder = async (orderId: string) => {
+        if (!window.confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) {
+            return;
+        }
+
+        try {
+            const response = await orderService.cancelOrder(orderId);
+            if (response.success) {
+                toast.success('Đơn hàng đã được hủy thành công!', {
+                    duration: 3000,
+                });
+                // Reload orders
+                await fetchOrders();
+            } else {
+                toast.error(response.message || 'Không thể hủy đơn hàng', {
+                    duration: 3000,
+                });
+            }
+        } catch (error) {
+            console.error('Error canceling order:', error);
+            toast.error('Có lỗi xảy ra khi hủy đơn hàng. Vui lòng thử lại!', {
+                duration: 3000,
+            });
+        }
+    };
+
+    // Handle open return dialog
+    const handleOpenReturnDialog = (order: OrderResponse) => {
+        setSelectedOrderForReturn(order);
+        setReturnReason('');
+        setReturnImages([]);
+        setShowReturnDialog(true);
+    };
+
+    // Handle close return dialog
+    const handleCloseReturnDialog = () => {
+        setShowReturnDialog(false);
+        setSelectedOrderForReturn(null);
+        setReturnReason('');
+        setReturnImages([]);
+    };
+
+    // Handle submit return request
+    const handleSubmitReturn = async () => {
+        if (!selectedOrderForReturn) return;
+
+        if (!returnReason.trim()) {
+            toast.error('Vui lòng nhập lý do trả hàng', {
+                duration: 3000,
+            });
+            return;
+        }
+
+        setIsSubmittingReturn(true);
+        try {
+            const response = await orderService.returnOrder(
+                selectedOrderForReturn.orderId,
+                returnReason,
+                returnImages
+            );
+
+            if (response.success) {
+                toast.success('Yêu cầu trả hàng đã được gửi thành công!', {
+                    duration: 3000,
+                });
+                handleCloseReturnDialog();
+                // Reload orders
+                await fetchOrders();
+            } else {
+                toast.error(response.message || 'Không thể gửi yêu cầu trả hàng', {
+                    duration: 3000,
+                });
+            }
+        } catch (error) {
+            console.error('Error submitting return request:', error);
+            toast.error('Có lỗi xảy ra khi gửi yêu cầu trả hàng. Vui lòng thử lại!', {
+                duration: 3000,
+            });
+        } finally {
+            setIsSubmittingReturn(false);
+        }
+    };
+
+    // Handle image upload for return
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files) return;
+
+        // Convert files to base64 or upload to server
+        // For now, we'll just store file names as placeholder
+        const imageUrls: string[] = [];
+        Array.from(files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                if (event.target?.result) {
+                    imageUrls.push(event.target.result as string);
+                    setReturnImages(prev => [...prev, event.target!.result as string]);
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    };
+
     useEffect(() => {
         if (!user) {
             navigate('/');
@@ -364,6 +475,34 @@ const HistoryReceipt: React.FC = () => {
         }
         fetchOrders();
     }, [user, navigate]);
+
+    // Handle MoMo payment callback
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const resultCode = urlParams.get('resultCode');
+        const orderId = urlParams.get('orderId');
+        const message = urlParams.get('message');
+
+        if (resultCode !== null) {
+            console.log('🔔 MoMo callback detected:', { resultCode, orderId, message });
+
+            if (resultCode === '0') {
+                // Payment success
+                toast.success('✅ Thanh toán thành công! Đơn hàng đã được xác nhận.', {
+                    duration: 5000,
+                });
+            } else {
+                // Payment failed
+                toast.error('❌ Thanh toán thất bại. Vui lòng thử lại.', {
+                    duration: 5000,
+                });
+            }
+
+            // Clean URL by removing query params
+            const cleanUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
+        }
+    }, []);
 
     // Refresh orders after successful checkout
     useEffect(() => {
@@ -782,9 +921,42 @@ const HistoryReceipt: React.FC = () => {
 
                                                     {/* Order Summary */}
                                                     <div className="pt-4 border-t border-gray-200">
-                                                        <div className="flex justify-between items-center text-lg font-bold text-red-600">
+                                                        <div className="flex justify-between items-center text-lg font-bold text-red-600 mb-4">
                                                             <span>Tổng thanh toán ({order.totalItems} sản phẩm):</span>
                                                             <span>{formatPrice(order.totalAmount)}</span>
+                                                        </div>
+
+                                                        {/* Action buttons */}
+                                                        <div className="flex gap-3 mt-4">
+                                                            {/* Cancel button - show when status is "Chờ xác nhận" (status = 1) */}
+                                                            {order.status === 1 && (
+                                                                <Button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleCancelOrder(order.orderId);
+                                                                    }}
+                                                                    variant="outline"
+                                                                    className="flex-1 border-red-500 text-red-600 hover:bg-red-50"
+                                                                >
+                                                                    <XCircle className="w-4 h-4 mr-2" />
+                                                                    Hủy đơn hàng
+                                                                </Button>
+                                                            )}
+
+                                                            {/* Return button - show when status is "Đã giao" (status = 4) */}
+                                                            {order.status === 4 && (
+                                                                <Button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleOpenReturnDialog(order);
+                                                                    }}
+                                                                    variant="outline"
+                                                                    className="flex-1 border-orange-500 text-orange-600 hover:bg-orange-50"
+                                                                >
+                                                                    <RotateCcw className="w-4 h-4 mr-2" />
+                                                                    Trả hàng
+                                                                </Button>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1141,6 +1313,119 @@ const HistoryReceipt: React.FC = () => {
                                 disabled={isSubmittingRating || !ratingComment.trim()}
                             >
                                 {isSubmittingRating ? 'Đang gửi...' : 'Gửi đánh giá'}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Return Order Dialog */}
+            {showReturnDialog && selectedOrderForReturn && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-bold text-gray-900">Yêu cầu trả hàng</h2>
+                            <button
+                                onClick={handleCloseReturnDialog}
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        {/* Order Info */}
+                        <div className="p-4 bg-gray-50 rounded-lg mb-6">
+                            <h3 className="font-semibold text-gray-900 mb-2">
+                                Đơn hàng #{selectedOrderForReturn.orderId}
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                                Tổng tiền: <span className="font-semibold text-red-600">{formatPrice(selectedOrderForReturn.totalAmount)}</span>
+                            </p>
+                            <p className="text-sm text-gray-600">
+                                Số lượng sản phẩm: {selectedOrderForReturn.totalItems}
+                            </p>
+                        </div>
+
+                        {/* Return Reason */}
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Lý do trả hàng <span className="text-red-500">*</span>
+                            </label>
+                            <textarea
+                                value={returnReason}
+                                onChange={(e) => setReturnReason(e.target.value)}
+                                placeholder="Vui lòng mô tả lý do bạn muốn trả hàng..."
+                                rows={4}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none"
+                            />
+                        </div>
+
+                        {/* Image Upload */}
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Hình ảnh sản phẩm (tùy chọn)
+                            </label>
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-orange-500 transition-colors">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    onChange={handleImageUpload}
+                                    className="hidden"
+                                    id="return-image-upload"
+                                />
+                                <label
+                                    htmlFor="return-image-upload"
+                                    className="cursor-pointer flex flex-col items-center"
+                                >
+                                    <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                                    <span className="text-sm text-gray-600">
+                                        Nhấn để tải lên hình ảnh
+                                    </span>
+                                    <span className="text-xs text-gray-500 mt-1">
+                                        PNG, JPG tối đa 5MB
+                                    </span>
+                                </label>
+                            </div>
+
+                            {/* Preview uploaded images */}
+                            {returnImages.length > 0 && (
+                                <div className="mt-4 grid grid-cols-3 gap-2">
+                                    {returnImages.map((image, index) => (
+                                        <div key={index} className="relative">
+                                            <img
+                                                src={image}
+                                                alt={`Return ${index + 1}`}
+                                                className="w-full h-20 object-cover rounded-lg border"
+                                            />
+                                            <button
+                                                onClick={() => setReturnImages(prev => prev.filter((_, i) => i !== index))}
+                                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-3">
+                            <Button
+                                onClick={handleCloseReturnDialog}
+                                variant="outline"
+                                className="flex-1"
+                                disabled={isSubmittingReturn}
+                            >
+                                Hủy
+                            </Button>
+                            <Button
+                                onClick={handleSubmitReturn}
+                                className="flex-1 bg-orange-600 hover:bg-orange-700"
+                                disabled={isSubmittingReturn || !returnReason.trim()}
+                            >
+                                {isSubmittingReturn ? 'Đang gửi...' : 'Gửi yêu cầu'}
                             </Button>
                         </div>
                     </div>
