@@ -48,7 +48,12 @@ const HistoryReceipt: React.FC = () => {
 
     // Return order dialog states
     const [showReturnDialog, setShowReturnDialog] = useState(false);
-    const [selectedOrderForReturn, setSelectedOrderForReturn] = useState<OrderResponse | null>(null);
+    const [selectedItemForReturn, setSelectedItemForReturn] = useState<{
+        orderItemId: string;
+        orderItemName: string;
+        orderItemImage?: string;
+        orderId: string;
+    } | null>(null);
     const [returnReason, setReturnReason] = useState('');
     const [returnImages, setReturnImages] = useState<string[]>([]);
     const [isSubmittingReturn, setIsSubmittingReturn] = useState(false);
@@ -391,9 +396,14 @@ const HistoryReceipt: React.FC = () => {
         }
     };
 
-    // Handle open return dialog
-    const handleOpenReturnDialog = (order: OrderResponse) => {
-        setSelectedOrderForReturn(order);
+    // Handle open return dialog for specific order item
+    const handleOpenReturnDialog = (orderItemId: string, orderItemName: string, orderItemImage: string | undefined, orderId: string) => {
+        setSelectedItemForReturn({
+            orderItemId,
+            orderItemName,
+            orderItemImage,
+            orderId
+        });
         setReturnReason('');
         setReturnImages([]);
         setShowReturnDialog(true);
@@ -402,14 +412,14 @@ const HistoryReceipt: React.FC = () => {
     // Handle close return dialog
     const handleCloseReturnDialog = () => {
         setShowReturnDialog(false);
-        setSelectedOrderForReturn(null);
+        setSelectedItemForReturn(null);
         setReturnReason('');
         setReturnImages([]);
     };
 
     // Handle submit return request
     const handleSubmitReturn = async () => {
-        if (!selectedOrderForReturn) return;
+        if (!selectedItemForReturn) return;
 
         if (!returnReason.trim()) {
             toast.error('Vui lòng nhập lý do trả hàng', {
@@ -421,7 +431,7 @@ const HistoryReceipt: React.FC = () => {
         setIsSubmittingReturn(true);
         try {
             const response = await orderService.returnOrder(
-                selectedOrderForReturn.orderId,
+                selectedItemForReturn.orderItemId, // Use orderItemId instead of orderId
                 returnReason,
                 returnImages
             );
@@ -867,35 +877,56 @@ const HistoryReceipt: React.FC = () => {
                                                                                         detail?.unitPrice || 0,
                                                                                     )}
                                                                                 </p>
-                                                                                {/* Rating button for completed orders */}
+                                                                                {/* Buttons for completed orders */}
                                                                                 {order.status === 4 && detail && (
-                                                                                    ratedOrderItems.get(detail.orderDetailId) ? (
-                                                                                        <Button
-                                                                                            size="sm"
-                                                                                            className="mt-2 bg-gray-400 text-white text-xs cursor-not-allowed"
-                                                                                            disabled
-                                                                                        >
-                                                                                            <Star className="w-3 h-3 mr-1 fill-white" />
-                                                                                            Đã đánh giá
-                                                                                        </Button>
-                                                                                    ) : (
+                                                                                    <div className="flex gap-2 mt-2">
+                                                                                        {/* Rating button */}
+                                                                                        {ratedOrderItems.get(detail.orderDetailId) ? (
+                                                                                            <Button
+                                                                                                size="sm"
+                                                                                                className="bg-gray-400 text-white text-xs cursor-not-allowed"
+                                                                                                disabled
+                                                                                            >
+                                                                                                <Star className="w-3 h-3 mr-1 fill-white" />
+                                                                                                Đã đánh giá
+                                                                                            </Button>
+                                                                                        ) : (
+                                                                                            <Button
+                                                                                                onClick={(e) => {
+                                                                                                    e.stopPropagation();
+                                                                                                    handleOpenRatingDialog(
+                                                                                                        detail.productId,
+                                                                                                        detail.productName,
+                                                                                                        detail.productImages?.[0],
+                                                                                                        detail.orderDetailId,
+                                                                                                    );
+                                                                                                }}
+                                                                                                size="sm"
+                                                                                                className="bg-amber-500 hover:bg-amber-600 text-white text-xs"
+                                                                                            >
+                                                                                                <Star className="w-3 h-3 mr-1" />
+                                                                                                Đánh giá
+                                                                                            </Button>
+                                                                                        )}
+                                                                                        
+                                                                                        {/* Return button for each item */}
                                                                                         <Button
                                                                                             onClick={(e) => {
                                                                                                 e.stopPropagation();
-                                                                                                handleOpenRatingDialog(
-                                                                                                    detail.productId,
+                                                                                                handleOpenReturnDialog(
+                                                                                                    detail.orderDetailId,
                                                                                                     detail.productName,
                                                                                                     detail.productImages?.[0],
-                                                                                                    detail.orderDetailId, // Pass orderDetailId
+                                                                                                    order.orderId
                                                                                                 );
                                                                                             }}
                                                                                             size="sm"
-                                                                                            className="mt-2 bg-amber-500 hover:bg-amber-600 text-white text-xs"
+                                                                                            className="bg-orange-500 hover:bg-orange-600 text-white text-xs"
                                                                                         >
-                                                                                            <Star className="w-3 h-3 mr-1" />
-                                                                                            Đánh giá
+                                                                                            <RotateCcw className="w-3 h-3 mr-1" />
+                                                                                            Trả hàng
                                                                                         </Button>
-                                                                                    )
+                                                                                    </div>
                                                                                 )}
                                                                             </div>
                                                                             <div className="text-right">
@@ -940,21 +971,6 @@ const HistoryReceipt: React.FC = () => {
                                                                 >
                                                                     <XCircle className="w-4 h-4 mr-2" />
                                                                     Hủy đơn hàng
-                                                                </Button>
-                                                            )}
-
-                                                            {/* Return button - show when status is "Đã giao" (status = 4) */}
-                                                            {order.status === 4 && (
-                                                                <Button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleOpenReturnDialog(order);
-                                                                    }}
-                                                                    variant="outline"
-                                                                    className="flex-1 border-orange-500 text-orange-600 hover:bg-orange-50"
-                                                                >
-                                                                    <RotateCcw className="w-4 h-4 mr-2" />
-                                                                    Trả hàng
                                                                 </Button>
                                                             )}
                                                         </div>
@@ -1320,7 +1336,7 @@ const HistoryReceipt: React.FC = () => {
             )}
 
             {/* Return Order Dialog */}
-            {showReturnDialog && selectedOrderForReturn && (
+            {showReturnDialog && selectedItemForReturn && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-4">
@@ -1333,17 +1349,42 @@ const HistoryReceipt: React.FC = () => {
                             </button>
                         </div>
 
-                        {/* Order Info */}
+                        {/* Order Item Info */}
                         <div className="p-4 bg-gray-50 rounded-lg mb-6">
-                            <h3 className="font-semibold text-gray-900 mb-2">
-                                Đơn hàng #{selectedOrderForReturn.orderId}
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                                Tổng tiền: <span className="font-semibold text-red-600">{formatPrice(selectedOrderForReturn.totalAmount)}</span>
-                            </p>
-                            <p className="text-sm text-gray-600">
-                                Số lượng sản phẩm: {selectedOrderForReturn.totalItems}
-                            </p>
+                            <div className="flex items-center gap-4">
+                                {/* Product Image */}
+                                <div className="relative w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                                    {selectedItemForReturn.orderItemImage ? (
+                                        <img
+                                            src={getImageUrl(selectedItemForReturn.orderItemImage)}
+                                            alt={selectedItemForReturn.orderItemName}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                const target = e.target as HTMLImageElement;
+                                                target.style.display = 'none';
+                                                const fallback = target.nextElementSibling as HTMLElement;
+                                                if (fallback) fallback.classList.remove('hidden');
+                                            }}
+                                        />
+                                    ) : null}
+                                    <div className={`${selectedItemForReturn.orderItemImage ? 'hidden' : ''} absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-100 to-blue-200`}>
+                                        <Package className="w-6 h-6 text-blue-500" />
+                                    </div>
+                                </div>
+                                
+                                {/* Product Info */}
+                                <div className="flex-1">
+                                    <h3 className="font-semibold text-gray-900 mb-1">
+                                        {selectedItemForReturn.orderItemName}
+                                    </h3>
+                                    <p className="text-sm text-gray-600">
+                                        Mã đơn hàng: <span className="font-medium">#{selectedItemForReturn.orderId.slice(0, 8)}...</span>
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Mã sản phẩm: #{selectedItemForReturn.orderItemId.slice(0, 8)}...
+                                    </p>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Return Reason */}
