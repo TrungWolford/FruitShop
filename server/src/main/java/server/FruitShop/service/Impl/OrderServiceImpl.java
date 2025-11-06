@@ -147,14 +147,24 @@ public class OrderServiceImpl implements OrderService {
                 })
                 .collect(Collectors.toList());
 
-        // Calculate total amount
+        // Calculate total amount from products
         totalAmount = orderItems.stream()
                 .mapToLong(detail -> detail.getUnitPrice() * detail.getQuantity())
                 .sum();
 
+        // Add shipping fee to total amount
+        if (shipping != null) {
+            long shippingFee = shipping.getShippingFee();
+            totalAmount += shippingFee;
+            System.out.println("💰 Order total calculation:");
+            System.out.println("   - Products subtotal: " + (totalAmount - shippingFee) + " VND");
+            System.out.println("   - Shipping fee: " + shippingFee + " VND");
+            System.out.println("   - Total amount: " + totalAmount + " VND");
+        }
+
         savedOrder.setTotalAmount(totalAmount);
         savedOrder.setOrderItems(orderItems);
-        // Update payment amount with total
+        // Update payment amount with total (products + shipping)
         if (paymentEntity != null) {
             paymentEntity.setAmount(java.math.BigDecimal.valueOf(totalAmount));
             paymentRepository.save(paymentEntity);
