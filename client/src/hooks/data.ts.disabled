@@ -2,115 +2,46 @@ import type { Account } from '../types/account';
 import type { Category, Product } from '../types/product';
 
 export const mockAccounts: Account[] = [
+  // Mock data disabled - using real API
+  /*
   {
-    id: 1,
-    username: 'admin',
+    accountId: 'ACC001',
+    accountName: 'admin',
     phone: '0901234567',
     password: 'admin123',
-    status: 'ACTIVE',
-    role: 'ADMIN'
-  },
-  {
-    id: 2,
-    username: 'nguyenvana',
-    phone: '0912345678',
-    password: 'password123',
-    status: 'ACTIVE',
-    role: 'CUSTOMER'
-  },
-  {
-    id: 3,
-    username: 'tranthib',
-    phone: '0923456789',
-    password: 'mypassword',
-    status: 'ACTIVE',
-    role: 'CUSTOMER'
-  },
-  {
-    id: 4,
-    username: 'lequangc',
-    phone: '0934567890',
-    password: 'securepass',
-    status: 'INACTIVE',
-    role: 'CUSTOMER'
-  },
-  {
-    id: 5,
-    username: 'phamthid',
-    phone: '0945678901',
-    password: 'userpass123',
-    status: 'BANNED',
-    role: 'CUSTOMER'
-  },
-  {
-    id: 6,
-    username: 'hoanganhe',
-    phone: '0956789012',
-    password: 'password456',
-    status: 'ACTIVE',
-    role: 'CUSTOMER'
-  },
-  {
-    id: 7,
-    username: 'moderator1',
-    phone: '0967890123',
-    password: 'mod123456',
-    status: 'ACTIVE',
-    role: 'ADMIN'
-  },
-  {
-    id: 8,
-    username: 'vuthif',
-    phone: '0978901234',
-    password: 'mypass789',
-    status: 'ACTIVE',
-    role: 'CUSTOMER'
-  },
-  {
-    id: 9,
-    username: 'dangvanb',
-    phone: '0989012345',
-    password: 'strongpass',
-    status: 'INACTIVE',
-    role: 'CUSTOMER'
-  },
-  {
-    id: 10,
-    username: 'buithing',
-    phone: '0990123456',
-    password: 'password999',
-    status: 'ACTIVE',
-    role: 'CUSTOMER'
+    status: 1, // ACTIVE
+    roles: [{ roleId: 'ROLE_ADMIN', roleName: 'ADMIN' }]
   }
+  */
 ];
 
-// Helper functions để làm việc với mock data
-export const getAccountById = (id: number): Account | undefined => {
-  return mockAccounts.find(account => account.id === id);
+// Helper functions disabled - using real API
+export const getAccountById = (_id: string): Account | undefined => {
+  return undefined;
 };
 
-export const getAccountByUsername = (username: string): Account | undefined => {
-  return mockAccounts.find(account => account.username === username);
+export const getAccountByUsername = (_username: string): Account | undefined => {
+  return undefined;
 };
 
-export const getAccountsByRole = (role: 'ADMIN' | 'CUSTOMER'): Account[] => {
-  return mockAccounts.filter(account => account.role === role);
+export const getAccountsByRole = (_role: string): Account[] => {
+  return [];
 };
 
-export const getAccountsByStatus = (status: 'ACTIVE' | 'INACTIVE' | 'BANNED'): Account[] => {
-  return mockAccounts.filter(account => account.status === status);
+export const getAccountsByStatus = (_status: number): Account[] => {
+  return [];
 };
 
 export const getTotalAccounts = (): number => {
-  return mockAccounts.length;
+  return 0;
 };
 
 export const getActiveAccounts = (): Account[] => {
-  return mockAccounts.filter(account => account.status === 'ACTIVE');
+  return [];
 };
 
 export const getAdminAccounts = (): Account[] => {
-  return mockAccounts.filter(account => account.role === 'ADMIN');
+  return [];
 };
 
 // ==================== CATEGORIES ====================
@@ -183,21 +114,21 @@ export const mockProducts: Product[] = [
     productId: 'P1A2B3C4D',
     productName: 'Đắc Nhân Tâm',
     categories: [mockCategories[3]], // Tâm lý - Kỹ năng sống
-    image: [
+    images: [
       '/images/dac-nhan-tam-1.jpg',
       '/images/dac-nhan-tam-2.jpg'
     ],
     price: 89000,
     stock: 150,
     description: 'Cuốn sách kinh điển về nghệ thuật giao tiếp và ứng xử trong cuộc sống. Đây là một trong những cuốn sách bán chạy nhất mọi thời đại.',
-    createdAt: new Date('2024-01-15'),
+    createdAt: '',
     status: 1
   },
   {
     productId: 'P2E5F6G7H',
     productName: 'Sapiens: Lược sử loài người',
     categories: [mockCategories[5]], // Lịch sử
-    image: [
+    images: [
       '/images/sapiens-1.jpg',
       '/images/sapiens-2.jpg',
       '/images/sapiens-3.jpg'
@@ -205,141 +136,141 @@ export const mockProducts: Product[] = [
     price: 299000,
     stock: 75,
     description: 'Cuốn sách đưa chúng ta đi qua toàn bộ lịch sử phát triển của loài người từ thời nguyên thủy đến hiện đại.',
-    createdAt: new Date('2024-02-20'),
+    createdAt: '',
     status: 1
   },
   {
     productId: 'P3I9J0K1L',
     productName: 'Tôi Tài Giỏi, Bạn Cũng Thế',
     categories: [mockCategories[3]], // Tâm lý - Kỹ năng sống
-    image: [
+    images: [
       '/images/toi-tai-gioi-1.jpg'
     ],
     price: 79000,
     stock: 200,
     description: 'Cuốn sách giúp phát triển tư duy tích cực và kỹ năng học tập hiệu quả cho học sinh, sinh viên.',
-    createdAt: new Date('2024-03-10'),
+    createdAt: '',
     status: 1
   },
   {
     productId: 'P4M2N3O4P',
     productName: 'Kinh Tế Học Vĩ Mô',
     categories: [mockCategories[2]], // Kinh tế - Quản lý
-    image: [
+    images: [
       '/images/kinh-te-vi-mo-1.jpg',
       '/images/kinh-te-vi-mo-2.jpg'
     ],
     price: 450000,
     stock: 50,
     description: 'Giáo trình kinh tế học vĩ mô dành cho sinh viên đại học, được sử dụng rộng rãi tại các trường đại học.',
-    createdAt: new Date('2024-01-25'),
+    createdAt: '',
     status: 1
   },
   {
     productId: 'P5Q5R6S7T',
     productName: 'Thành Phố Tình Yêu',
     categories: [mockCategories[0]], // Văn học
-    image: [
+    images: [
       '/images/thanh-pho-tinh-yeu-1.jpg'
     ],
     price: 65000,
     stock: 120,
     description: 'Tiểu thuyết lãng mạn về những câu chuyện tình yêu trong thành phố hiện đại.',
-    createdAt: new Date('2024-04-05'),
+    createdAt: '',
     status: 1
   },
   {
     productId: 'P6U8V9W0X',
     productName: 'Lập Trình Python Cơ Bản',
     categories: [mockCategories[1]], // Khoa học công nghệ
-    image: [
+    images: [
       '/images/python-co-ban-1.jpg',
       '/images/python-co-ban-2.jpg'
     ],
     price: 199000,
     stock: 80,
     description: 'Sách hướng dẫn lập trình Python từ cơ bản đến nâng cao, phù hợp cho người mới bắt đầu.',
-    createdAt: new Date('2024-02-28'),
+    createdAt: '',
     status: 1
   },
   {
     productId: 'P7Y1Z2A3B',
     productName: 'Doraemon - Tập 15',
     categories: [mockCategories[4], mockCategories[9]], // Thiếu nhi + Truyện tranh
-    image: [
+    images: [
       '/images/doraemon-15-1.jpg'
     ],
     price: 25000,
     stock: 300,
     description: 'Tập truyện tranh Doraemon với những câu chuyện thú vị về Nobita và chú mèo máy đến từ tương lai.',
-    createdAt: new Date('2024-03-20'),
+    createdAt: '',
     status: 1
   },
   {
     productId: 'P8C4D5E6F',
     productName: 'Triết Học Phương Đông',
     categories: [mockCategories[6]], // Triết học
-    image: [
+    images: [
       '/images/triet-hoc-phuong-dong-1.jpg',
       '/images/triet-hoc-phuong-dong-2.jpg'
     ],
     price: 350000,
     stock: 45,
     description: 'Tổng quan về các trường phái triết học phương Đông, từ Ấn Độ, Trung Quốc đến Nhật Bản.',
-    createdAt: new Date('2024-01-30'),
+    createdAt: '',
     status: 1
   },
   {
     productId: 'P9G7H8I9J',
     productName: 'English Grammar in Use',
     categories: [mockCategories[7]], // Ngoại ngữ
-    image: [
+    images: [
       '/images/english-grammar-1.jpg'
     ],
     price: 180000,
     stock: 95,
     description: 'Sách ngữ pháp tiếng Anh phổ biến nhất thế giới, phù hợp cho người học trình độ trung cấp.',
-    createdAt: new Date('2024-04-12'),
+    createdAt: '',
     status: 1
   },
   {
     productId: 'P0K0L1M2N',
     productName: 'Toán Lớp 12 - Sách Giáo Khoa',
     categories: [mockCategories[8]], // Sách giáo khoa
-    image: [
+    images: [
       '/images/toan-12-sgk-1.jpg'
     ],
     price: 45000,
     stock: 250,
     description: 'Sách giáo khoa Toán lớp 12 theo chương trình giáo dục phổ thông mới.',
-    createdAt: new Date('2024-05-01'),
+    createdAt: '',
     status: 1
   },
   {
     productId: 'P1O3P4Q5R',
     productName: 'Người Khổng Lồ Sa Ngã',
     categories: [mockCategories[0]], // Văn học
-    image: [
+    images: [
       '/images/nguoi-khong-lo-1.jpg',
       '/images/nguoi-khong-lo-2.jpg'
     ],
     price: 420000,
     stock: 30,
     description: 'Tiểu thuyết lịch sử hấp dẫn về cuộc sống của các gia đình trong Thế chiến thứ nhất.',
-    createdAt: new Date('2024-03-15'),
+    createdAt: '',
     status: 0 // Tạm hết hàng
   },
   {
     productId: 'P2S6T7U8V',
     productName: 'Kỹ Năng Quản Lý Thời Gian',
     categories: [mockCategories[3]], // Tâm lý - Kỹ năng sống
-    image: [
+    images: [
       '/images/quan-ly-thoi-gian-1.jpg'
     ],
     price: 95000,
     stock: 110,
     description: 'Hướng dẫn các phương pháp quản lý thời gian hiệu quả để tăng năng suất làm việc.',
-    createdAt: new Date('2024-04-20'),
+    createdAt: '',
     status: 1
   }
 ];
@@ -447,14 +378,14 @@ export const mockOrders: Order[] = [
     items: [
       {
         id: 1,
-        product: { ...mockProducts[0], image: ['/banner1.jpg'] },
+        product: { ...mockProducts[0], images: ['/banner1.jpg'] },
         quantity: 2,
         price: 89000,
         total: 178000
       },
       {
         id: 2,
-        product: { ...mockProducts[2], image: ['/banner2.jpg'] },
+        product: { ...mockProducts[2], images: ['/banner2.jpg'] },
         quantity: 1,
         price: 79000,
         total: 79000
@@ -480,21 +411,21 @@ export const mockOrders: Order[] = [
     items: [
       {
         id: 3,
-        product: { ...mockProducts[1], image: ['/banner3.jpg'] },
+        product: { ...mockProducts[1], images: ['/banner3.jpg'] },
         quantity: 1,
         price: 299000,
         total: 299000
       },
       {
         id: 4,
-        product: { ...mockProducts[5], image: ['/banner4.jpg'] },
+        product: { ...mockProducts[5], images: ['/banner4.jpg'] },
         quantity: 1,
         price: 65000,
         total: 65000
       },
       {
         id: 5,
-        product: { ...mockProducts[6], image: ['/banner1.jpg'] },
+        product: { ...mockProducts[6], images: ['/banner1.jpg'] },
         quantity: 1,
         price: 199000,
         total: 199000
@@ -519,7 +450,7 @@ export const mockOrders: Order[] = [
     items: [
       {
         id: 6,
-        product: { ...mockProducts[3], image: ['/banner2.jpg'] },
+        product: { ...mockProducts[3], images: ['/banner2.jpg'] },
         quantity: 1,
         price: 450000,
         total: 450000
@@ -544,21 +475,21 @@ export const mockOrders: Order[] = [
     items: [
       {
         id: 7,
-        product: { ...mockProducts[7], image: ['/banner3.jpg'] },
+        product: { ...mockProducts[7], images: ['/banner3.jpg'] },
         quantity: 3,
         price: 25000,
         total: 75000
       },
       {
         id: 8,
-        product: { ...mockProducts[8], image: ['/banner4.jpg'] },
+        product: { ...mockProducts[8], images: ['/banner4.jpg'] },
         quantity: 1,
         price: 350000,
         total: 350000
       },
       {
         id: 9,
-        product: { ...mockProducts[9], image: ['/banner1.jpg'] },
+        product: { ...mockProducts[9], images: ['/banner1.jpg'] },
         quantity: 1,
         price: 180000,
         total: 180000
@@ -583,14 +514,14 @@ export const mockOrders: Order[] = [
     items: [
       {
         id: 10,
-        product: { ...mockProducts[10], image: ['/banner2.jpg'] },
+        product: { ...mockProducts[10], images: ['/banner2.jpg'] },
         quantity: 2,
         price: 45000,
         total: 90000
       },
       {
         id: 11,
-        product: { ...mockProducts[11], image: ['/banner3.jpg'] },
+        product: { ...mockProducts[11], images: ['/banner3.jpg'] },
         quantity: 1,
         price: 420000,
         total: 420000

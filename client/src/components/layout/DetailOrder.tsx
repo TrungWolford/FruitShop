@@ -145,7 +145,7 @@ const DetailOrder: React.FC<DetailOrderProps> = ({ order, isOpen, onClose }) => 
                                         <div className="w-20 h-20 bg-gray-200 rounded-lg border-2 border-gray-300 flex items-center justify-center overflow-hidden flex-shrink-0">
                                             {item.product.images && item.product.images.length > 0 ? (
                                                 <img
-                                                    src={item.product.images[0]}
+                                                    src={typeof item.product.images[0] === 'string' ? item.product.images[0] : item.product.images[0].imageUrl}
                                                     alt={item.product.productName}
                                                     className="w-full h-full object-cover"
                                                     onError={(e) => {
@@ -162,8 +162,7 @@ const DetailOrder: React.FC<DetailOrderProps> = ({ order, isOpen, onClose }) => 
                                                 {item.product.productName}
                                             </h4>
                                             <div className="text-sm text-gray-600 space-y-1">
-                                                <p>Tác giả: {item.product.author}</p>
-                                                <p>Bìa: {item.product.cover}</p>
+                                                <p>Sản phẩm: {item.product.productName}</p>
                                             </div>
                                         </div>
                                         <div className="text-right flex-shrink-0">

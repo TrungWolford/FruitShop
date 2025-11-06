@@ -1,8 +1,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Badge } from '../ui/badge';
-import { Button } from '../ui/Button/Button';
-import { Package, Calendar, User, Tag, DollarSign, Box, FileText, Eye } from 'lucide-react';
+import { Package, Calendar, Tag, Box, FileText, Eye } from 'lucide-react';
 import type { Product } from '../../types/product';
 
 interface ViewProductModalProps {
@@ -76,11 +75,11 @@ const ViewProductModal: React.FC<ViewProductModalProps> = ({ isOpen, onClose, pr
         return `/products${cleanUrl}`;
     };
 
-    const getStockStatus = (stock: number) => {
-        if (stock > 50) return { color: 'text-green-600', bg: 'bg-green-50', text: 'Còn hàng' };
-        if (stock > 10) return { color: 'text-yellow-600', bg: 'bg-yellow-50', text: 'Sắp hết' };
-        return { color: 'text-red-600', bg: 'bg-red-50', text: 'Sắp hết' };
-    };
+    // const getStockStatus = (stock: number) => {
+    //     if (stock > 50) return { color: 'text-green-600', bg: 'bg-green-50', text: 'Còn hàng' };
+    //     if (stock > 10) return { color: 'text-yellow-600', bg: 'bg-yellow-50', text: 'Sắp hết' };
+    //     return { color: 'text-red-600', bg: 'bg-red-50', text: 'Sắp hết' };
+    // };
 
     const numberToVietnameseWords = (num: number): string => {
         const ones = ['', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
@@ -141,7 +140,7 @@ const ViewProductModal: React.FC<ViewProductModalProps> = ({ isOpen, onClose, pr
         return 'quá lớn';
     };
 
-    const stockStatus = getStockStatus(product.stock);
+    // const stockStatus = getStockStatus(product.stock);
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>

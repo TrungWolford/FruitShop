@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../hooks/redux';
 import { categoryService } from '../../services/categoryService';
-import type { Category, PaginatedCategoryResponse } from '../../types/category';
+import type { Category } from '../../types/category';
 import LeftTaskbar from '../../components/LeftTaskbar';
 import AddCategoryModal from '../../components/modals/AddCategoryModal';
 import EditCategoryModal from '../../components/modals/EditCategoryModal';
@@ -73,7 +73,7 @@ const AdminCategory: React.FC = () => {
     const loadCategories = async () => {
         setLoading(true);
         try {
-            const response: PaginatedCategoryResponse = await categoryService.getAllCategories(currentPage, pageSize);
+            const response = await categoryService.getAllCategories(currentPage, pageSize);
 
             let filteredContent = response.content;
 

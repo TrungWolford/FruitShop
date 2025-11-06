@@ -265,12 +265,9 @@ const ProductDetail: React.FC = () => {
             const response = await ratingService.updateRating(userRating.ratingId, updateData);
             
             console.log('📤 Update rating response:', response);
-            console.log('- response.success:', response.success);
-            console.log('- response.data:', response.data);
             
-            // Backend trả về trực tiếp RatingResponse, không có wrapper
-            // Check nếu có ratingId là thành công
-            const isSuccess = response.success === true || (response as any).ratingId;
+            // Backend trả về trực tiếp RatingResponse, kiểm tra nếu có ratingId là thành công
+            const isSuccess = response && (response as any).ratingId;
             
             if (isSuccess) {
                 console.log('✅ Rating updated successfully, showing toast...');
@@ -286,7 +283,7 @@ const ProductDetail: React.FC = () => {
                     window.location.reload();
                 }, 2000);
             } else {
-                toast.error(response.message || 'Không thể cập nhật đánh giá. Vui lòng thử lại!');
+                toast.error('Không thể cập nhật đánh giá. Vui lòng thử lại!');
                 setIsUpdatingRating(false);
             }
         } catch (error: any) {
@@ -330,7 +327,7 @@ const ProductDetail: React.FC = () => {
             console.log('📤 Delete rating response:', response);
             
             // Backend returns RatingResponse with updated status
-            const isSuccess = response.success === true || (response as any).ratingId;
+            const isSuccess = response && (response as any).ratingId;
             
             if (isSuccess) {
                 console.log('✅ Rating deleted successfully');
@@ -345,7 +342,7 @@ const ProductDetail: React.FC = () => {
                     window.location.reload();
                 }, 2000);
             } else {
-                toast.error(response.message || 'Không thể xóa đánh giá. Vui lòng thử lại!');
+                toast.error('Không thể xóa đánh giá. Vui lòng thử lại!');
             }
         } catch (error: any) {
             console.error('Error deleting rating:', error);
@@ -361,13 +358,13 @@ const ProductDetail: React.FC = () => {
         }).format(price);
     };
 
-    const formatDiscountPrice = (price: number, discount: number) => {
-        const discountedPrice = price * (1 - discount / 100);
-        return new Intl.NumberFormat('vi-VN', {
-            style: 'currency',
-            currency: 'VND',
-        }).format(discountedPrice);
-    };
+    // const formatDiscountPrice = (price: number, discount: number) => {
+    //     const discountedPrice = price * (1 - discount / 100);
+    //     return new Intl.NumberFormat('vi-VN', {
+    //         style: 'currency',
+    //         currency: 'VND',
+    //     }).format(discountedPrice);
+    // };
 
     // Function to convert number to Vietnamese text
     const numberToVietnameseText = (num: number): string => {
@@ -553,6 +550,11 @@ const ProductDetail: React.FC = () => {
             await cartService.clearCart(user.accountId);
 
             // Add only this product to cart
+            if (!product) {
+                toast.error('Không tìm thấy thông tin sản phẩm');
+                return;
+            }
+            
             const response = await cartService.addToCart({
                 productId: product.productId,
                 quantity: quantity,
@@ -656,15 +658,6 @@ const ProductDetail: React.FC = () => {
                                     product.images[currentImageIndex] ? (
                                         <img
                                             src={getImageUrl(product.images[currentImageIndex].imageUrl)}
-                                            alt={product.productName}
-                                            className="w-full h-full object-cover"
-                                            onError={(e) => {
-                                                e.currentTarget.style.display = 'none';
-                                            }}
-                                        />
-                                    ) : product.imageUrl ? (
-                                        <img
-                                            src={getImageUrl(product.imageUrl)}
                                             alt={product.productName}
                                             className="w-full h-full object-cover"
                                             onError={(e) => {
@@ -796,25 +789,12 @@ const ProductDetail: React.FC = () => {
                                     <span className="text-sm text-gray-600">Giá:</span>
                                     <div className="flex items-center gap-3 mt-1">
                                         <div className="text-3xl font-bold text-red-600">
-                                            {product.discount
-                                                ? formatDiscountPrice(product.price, product.discount)
-                                                : formatPrice(product.price)}
-                                        </div>
-                                        <div className="text-sm text-gray-400">
-                                            (
-                                            {product.discount
-                                                ? numberToVietnameseText(
-                                                      Math.floor(product.price * (1 - product.discount / 100)),
-                                                  )
-                                                : numberToVietnameseText(product.price)}
-                                            )
-                                        </div>
-                                    </div>
-                                    {product.discount && (
-                                        <div className="text-lg text-gray-500 line-through mt-1">
                                             {formatPrice(product.price)}
                                         </div>
-                                    )}
+                                        <div className="text-sm text-gray-400">
+                                            ({numberToVietnameseText(product.price)})
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* Quantity Selector */}
