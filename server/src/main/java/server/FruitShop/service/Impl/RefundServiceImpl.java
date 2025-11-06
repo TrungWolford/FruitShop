@@ -49,9 +49,14 @@ public class RefundServiceImpl implements RefundService {
     @Override
     @Transactional
     public RefundResponse createRefund(CreateRefundRequest request) {
+        System.out.println("🔔 Creating refund with request: " + request);
+        
         // Validate order exists
         Order order = orderRepository.findById(request.getOrderId())
             .orElseThrow(() -> new RuntimeException("Order not found with id: " + request.getOrderId()));
+        
+        System.out.println("🔔 Found order: " + order.getOrderId());
+        System.out.println("🔔 Order account: " + (order.getAccount() != null ? order.getAccount().getAccountName() : "NULL"));
         
         // Get original payment if exists
         Payment originalPayment = null;
@@ -74,7 +79,16 @@ public class RefundServiceImpl implements RefundService {
         // Save refund
         Refund savedRefund = refundRepository.save(refund);
         
-        return RefundResponse.fromEntity(savedRefund);
+        System.out.println("🔔 Saved refund: " + savedRefund.getRefundId());
+        System.out.println("🔔 Saved refund order: " + (savedRefund.getOrder() != null ? savedRefund.getOrder().getOrderId() : "NULL"));
+        System.out.println("🔔 Saved refund order account: " + (savedRefund.getOrder() != null && savedRefund.getOrder().getAccount() != null ? savedRefund.getOrder().getAccount().getAccountName() : "NULL"));
+        
+        RefundResponse response = RefundResponse.fromEntity(savedRefund);
+        
+        System.out.println("🔔 Response orderId: " + (response.getOrder() != null ? response.getOrder().getOrderId() : "NULL"));
+        System.out.println("🔔 Response accountName: " + (response.getOrder() != null ? response.getOrder().getAccountName() : "NULL"));
+        
+        return response;
     }
     
     @Override

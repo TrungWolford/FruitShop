@@ -14,7 +14,7 @@ public class Refund {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String refundId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "order_id")
     private Order order;
 
