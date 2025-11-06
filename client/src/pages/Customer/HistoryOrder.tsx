@@ -179,28 +179,39 @@ const HistoryReceipt: React.FC = () => {
     const checkOrderItemRefunds = async (orders: OrderResponse[]) => {
         const refundsMap = new Map<string, RefundResponse>();
         
-        const orderIds = new Set<string>(orders.map(order => order.orderId));
+        // Get all order items from all orders
+        const orderItems = new Map<string, { orderDetailId: string; orderId: string }>();
+        orders.forEach(order => {
+            order.orderDetails.forEach(detail => {
+                orderItems.set(detail.orderDetailId, {
+                    orderDetailId: detail.orderDetailId,
+                    orderId: order.orderId
+                });
+            });
+        });
 
-        console.log('📋 Checking refunds for orders:', orderIds.size);
+        console.log('📋 Checking refunds for order items:', orderItems.size);
 
-        for (const orderId of orderIds) {
+        // Check each order item for refunds
+        for (const [orderDetailId] of orderItems) {
             try {
-                const response = await refundService.getRefundsByOrderId(orderId);
+                const response = await refundService.getRefundsByOrderItemId(orderDetailId);
                 
-                console.log(`✅ Refunds for order ${orderId}:`, response);
+                console.log(`✅ Refunds for order item ${orderDetailId}:`, response);
 
-                if (response.success && response.data && Array.isArray(response.data)) {
-                    response.data.forEach((refund: RefundResponse) => {
-                        console.log(`💰 Found refund for order ${orderId}:`, refund);
-                        refundsMap.set(orderId, refund);
-                    });
+                if (response.success && response.data && Array.isArray(response.data) && response.data.length > 0) {
+                    // Store the first refund (should only be one per item)
+                    const refund = response.data[0];
+                    console.log(`💰 Found refund for order item ${orderDetailId}:`, refund);
+                    refundsMap.set(orderDetailId, refund);
                 }
             } catch (error) {
-                console.error(`❌ Error fetching refunds for order ${orderId}:`, error);
+                console.error(`❌ Error fetching refunds for order item ${orderDetailId}:`, error);
             }
         }
 
-        console.log('📊 Total refunds found:', refundsMap.size);
+        console.log('📊 Total refunds found (per order item):', refundsMap.size);
+        console.log('📊 Refund map keys (orderDetailIds):', Array.from(refundsMap.keys()));
 
         setOrderItemRefunds(refundsMap);
     };
@@ -1255,8 +1266,8 @@ const HistoryReceipt: React.FC = () => {
                                                                                             </Button>
                                                                                         )}
                                                                                         
-                                                                                        {/* Return button - disable if order has a refund */}
-                                                                                        {orderItemRefunds.has(order.orderId) ? (
+                                                                                        {/* Return button - disable if THIS ORDER ITEM has a refund */}
+                                                                                        {orderItemRefunds.has(detail.orderDetailId) ? (
                                                                                             <Button
                                                                                                 size="sm"
                                                                                                 className="bg-gray-400 text-white text-xs cursor-not-allowed"

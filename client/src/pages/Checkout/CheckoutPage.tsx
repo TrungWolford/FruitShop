@@ -770,7 +770,7 @@ const CheckoutPage: React.FC = () => {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="0">Thanh toán khi nhận hàng (COD)</SelectItem>
-                                            <SelectItem value="1">Chuyển khoản ngân hàng</SelectItem>
+                                            <SelectItem value="1">Thanh toán Momo</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>

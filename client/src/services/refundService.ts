@@ -7,6 +7,7 @@ export interface RefundResponse {
   refundId: string;
   order?: OrderResponse; // Full order object from backend
   orderId?: string; // Extracted orderId for convenience
+  orderItemId?: string; // Add orderItemId for per-item refund
   orderDate?: string; // Extracted from order
   accountName?: string; // Extracted from order.account
   reason: string;
@@ -15,13 +16,16 @@ export interface RefundResponse {
   processedAt?: string;
   refundAmount: number;
   originalPaymentId?: string;
+  imageUrls?: string[]; // List of image URLs for evidence
 }
 
 export interface CreateRefundRequest {
   orderId: string;
+  orderItemId: string; // Add orderItemId for per-item refund
   reason: string;
   refundAmount: number;
   originalPaymentId?: string;
+  imageUrls?: string[]; // List of image URLs for evidence
 }
 
 export interface UpdateRefundStatusRequest {
@@ -149,6 +153,23 @@ const refundService = {
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể tải danh sách hoàn tiền',
+      };
+    }
+  },
+
+  // Get refunds by order item ID (per-item refund)
+  async getRefundsByOrderItemId(orderItemId: string) {
+    try {
+      const response = await axiosInstance.get(`${API.REFUND}/order-item/${orderItemId}`);
+      return {
+        success: true,
+        data: response.data.map(mapRefundResponse),
+      };
+    } catch (error: any) {
+      console.error('Error fetching refunds by order item:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Không thể tải danh sách hoàn tiền theo sản phẩm',
       };
     }
   },
