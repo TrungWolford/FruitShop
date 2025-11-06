@@ -10,6 +10,7 @@ export interface OrderDetailResponse {
   unitPrice: number;
   totalPrice: number;
   productImages: string[];
+  status?: string; // Status của orderItem: null, "returned", "returning", etc.
 }
 
 export interface ShippingInfo {
@@ -102,7 +103,8 @@ export function mapBackendOrderToFrontend(o: any): OrderResponse {
     quantity: it.quantity,
     unitPrice: it.unitPrice ?? it.price ?? 0,
     totalPrice: it.totalPrice ?? (it.unitPrice ? it.unitPrice * (it.quantity || 0) : 0),
-    productImages: it.productImages || []
+    productImages: it.productImages || [],
+    status: it.status // Map status field from backend
   }));
 
   return {
