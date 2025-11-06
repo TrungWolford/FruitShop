@@ -1304,6 +1304,21 @@ const HistoryReceipt: React.FC = () => {
                                                                                         detail?.totalPrice || 0,
                                                                                     )}
                                                                                 </p>
+                                                                                
+                                                                                {/* Show refund status under price if item has refund */}
+                                                                                {detail && orderItemRefunds.has(detail.orderDetailId) && (
+                                                                                    <div className="mt-1">
+                                                                                        <Badge className={`text-xs ${
+                                                                                            getRefundStatusColor(
+                                                                                                orderItemRefunds.get(detail.orderDetailId)?.refundStatus || ''
+                                                                                            )
+                                                                                        }`}>
+                                                                                            {getRefundStatusText(
+                                                                                                orderItemRefunds.get(detail.orderDetailId)?.refundStatus || ''
+                                                                                            )}
+                                                                                        </Badge>
+                                                                                    </div>
+                                                                                )}
                                                                             </div>
                                                                         </div>
                                                                     );
@@ -1586,6 +1601,21 @@ const HistoryReceipt: React.FC = () => {
                                             </div>
                                             <div className="text-right">
                                                 <p className="font-semibold">{formatPrice(detail.totalPrice)}</p>
+                                                
+                                                {/* Show refund status under price in detail modal */}
+                                                {orderItemRefunds.has(detail.orderDetailId) && (
+                                                    <div className="mt-1">
+                                                        <Badge className={`text-xs ${
+                                                            getRefundStatusColor(
+                                                                orderItemRefunds.get(detail.orderDetailId)?.refundStatus || ''
+                                                            )
+                                                        }`}>
+                                                            {getRefundStatusText(
+                                                                orderItemRefunds.get(detail.orderDetailId)?.refundStatus || ''
+                                                            )}
+                                                        </Badge>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     ))}
