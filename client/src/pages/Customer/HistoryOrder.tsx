@@ -18,6 +18,10 @@ import { orderService } from '../../services/orderService';
 import type { OrderResponse } from '../../services/orderService';
 import { ratingService } from '../../services/ratingService';
 import type { CreateRatingRequest } from '../../types/rating';
+import { uploadService } from '../../services/uploadService';
+import type { UploadImageResponse } from '../../services/uploadService';
+import refundService from '../../services/refundService';
+import type { RefundResponse } from '../../services/refundService';
 import { toast } from 'sonner';
 
 const HistoryReceipt: React.FC = () => {
@@ -46,6 +50,9 @@ const HistoryReceipt: React.FC = () => {
     // Track rated order items: Map<orderDetailId, boolean>
     const [ratedOrderItems, setRatedOrderItems] = useState<Map<string, boolean>>(new Map());
 
+    // Track order items with return orders: Map<orderDetailId, RefundResponse>
+    const [orderItemRefunds, setOrderItemRefunds] = useState<Map<string, RefundResponse>>(new Map());
+
     // Return order dialog states
     const [showReturnDialog, setShowReturnDialog] = useState(false);
     const [selectedItemForReturn, setSelectedItemForReturn] = useState<{
@@ -53,10 +60,12 @@ const HistoryReceipt: React.FC = () => {
         orderItemName: string;
         orderItemImage?: string;
         orderId: string;
+        refundAmount: number;
     } | null>(null);
     const [returnReason, setReturnReason] = useState('');
-    const [returnImages, setReturnImages] = useState<string[]>([]);
+    const [returnImages, setReturnImages] = useState<UploadImageResponse[]>([]);
     const [isSubmittingReturn, setIsSubmittingReturn] = useState(false);
+    const [isUploadingImages, setIsUploadingImages] = useState(false);
 
     // Fetch orders từ API
     const fetchOrders = async () => {
@@ -88,6 +97,9 @@ const HistoryReceipt: React.FC = () => {
                 
                 // Check which order items have been rated
                 await checkRatedOrderItems(response.data);
+                
+                // Check which order items have return orders (refunds)
+                await checkOrderItemRefunds(response.data);
             } else {
                 console.error('Failed to fetch orders:', response.message);
                 setOrders([]);
@@ -161,6 +173,36 @@ const HistoryReceipt: React.FC = () => {
         console.log('📊 Rated orderItems:', Array.from(ratedMap.entries()).filter(([_, rated]) => rated));
 
         setRatedOrderItems(ratedMap);
+    };
+
+    // Check which order items have return orders (refunds)
+    const checkOrderItemRefunds = async (orders: OrderResponse[]) => {
+        const refundsMap = new Map<string, RefundResponse>();
+        
+        const orderIds = new Set<string>(orders.map(order => order.orderId));
+
+        console.log('📋 Checking refunds for orders:', orderIds.size);
+
+        for (const orderId of orderIds) {
+            try {
+                const response = await refundService.getRefundsByOrderId(orderId);
+                
+                console.log(`✅ Refunds for order ${orderId}:`, response);
+
+                if (response.success && response.data && Array.isArray(response.data)) {
+                    response.data.forEach((refund: RefundResponse) => {
+                        console.log(`💰 Found refund for order ${orderId}:`, refund);
+                        refundsMap.set(orderId, refund);
+                    });
+                }
+            } catch (error) {
+                console.error(`❌ Error fetching refunds for order ${orderId}:`, error);
+            }
+        }
+
+        console.log('📊 Total refunds found:', refundsMap.size);
+
+        setOrderItemRefunds(refundsMap);
     };
 
     // Lọc đơn hàng theo search và status
@@ -266,6 +308,98 @@ const HistoryReceipt: React.FC = () => {
                 return 'bg-purple-500'; // Đang giao
             case 4:
                 return 'bg-green-500'; // Đã giao
+            default:
+                return 'bg-gray-500';
+        }
+    };
+
+    const getRefundStatusText = (status: string) => {
+        switch (status.toLowerCase()) {
+            case 'pending':
+            case 'chờ xác nhận':
+                return 'Chờ xác nhận';
+            case 'approved':
+            case 'đã duyệt':
+                return 'Đã duyệt';
+            case 'rejected':
+            case 'từ chối':
+                return 'Từ chối';
+            case 'completed':
+            case 'hoàn thành':
+                return 'Hoàn thành';
+            default:
+                return status;
+        }
+    };
+
+    const getRefundStatusColor = (status: string) => {
+        switch (status.toLowerCase()) {
+            case 'pending':
+            case 'chờ xác nhận':
+                return 'bg-yellow-600 text-white border-yellow-600';
+            case 'approved':
+            case 'đã duyệt':
+                return 'bg-blue-600 text-white border-blue-600';
+            case 'rejected':
+            case 'từ chối':
+                return 'bg-red-600 text-white border-red-600';
+            case 'completed':
+            case 'hoàn thành':
+                return 'bg-green-600 text-white border-green-600';
+            default:
+                return 'bg-gray-600 text-white border-gray-600';
+        }
+    };
+
+    const getRefundProgressStep = (status: string) => {
+        switch (status.toLowerCase()) {
+            case 'pending':
+            case 'chờ xác nhận':
+                return 1;
+            case 'approved':
+            case 'đã duyệt':
+                return 2;
+            case 'rejected':
+            case 'từ chối':
+                return 0;
+            case 'completed':
+            case 'hoàn thành':
+                return 3;
+            default:
+                return 0;
+        }
+    };
+
+    const getRefundProgressColor = (currentStep: number, targetStep: number) => {
+        if (currentStep >= targetStep) {
+            switch (targetStep) {
+                case 1:
+                    return 'bg-yellow-500';
+                case 2:
+                    return 'bg-blue-500';
+                case 3:
+                    return 'bg-green-500';
+                default:
+                    return 'bg-green-500';
+            }
+        }
+        return 'bg-gray-300';
+    };
+
+    const getCurrentRefundStatusColor = (status: string) => {
+        switch (status.toLowerCase()) {
+            case 'pending':
+            case 'chờ xác nhận':
+                return 'bg-yellow-500';
+            case 'approved':
+            case 'đã duyệt':
+                return 'bg-blue-500';
+            case 'rejected':
+            case 'từ chối':
+                return 'bg-red-500';
+            case 'completed':
+            case 'hoàn thành':
+                return 'bg-green-500';
             default:
                 return 'bg-gray-500';
         }
@@ -397,12 +531,19 @@ const HistoryReceipt: React.FC = () => {
     };
 
     // Handle open return dialog for specific order item
-    const handleOpenReturnDialog = (orderItemId: string, orderItemName: string, orderItemImage: string | undefined, orderId: string) => {
+    const handleOpenReturnDialog = (
+        orderItemId: string, 
+        orderItemName: string, 
+        orderItemImage: string | undefined, 
+        orderId: string,
+        refundAmount: number
+    ) => {
         setSelectedItemForReturn({
             orderItemId,
             orderItemName,
             orderItemImage,
-            orderId
+            orderId,
+            refundAmount
         });
         setReturnReason('');
         setReturnImages([]);
@@ -430,10 +571,15 @@ const HistoryReceipt: React.FC = () => {
 
         setIsSubmittingReturn(true);
         try {
+            // Extract image URLs from uploaded images
+            const imageUrls = returnImages.map(img => img.url);
+
             const response = await orderService.returnOrder(
-                selectedItemForReturn.orderItemId, // Use orderItemId instead of orderId
+                selectedItemForReturn.orderItemId,
+                selectedItemForReturn.orderId,
                 returnReason,
-                returnImages
+                selectedItemForReturn.refundAmount,
+                imageUrls // Send array of URLs
             );
 
             if (response.success) {
@@ -459,22 +605,72 @@ const HistoryReceipt: React.FC = () => {
     };
 
     // Handle image upload for return
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
-        if (!files) return;
+        if (!files || files.length === 0) return;
 
-        // Convert files to base64 or upload to server
-        // For now, we'll just store file names as placeholder
-        const imageUrls: string[] = [];
-        Array.from(files).forEach(file => {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                if (event.target?.result) {
-                    imageUrls.push(event.target.result as string);
-                    setReturnImages(prev => [...prev, event.target!.result as string]);
-                }
-            };
-            reader.readAsDataURL(file);
+        // Validate number of images (max 5)
+        if (returnImages.length + files.length > 5) {
+            toast.error('Chỉ được tải lên tối đa 5 hình ảnh', {
+                duration: 3000,
+            });
+            return;
+        }
+
+        setIsUploadingImages(true);
+        const toastId = toast.loading('Đang tải lên hình ảnh...');
+
+        try {
+            // Upload images to Cloudinary with folder = "refunds"
+            const uploadPromises = Array.from(files).map(file => 
+                uploadService.uploadImage(file, 'refunds')
+            );
+
+            const results = await Promise.all(uploadPromises);
+
+            // Filter successful uploads
+            const successfulUploads = results.filter(r => r.success && r.data);
+            const failedUploads = results.filter(r => !r.success);
+
+            if (successfulUploads.length > 0) {
+                // Add successful uploads to state
+                const newImages = successfulUploads.map(r => r.data!);
+                setReturnImages(prev => [...prev, ...newImages]);
+
+                toast.success(
+                    `Đã tải lên ${successfulUploads.length}/${files.length} hình ảnh`,
+                    {
+                        id: toastId,
+                        duration: 3000,
+                    }
+                );
+            }
+
+            if (failedUploads.length > 0) {
+                const errorMessage = failedUploads[0].message || 'Một số hình ảnh không thể tải lên';
+                toast.error(errorMessage, {
+                    id: toastId,
+                    duration: 3000,
+                });
+            }
+        } catch (error) {
+            console.error('Error uploading images:', error);
+            toast.error('Có lỗi xảy ra khi tải lên hình ảnh', {
+                id: toastId,
+                duration: 3000,
+            });
+        } finally {
+            setIsUploadingImages(false);
+            // Reset input
+            e.target.value = '';
+        }
+    };
+
+    // Handle remove uploaded image
+    const handleRemoveImage = (index: number) => {
+        setReturnImages(prev => prev.filter((_, i) => i !== index));
+        toast.success('Đã xóa hình ảnh', {
+            duration: 2000,
         });
     };
 
@@ -793,6 +989,100 @@ const HistoryReceipt: React.FC = () => {
                                                 </div>
                                             )}
 
+                                            {/* Refund Progress Bar - Show if order has a refund */}
+                                            {orderItemRefunds.has(order.orderId) && (() => {
+                                                const refund = orderItemRefunds.get(order.orderId)!;
+                                                const refundStep = getRefundProgressStep(refund.refundStatus);
+                                                const isRejected = refund.refundStatus.toLowerCase() === 'rejected' || refund.refundStatus.toLowerCase() === 'từ chối';
+                                                
+                                                return (
+                                                    <div className="mb-6">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <span className="text-sm font-medium text-gray-700">
+                                                                Tiến trình trả hàng
+                                                            </span>
+                                                            <Badge className={`text-xs ${getRefundStatusColor(refund.refundStatus)}`}>
+                                                                {getRefundStatusText(refund.refundStatus)}
+                                                            </Badge>
+                                                        </div>
+                                                        {!isRejected && (
+                                                            <div className="relative">
+                                                                <div className="flex items-center">
+                                                                    <div className="flex-1 h-2 bg-gray-200 overflow-hidden">
+                                                                        <div
+                                                                            className={`h-full transition-all duration-500 ${
+                                                                                refundStep >= 1
+                                                                                    ? getCurrentRefundStatusColor(refund.refundStatus)
+                                                                                    : 'bg-gray-300'
+                                                                            }`}
+                                                                            style={{
+                                                                                width: `${Math.max(
+                                                                                    0,
+                                                                                    Math.min(100, (refundStep / 3) * 100),
+                                                                                )}%`,
+                                                                            }}
+                                                                        ></div>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Refund Progress Steps */}
+                                                                <div className="flex justify-between mt-2">
+                                                                    <div className="flex flex-col items-center">
+                                                                        <div
+                                                                            className={`w-6 h-6 flex items-center justify-center text-xs font-medium ${
+                                                                                refundStep >= 1
+                                                                                    ? getRefundProgressColor(refundStep, 1) + ' text-white'
+                                                                                    : 'bg-gray-300 text-gray-600'
+                                                                            }`}
+                                                                        >
+                                                                            {refundStep >= 1 ? <CheckCircle className="w-4 h-4" /> : '1'}
+                                                                        </div>
+                                                                        <span className="text-xs text-gray-600 mt-1">
+                                                                            Chờ xác nhận
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="flex flex-col items-center">
+                                                                        <div
+                                                                            className={`w-6 h-6 flex items-center justify-center text-xs font-medium ${
+                                                                                refundStep >= 2
+                                                                                    ? getRefundProgressColor(refundStep, 2) + ' text-white'
+                                                                                    : 'bg-gray-300 text-gray-600'
+                                                                            }`}
+                                                                        >
+                                                                            {refundStep >= 2 ? <CheckCircle className="w-4 h-4" /> : '2'}
+                                                                        </div>
+                                                                        <span className="text-xs text-gray-600 mt-1">
+                                                                            Đã duyệt
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="flex flex-col items-center">
+                                                                        <div
+                                                                            className={`w-6 h-6 flex items-center justify-center text-xs font-medium ${
+                                                                                refundStep >= 3
+                                                                                    ? getRefundProgressColor(refundStep, 3) + ' text-white'
+                                                                                    : 'bg-gray-300 text-gray-600'
+                                                                            }`}
+                                                                        >
+                                                                            {refundStep >= 3 ? <CheckCircle className="w-4 h-4" /> : '3'}
+                                                                        </div>
+                                                                        <span className="text-xs text-gray-600 mt-1">
+                                                                            Hoàn thành
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        {isRejected && (
+                                                            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-2">
+                                                                <p className="text-sm text-red-700">
+                                                                    ❌ Yêu cầu trả hàng đã bị từ chối
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
+
                                             {/* Two Column Layout: Order Info Left, Shipping Info Right */}
                                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                                 {/* LEFT COLUMN: Order Information */}
@@ -927,23 +1217,35 @@ const HistoryReceipt: React.FC = () => {
                                                                                             </Button>
                                                                                         )}
                                                                                         
-                                                                                        {/* Return button - only show if item hasn't been returned yet */}
-                                                                                        <Button
-                                                                                            onClick={(e) => {
-                                                                                                e.stopPropagation();
-                                                                                                handleOpenReturnDialog(
-                                                                                                    detail.orderDetailId,
-                                                                                                    detail.productName,
-                                                                                                    detail.productImages?.[0],
-                                                                                                    order.orderId
-                                                                                                );
-                                                                                            }}
-                                                                                            size="sm"
-                                                                                            className="bg-orange-500 hover:bg-orange-600 text-white text-xs"
-                                                                                        >
-                                                                                            <RotateCcw className="w-3 h-3 mr-1" />
-                                                                                            Trả hàng
-                                                                                        </Button>
+                                                                                        {/* Return button - disable if order has a refund */}
+                                                                                        {orderItemRefunds.has(order.orderId) ? (
+                                                                                            <Button
+                                                                                                size="sm"
+                                                                                                className="bg-gray-400 text-white text-xs cursor-not-allowed"
+                                                                                                disabled
+                                                                                            >
+                                                                                                <RotateCcw className="w-3 h-3 mr-1" />
+                                                                                                Đã yêu cầu trả hàng
+                                                                                            </Button>
+                                                                                        ) : (
+                                                                                            <Button
+                                                                                                onClick={(e) => {
+                                                                                                    e.stopPropagation();
+                                                                                                    handleOpenReturnDialog(
+                                                                                                        detail.orderDetailId,
+                                                                                                        detail.productName,
+                                                                                                        detail.productImages?.[0],
+                                                                                                        order.orderId,
+                                                                                                        detail.totalPrice
+                                                                                                    );
+                                                                                                }}
+                                                                                                size="sm"
+                                                                                                className="bg-orange-500 hover:bg-orange-600 text-white text-xs"
+                                                                                            >
+                                                                                                <RotateCcw className="w-3 h-3 mr-1" />
+                                                                                                Trả hàng
+                                                                                            </Button>
+                                                                                        )}
                                                                                     </div>
                                                                                 )}
                                                                             </div>
@@ -1422,27 +1724,41 @@ const HistoryReceipt: React.FC = () => {
                         {/* Image Upload */}
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Hình ảnh sản phẩm (tùy chọn)
+                                Hình ảnh sản phẩm (tùy chọn) {returnImages.length > 0 && (
+                                    <span className="text-xs text-gray-500">({returnImages.length}/5)</span>
+                                )}
                             </label>
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-orange-500 transition-colors">
+                            <div className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
+                                isUploadingImages || returnImages.length >= 5
+                                    ? 'border-gray-200 bg-gray-50 cursor-not-allowed'
+                                    : 'border-gray-300 hover:border-orange-500 cursor-pointer'
+                            }`}>
                                 <input
                                     type="file"
-                                    accept="image/*"
+                                    accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
                                     multiple
                                     onChange={handleImageUpload}
                                     className="hidden"
                                     id="return-image-upload"
+                                    disabled={isUploadingImages || returnImages.length >= 5}
                                 />
                                 <label
                                     htmlFor="return-image-upload"
-                                    className="cursor-pointer flex flex-col items-center"
+                                    className={`flex flex-col items-center ${
+                                        isUploadingImages || returnImages.length >= 5 
+                                            ? 'cursor-not-allowed opacity-50' 
+                                            : 'cursor-pointer'
+                                    }`}
                                 >
                                     <Upload className="w-8 h-8 text-gray-400 mb-2" />
                                     <span className="text-sm text-gray-600">
-                                        Nhấn để tải lên hình ảnh
+                                        {returnImages.length >= 5 
+                                            ? 'Đã đạt tối đa 5 hình ảnh'
+                                            : 'Nhấn để tải lên hình ảnh'
+                                        }
                                     </span>
                                     <span className="text-xs text-gray-500 mt-1">
-                                        PNG, JPG tối đa 5MB
+                                        PNG, JPG, WEBP, GIF - Tối đa 5MB/ảnh
                                     </span>
                                 </label>
                             </div>
@@ -1453,18 +1769,27 @@ const HistoryReceipt: React.FC = () => {
                                     {returnImages.map((image, index) => (
                                         <div key={index} className="relative">
                                             <img
-                                                src={image}
+                                                src={image.url}
                                                 alt={`Return ${index + 1}`}
                                                 className="w-full h-20 object-cover rounded-lg border"
                                             />
                                             <button
-                                                onClick={() => setReturnImages(prev => prev.filter((_, i) => i !== index))}
-                                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                                                onClick={() => handleRemoveImage(index)}
+                                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                                                type="button"
                                             >
                                                 <X className="w-3 h-3" />
                                             </button>
                                         </div>
                                     ))}
+                                </div>
+                            )}
+
+                            {/* Upload status */}
+                            {isUploadingImages && (
+                                <div className="mt-2 text-sm text-orange-600 flex items-center gap-2">
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600"></div>
+                                    Đang tải lên...
                                 </div>
                             )}
                         </div>

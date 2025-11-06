@@ -1,12 +1,14 @@
 import axiosInstance from '../libs/axios';
 import { API } from '../config/constants';
+import type { OrderResponse } from './orderService';
 
 // Types
 export interface RefundResponse {
   refundId: string;
-  orderId: string;
-  orderDate?: string;
-  accountName?: string;
+  order?: OrderResponse; // Full order object from backend
+  orderId?: string; // Extracted orderId for convenience
+  orderDate?: string; // Extracted from order
+  accountName?: string; // Extracted from order.account
   reason: string;
   refundStatus: string; // "Chờ xác nhận", "Đã duyệt", "Từ chối", "Hoàn thành"
   requestedAt: string;
@@ -34,6 +36,19 @@ export interface PaginatedRefundResponse {
   size: number;
 }
 
+// Helper function to map backend response to frontend format
+const mapRefundResponse = (refund: any): RefundResponse => {
+  console.log('🔍 Mapping refund:', refund);
+  console.log('🔍 Order data:', refund.order);
+  
+  return {
+    ...refund,
+    orderId: refund.order?.orderId || refund.orderId,
+    orderDate: refund.order?.createdAt || refund.orderDate,
+    accountName: refund.order?.accountName || refund.accountName,
+  };
+};
+
 // Service functions
 const refundService = {
   // Create new refund request
@@ -42,7 +57,7 @@ const refundService = {
       const response = await axiosInstance.post(`${API.REFUND}`, request);
       return {
         success: true,
-        data: response.data as RefundResponse,
+        data: mapRefundResponse(response.data),
       };
     } catch (error: any) {
       console.error('Error creating refund:', error);
@@ -59,9 +74,16 @@ const refundService = {
       const response = await axiosInstance.get(`${API.REFUND}`, {
         params: { page, size },
       });
+      
+      // Map all refunds in the content array
+      const mappedData = {
+        ...response.data,
+        content: response.data.content.map(mapRefundResponse),
+      };
+      
       return {
         success: true,
-        data: response.data as PaginatedRefundResponse,
+        data: mappedData as PaginatedRefundResponse,
       };
     } catch (error: any) {
       console.error('Error fetching refunds:', error);
@@ -78,7 +100,7 @@ const refundService = {
       const response = await axiosInstance.get(`${API.REFUND}/${refundId}`);
       return {
         success: true,
-        data: response.data as RefundResponse,
+        data: mapRefundResponse(response.data),
       };
     } catch (error: any) {
       console.error('Error fetching refund:', error);
@@ -95,15 +117,21 @@ const refundService = {
       const response = await axiosInstance.get(`${API.REFUND}/status/${status}`, {
         params: { page, size },
       });
+      
+      const mappedData = {
+        ...response.data,
+        content: response.data.content.map(mapRefundResponse),
+      };
+      
       return {
         success: true,
-        data: response.data as PaginatedRefundResponse,
+        data: mappedData as PaginatedRefundResponse,
       };
     } catch (error: any) {
       console.error('Error fetching refunds by status:', error);
       return {
         success: false,
-        message: error.response?.data?.message || 'Không thể tải danh sách hoàn tiền',
+        message: error.response?.data?.message || 'Không thể tải danh sách hoàn tiền theo trạng thái',
       };
     }
   },
@@ -114,7 +142,7 @@ const refundService = {
       const response = await axiosInstance.get(`${API.REFUND}/order/${orderId}`);
       return {
         success: true,
-        data: response.data as RefundResponse[],
+        data: response.data.map(mapRefundResponse),
       };
     } catch (error: any) {
       console.error('Error fetching refunds by order:', error);
@@ -131,9 +159,15 @@ const refundService = {
       const response = await axiosInstance.get(`${API.REFUND}/search`, {
         params: { keyword, page, size },
       });
+      
+      const mappedData = {
+        ...response.data,
+        content: response.data.content.map(mapRefundResponse),
+      };
+      
       return {
         success: true,
-        data: response.data as PaginatedRefundResponse,
+        data: mappedData as PaginatedRefundResponse,
       };
     } catch (error: any) {
       console.error('Error searching refunds:', error);
@@ -179,7 +213,7 @@ const refundService = {
       const response = await axiosInstance.put(`${API.REFUND}/${refundId}/status`, request);
       return {
         success: true,
-        data: response.data as RefundResponse,
+        data: mapRefundResponse(response.data),
       };
     } catch (error: any) {
       console.error('Error updating refund status:', error);
@@ -196,7 +230,7 @@ const refundService = {
       const response = await axiosInstance.put(`${API.REFUND}/${refundId}/approve`);
       return {
         success: true,
-        data: response.data as RefundResponse,
+        data: mapRefundResponse(response.data),
       };
     } catch (error: any) {
       console.error('Error approving refund:', error);

@@ -74,6 +74,15 @@ const AdminRefund: React.FC = () => {
 
             console.log('🔍 Loaded refunds:', allRefunds);
             
+            // Debug: Log first refund to see structure
+            if (allRefunds.length > 0) {
+                console.log('🔍 First refund structure:', allRefunds[0]);
+                console.log('🔍 First refund orderId:', allRefunds[0].orderId);
+                console.log('🔍 First refund accountName:', allRefunds[0].accountName);
+                console.log('🔍 First refund refundAmount:', allRefunds[0].refundAmount);
+                console.log('🔍 First refund order object:', allRefunds[0].order);
+            }
+            
             setTotalItems(allRefunds.length);
             setTotalPages(Math.max(1, Math.ceil(allRefunds.length / itemsPerPage)));
             
@@ -445,14 +454,14 @@ const AdminRefund: React.FC = () => {
                                                     >
                                                         <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
                                                         <span className="text-sm font-medium text-amber-700">
-                                                            #{refund.refundId.slice(0, 8)}
+                                                            #{refund.refundId?.slice(0, 8) || 'N/A'}
                                                         </span>
                                                     </div>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="px-4 py-3 text-center">
                                                 <span className="text-sm font-medium text-gray-700">
-                                                    #{refund.orderId.slice(0, 8)}
+                                                    #{refund.orderId?.slice(0, 8) || 'N/A'}
                                                 </span>
                                             </TableCell>
                                             <TableCell className="px-4 py-3">

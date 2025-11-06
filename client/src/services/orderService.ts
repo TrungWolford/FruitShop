@@ -271,11 +271,21 @@ export const orderService = {
     }
   },
 
-  // Return order with reason and images
-  returnOrder: async (orderId: string, reason: string, images?: string[]): Promise<{ success: boolean; data?: any; message?: string }> => {
+  // Return order with reason and images - Create refund request
+  returnOrder: async (
+    _orderItemId: string,  // OrderItem ID for tracking (not used yet, for future use)
+    orderId: string,      // Order ID for refund
+    reason: string, 
+    refundAmount: number,
+    images?: string[]
+  ): Promise<{ success: boolean; data?: any; message?: string }> => {
     try {
-      const response = await axiosInstance.post(`/order/${orderId}/return`, {
+      // Create refund request via POST /api/refund
+      // Note: orderItemId is not sent to backend yet, may be added in future
+      const response = await axiosInstance.post(API.REFUND, {
+        orderId: orderId,
         reason,
+        refundAmount: refundAmount,
         images: images || []
       });
       return {
