@@ -184,6 +184,27 @@ const TopNavigation: React.FC = () => {
     }
   };
 
+  // Helper function to get correct image URL
+  const getImageUrl = (imageUrl?: string) => {
+    if (!imageUrl) {
+      return '/placeholder-image.svg';
+    }
+    
+    // If already a full URL
+    if (imageUrl.startsWith('http')) {
+      return imageUrl;
+    }
+    
+    // If already starts with /products/
+    if (imageUrl.startsWith('/products/')) {
+      return imageUrl;
+    }
+    
+    // Clean and add /products/ prefix
+    const cleanUrl = imageUrl.startsWith('/') ? imageUrl.slice(1) : imageUrl;
+    return `/products/${cleanUrl}`;
+  };
+
   const handleUpdateQuantity = async (cartItemId: string, currentQuantity: number, delta: number) => {
     const newQuantity = currentQuantity + delta;
     if (newQuantity <= 0) return;
@@ -392,9 +413,13 @@ const TopNavigation: React.FC = () => {
                         <div key={item.cartItemId} className="flex items-start justify-between w-full">
                           <div className="flex">
                             <img
-                              src={item.images?.[0] || imgaes.banner2}
+                              src={getImageUrl(item.images?.[0])}
                               alt={item.productName}
                               className="w-20 h-20 object-cover rounded"
+                              onError={(e) => {
+                                console.error('❌ Header hover cart - Image failed to load:', item.images?.[0]);
+                                e.currentTarget.src = '/placeholder-image.svg';
+                              }}
                             />
                             <div className="flex flex-col ml-2">
                               <h4 className="text-sm font-medium line-clamp-2 mb-2">{item.productName}</h4>
