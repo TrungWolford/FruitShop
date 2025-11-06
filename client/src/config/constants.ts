@@ -124,6 +124,20 @@ export const API = {
   MOMO_IPN_HANDLER: '/momo/ipn-handler', // POST /api/momo/ipn-handler (called by MoMo)
   MOMO_RETURN: '/momo/return', // GET /api/momo/return
   CHECK_MOMO_STATUS: (orderId: string) => `/momo/check-status/${orderId}`, // GET /api/momo/check-status/{orderId}
+
+  // Refunds - Theo RefundController.java
+  REFUND: '/refund', // GET /api/refund?page=0&size=10 | POST /api/refund
+  GET_REFUND_BY_ID: (refundId: string) => `/refund/${refundId}`, // GET /api/refund/{refundId}
+  GET_REFUNDS_BY_STATUS: (status: string) => `/refund/status/${status}`, // GET /api/refund/status/{status}?page=0&size=10
+  GET_REFUNDS_BY_ORDER: (orderId: string) => `/refund/order/${orderId}`, // GET /api/refund/order/{orderId}
+  SEARCH_REFUNDS: '/refund/search', // GET /api/refund/search?keyword=xxx&page=0&size=10
+  GET_REFUNDS_BY_DATE_RANGE: '/refund/date-range', // GET /api/refund/date-range?startDate=xxx&endDate=xxx&page=0&size=10
+  UPDATE_REFUND_STATUS: (refundId: string) => `/refund/${refundId}/status`, // PUT /api/refund/{refundId}/status
+  APPROVE_REFUND: (refundId: string) => `/refund/${refundId}/approve`, // PUT /api/refund/{refundId}/approve
+  REJECT_REFUND: (refundId: string) => `/refund/${refundId}/reject`, // PUT /api/refund/{refundId}/reject
+  COMPLETE_REFUND: (refundId: string) => `/refund/${refundId}/complete`, // PUT /api/refund/{refundId}/complete
+  CANCEL_REFUND: (refundId: string) => `/refund/${refundId}`, // DELETE /api/refund/{refundId}
+  GET_PENDING_REFUNDS_COUNT: '/refund/stats/pending-count', // GET /api/refund/stats/pending-count
 } as const;
 
 // HTTP Status Codes
