@@ -136,6 +136,7 @@ export const API = {
   APPROVE_REFUND: (refundId: string) => `/refund/${refundId}/approve`, // PUT /api/refund/{refundId}/approve
   REJECT_REFUND: (refundId: string) => `/refund/${refundId}/reject`, // PUT /api/refund/{refundId}/reject
   COMPLETE_REFUND: (refundId: string) => `/refund/${refundId}/complete`, // PUT /api/refund/{refundId}/complete
+  DELETE_REFUND: (refundId: string) => `/refund/${refundId}`, // DELETE /api/refund/{refundId}
   CANCEL_REFUND: (refundId: string) => `/refund/${refundId}`, // DELETE /api/refund/{refundId}
   GET_PENDING_REFUNDS_COUNT: '/refund/stats/pending-count', // GET /api/refund/stats/pending-count
 } as const;
