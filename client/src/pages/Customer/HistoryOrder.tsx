@@ -877,8 +877,26 @@ const HistoryReceipt: React.FC = () => {
                                                                                         detail?.unitPrice || 0,
                                                                                     )}
                                                                                 </p>
+                                                                                
+                                                                                {/* Show status badge if item has been returned */}
+                                                                                {detail?.status && (
+                                                                                    <div className="mt-1">
+                                                                                        <Badge className={`text-xs ${
+                                                                                            detail.status === 'returned' 
+                                                                                                ? 'bg-red-100 text-red-700 border-red-300' 
+                                                                                                : detail.status === 'returning'
+                                                                                                ? 'bg-orange-100 text-orange-700 border-orange-300'
+                                                                                                : 'bg-gray-100 text-gray-700 border-gray-300'
+                                                                                        }`}>
+                                                                                            {detail.status === 'returned' && '✓ Đã trả hàng'}
+                                                                                            {detail.status === 'returning' && '⏳ Đang xử lý trả hàng'}
+                                                                                            {!['returned', 'returning'].includes(detail.status) && detail.status}
+                                                                                        </Badge>
+                                                                                    </div>
+                                                                                )}
+                                                                                
                                                                                 {/* Buttons for completed orders */}
-                                                                                {order.status === 4 && detail && (
+                                                                                {order.status === 4 && detail && !detail.status && (
                                                                                     <div className="flex gap-2 mt-2">
                                                                                         {/* Rating button */}
                                                                                         {ratedOrderItems.get(detail.orderDetailId) ? (
@@ -909,7 +927,7 @@ const HistoryReceipt: React.FC = () => {
                                                                                             </Button>
                                                                                         )}
                                                                                         
-                                                                                        {/* Return button for each item */}
+                                                                                        {/* Return button - only show if item hasn't been returned yet */}
                                                                                         <Button
                                                                                             onClick={(e) => {
                                                                                                 e.stopPropagation();
