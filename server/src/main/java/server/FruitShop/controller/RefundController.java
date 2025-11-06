@@ -106,6 +106,18 @@ public class RefundController {
             return ResponseEntity.badRequest().build();
         }
     }
+    
+    // Get refunds by order item ID (per-item refund)
+    @GetMapping("/order-item/{orderItemId}")
+    public ResponseEntity<List<RefundResponse>> getRefundsByOrderItemId(@PathVariable String orderItemId) {
+        try {
+            List<RefundResponse> refunds = refundService.getRefundsByOrderItemId(orderItemId);
+            return ResponseEntity.ok(refunds);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
+        }
+    }
 
     // Search refunds
     @GetMapping("/search")

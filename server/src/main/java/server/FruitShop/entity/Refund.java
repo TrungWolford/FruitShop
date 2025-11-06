@@ -18,11 +18,17 @@ public class Refund {
     @JoinColumn(name = "order_id")
     private Order order;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "order_item_id")
+    private OrderItem orderItem;  // Add orderItem reference for per-item refund
+
     private String reason;          // Lý do trả hàng / hoàn tiền
     private String refundStatus;    // Pending, Approved, Rejected, Completed
     private Date requestedAt;       // Ngày người mua yêu cầu
     private Date processedAt;       // Ngày hoàn tất xử lý
     private long refundAmount;      // Số tiền hoàn
+    
+    private String imageUrls;       // JSON array of image URLs (for evidence)
 
     @OneToOne
     @JoinColumn(name = "payment_id")

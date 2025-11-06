@@ -29,6 +29,9 @@ public interface RefundService {
     // Get refunds by order ID
     List<RefundResponse> getRefundsByOrderId(String orderId);
     
+    // Get refunds by order item ID (per-item refund)
+    List<RefundResponse> getRefundsByOrderItemId(String orderItemId);
+    
     // Search refunds
     Page<RefundResponse> searchRefunds(String keyword, Pageable pageable);
     

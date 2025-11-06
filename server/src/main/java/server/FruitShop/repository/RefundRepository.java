@@ -23,6 +23,9 @@ public interface RefundRepository extends JpaRepository<Refund, String> {
     // Find refunds by order ID
     List<Refund> findByOrder_OrderId(String orderId);
     
+    // Find refund by order item ID (per-item refund)
+    List<Refund> findByOrderItem_OrderDetailId(String orderDetailId);
+    
     // Find refunds by date range
     @Query("SELECT r FROM Refund r WHERE r.requestedAt BETWEEN :startDate AND :endDate")
     Page<Refund> findByDateRange(@Param("startDate") Date startDate, @Param("endDate") Date endDate, Pageable pageable);
