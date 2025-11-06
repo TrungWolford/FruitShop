@@ -425,6 +425,22 @@ public class OrderServiceImpl implements OrderService {
             System.out.println("✅ Shipping status updated to: 4 (Đã giao)");
         }
 
+        // Update payment status to "Hoàn thành" (1) when order is completed
+        Payment orderPayment = order.getPayment();
+        if (orderPayment != null) {
+            // Only update if payment is still pending (0) or failed before (2)
+            if (orderPayment.getPaymentStatus() == 0 || orderPayment.getPaymentStatus() == 2) {
+                orderPayment.setPaymentStatus(1); // Completed
+                orderPayment.setPaymentDate(new Date()); // Update payment date
+                paymentRepository.save(orderPayment);
+                System.out.println("✅ Payment status updated to: 1 (Hoàn thành) for payment: " + orderPayment.getPaymentId());
+            } else {
+                System.out.println("ℹ️ Payment already in final state: " + orderPayment.getPaymentStatus());
+            }
+        } else {
+            System.out.println("⚠️ No payment found for order: " + orderId);
+        }
+
         return OrderResponse.fromEntity(savedOrder);
     }
 
