@@ -573,6 +573,13 @@ const HistoryReceipt: React.FC = () => {
         try {
             // Extract image URLs from uploaded images
             const imageUrls = returnImages.map(img => img.url);
+            
+            console.log('📤 Submitting return request with:');
+            console.log('  - Order Item ID:', selectedItemForReturn.orderItemId);
+            console.log('  - Order ID:', selectedItemForReturn.orderId);
+            console.log('  - Reason:', returnReason);
+            console.log('  - Refund Amount:', selectedItemForReturn.refundAmount);
+            console.log('  - Image URLs:', imageUrls);
 
             const response = await orderService.returnOrder(
                 selectedItemForReturn.orderItemId,
@@ -635,7 +642,38 @@ const HistoryReceipt: React.FC = () => {
             if (successfulUploads.length > 0) {
                 // Add successful uploads to state
                 const newImages = successfulUploads.map(r => r.data!);
-                setReturnImages(prev => [...prev, ...newImages]);
+                
+                // Log uploaded images for debugging
+                console.log('📸 ========== REFUND IMAGE UPLOAD DEBUG ==========');
+                console.log('📸 Total uploaded:', newImages.length);
+                console.log('📸 Full response data:', newImages);
+                
+                newImages.forEach((img, idx) => {
+                    console.log(`📸 Image ${idx + 1}:`);
+                    console.log(`   - URL: "${img.url}"`);
+                    console.log(`   - Public ID: "${img.publicId}"`);
+                    console.log(`   - Format: "${img.format}"`);
+                    console.log(`   - Width: ${img.width}`);
+                    console.log(`   - Height: ${img.height}`);
+                    console.log(`   - Bytes: ${img.bytes}`);
+                    
+                    // Test if URL is valid
+                    if (!img.url || img.url === '') {
+                        console.error(`❌ Image ${idx + 1} has EMPTY URL!`);
+                    } else if (!img.url.startsWith('http')) {
+                        console.error(`❌ Image ${idx + 1} URL is not a valid HTTP URL:`, img.url);
+                    } else {
+                        console.log(`✅ Image ${idx + 1} URL is valid`);
+                    }
+                });
+                
+                console.log('📸 =============================================');
+                
+                setReturnImages(prev => {
+                    const updated = [...prev, ...newImages];
+                    console.log('📸 Updated returnImages state:', updated);
+                    return updated;
+                });
 
                 toast.success(
                     `Đã tải lên ${successfulUploads.length}/${files.length} hình ảnh`,
@@ -1766,22 +1804,42 @@ const HistoryReceipt: React.FC = () => {
                             {/* Preview uploaded images */}
                             {returnImages.length > 0 && (
                                 <div className="mt-4 grid grid-cols-3 gap-2">
-                                    {returnImages.map((image, index) => (
-                                        <div key={index} className="relative">
-                                            <img
-                                                src={image.url}
-                                                alt={`Return ${index + 1}`}
-                                                className="w-full h-20 object-cover rounded-lg border"
-                                            />
-                                            <button
-                                                onClick={() => handleRemoveImage(index)}
-                                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                                                type="button"
-                                            >
-                                                <X className="w-3 h-3" />
-                                            </button>
-                                        </div>
-                                    ))}
+                                    {returnImages.map((image, index) => {
+                                        // Debug logging for each image render
+                                        console.log(`🖼️ Rendering preview image ${index + 1}:`, {
+                                            url: image.url,
+                                            hasUrl: !!image.url,
+                                            urlLength: image.url?.length || 0
+                                        });
+                                        
+                                        return (
+                                            <div key={index} className="relative">
+                                                <img
+                                                    src={image.url}
+                                                    alt={`Return ${index + 1}`}
+                                                    className="w-full h-20 object-cover rounded-lg border"
+                                                    onError={(e) => {
+                                                        console.error('❌ FAILED to load refund preview image!');
+                                                        console.error('   - Index:', index);
+                                                        console.error('   - URL:', image.url);
+                                                        console.error('   - Full image data:', image);
+                                                        e.currentTarget.src = '/placeholder-image.svg';
+                                                        e.currentTarget.style.border = '2px solid red';
+                                                    }}
+                                                    onLoad={() => {
+                                                        console.log(`✅ SUCCESS loading refund preview image ${index + 1}:`, image.url);
+                                                    }}
+                                                />
+                                                <button
+                                                    onClick={() => handleRemoveImage(index)}
+                                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                                                    type="button"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             )}
 

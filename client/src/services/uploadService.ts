@@ -64,7 +64,7 @@ class UploadService {
             formData.append('folder', folder);
 
             // Upload to server
-            const response = await axios.post<UploadImageResponse>(
+            const response = await axios.post<any>(
                 `${this.baseURL}${API.UPLOAD_IMAGE}`,
                 formData,
                 {
@@ -74,9 +74,26 @@ class UploadService {
                 }
             );
 
+            // Debug logging
+            console.log('📤 Upload API Response:', response.data);
+            
+            // Backend returns: { success: true, data: { url, publicId, ... } }
+            // We need to extract the data field
+            const uploadData = response.data.data;
+            
+            if (!uploadData || !uploadData.url) {
+                console.error('❌ Invalid upload response structure:', response.data);
+                return {
+                    success: false,
+                    message: 'Backend trả về dữ liệu không hợp lệ'
+                };
+            }
+
+            console.log('✅ Extracted upload data:', uploadData);
+
             return {
                 success: true,
-                data: response.data
+                data: uploadData as UploadImageResponse
             };
         } catch (error: any) {
             console.error('Error uploading image:', error);
