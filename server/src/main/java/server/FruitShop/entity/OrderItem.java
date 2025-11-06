@@ -23,6 +23,9 @@ public class OrderItem {
 
     private long unitPrice;
 
+    // Status của từng orderItem (null: normal, "returned": đã trả hàng, "returning": đang xử lý trả hàng)
+    private String status;
+
     @PrePersist
     public void generateIdIfAbsent() {
         if (this.orderDetailId == null) {
