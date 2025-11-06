@@ -139,6 +139,14 @@ export const API = {
   DELETE_REFUND: (refundId: string) => `/refund/${refundId}`, // DELETE /api/refund/{refundId}
   CANCEL_REFUND: (refundId: string) => `/refund/${refundId}`, // DELETE /api/refund/{refundId}
   GET_PENDING_REFUNDS_COUNT: '/refund/stats/pending-count', // GET /api/refund/stats/pending-count
+
+  // Payments - Theo PaymentController.java
+  PAYMENT: '/payment', // GET /api/payment?page=0&size=10 | POST /api/payment
+  GET_PAYMENT_BY_ID: (paymentId: string) => `/payment/${paymentId}`, // GET /api/payment/{paymentId}
+  UPDATE_PAYMENT: (paymentId: string) => `/payment/${paymentId}`, // PUT /api/payment/{paymentId}
+  GET_PAYMENTS_BY_STATUS: (status: number) => `/payment/status/${status}`, // GET /api/payment/status/{status}?page=0&size=10
+  UPDATE_PAYMENT_STATUS: (paymentId: string) => `/payment/${paymentId}/status`, // PUT /api/payment/{paymentId}/status?status=1
+  GET_PAYMENT_BY_TRANSACTION_ID: (transactionId: string) => `/payment/transaction/${transactionId}`, // GET /api/payment/transaction/{transactionId}
 } as const;
 
 // HTTP Status Codes

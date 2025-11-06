@@ -11,6 +11,7 @@ import AdminAccounts from './pages/Admin/AdminAccounts';
 import AdminRoles from './pages/Admin/AdminRoles';
 import AdminCategory from './pages/Admin/AdminCategory';
 import AdminOrder from './pages/Admin/AdminOrder';
+import AdminPayment from './pages/Admin/AdminPayment';
 import AdminRefund from './pages/Admin/AdminRefund';
 import AdminShipping from './pages/Admin/AdminShipping';
 import AdminRating from './pages/Admin/AdminRating';
@@ -74,6 +75,7 @@ const App: React.FC = () => {
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
       <Route path="/admin/products" element={<AdminProduct />} />
       <Route path="/admin/orders" element={<AdminOrder />} />
+      <Route path="/admin/payments" element={<AdminPayment />} />
       <Route path="/admin/refunds" element={<AdminRefund />} />
       <Route path="/admin/shippings" element={<AdminShipping />} />
       <Route path="/admin/ratings" element={<AdminRating />} />
