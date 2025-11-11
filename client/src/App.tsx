@@ -5,8 +5,8 @@ import Register from './pages/Mainpage/Register';
 import ProfileCustomer from './pages/Customer/ProfileCustomer';
 import HistoryReceipt from './pages/Customer/HistoryOrder';
 import ProductPage from './pages/Customer/Product';
-// import AdminDashboard from './pages/Admin/AdminDashboard';
-// import AdminProduct from './pages/Admin/AdminProduct';
+import AdminDashboard from './pages/Admin/AdminDashboard';
+import AdminProduct from './pages/Admin/AdminProduct';
 import AdminAccounts from './pages/Admin/AdminAccounts';
 import AdminRoles from './pages/Admin/AdminRoles';
 import AdminCategory from './pages/Admin/AdminCategory';
@@ -71,10 +71,10 @@ const App: React.FC = () => {
           </ErrorBoundary>
         }
       />
-      {/* Temporarily disabled - files not found */}
-      {/* <Route path="/admin" element={<AdminDashboard />} /> */}
-      {/* <Route path="/admin/dashboard" element={<AdminDashboard />} /> */}
-      {/* <Route path="/admin/products" element={<AdminProduct />} /> */}
+      {/* Admin routes */}
+      <Route path="/admin" element={<AdminDashboard />} />
+      <Route path="/admin/dashboard" element={<AdminDashboard />} />
+      <Route path="/admin/products" element={<AdminProduct />} />
       <Route path="/admin/orders" element={<AdminOrder />} />
       <Route path="/admin/payments" element={<AdminPayment />} />
       <Route path="/admin/refunds" element={<AdminRefund />} />
