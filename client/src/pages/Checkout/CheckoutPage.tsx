@@ -51,21 +51,53 @@ const CheckoutPage: React.FC = () => {
 
     // Fetch cart items and shipping addresses
     useEffect(() => {
-        if (isAuthenticated && user) {
+        console.log('🛒 CheckoutPage useEffect triggered');
+        console.log('🛒 isAuthenticated:', isAuthenticated);
+        console.log('🛒 user:', user);
+        console.log('🛒 localStorage user:', localStorage.getItem('user'));
+        console.log('🛒 localStorage isAuthenticated:', localStorage.getItem('isAuthenticated'));
+        
+        // Check both Redux and localStorage for authentication
+        const isAuthInLocalStorage = localStorage.getItem('isAuthenticated') === 'true';
+        const userInLocalStorage = localStorage.getItem('user');
+        
+        if ((isAuthenticated && user) || (isAuthInLocalStorage && userInLocalStorage)) {
+            console.log('✅ User is authenticated, fetching cart items');
             fetchCartItems();
             fetchShippingAddresses();
         } else {
-            // Redirect to home if not authenticated
-            navigate('/');
+            console.log('❌ User NOT authenticated, redirecting to home');
+            console.log('❌ isAuthenticated:', isAuthenticated);
+            console.log('❌ user:', user);
+            console.log('❌ isAuthInLocalStorage:', isAuthInLocalStorage);
+            console.log('❌ userInLocalStorage:', userInLocalStorage);
+            
+            // Give a small delay in case Redux is still updating
+            const timer = setTimeout(() => {
+                if (!isAuthenticated && !isAuthInLocalStorage) {
+                    navigate('/');
+                }
+            }, 100);
+            
+            return () => clearTimeout(timer);
         }
     }, [isAuthenticated, user, navigate]);
 
     const fetchCartItems = async () => {
-        if (!user) return;
+        // Get user from Redux or localStorage
+        let currentUser = user;
+        if (!currentUser) {
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                currentUser = JSON.parse(userStr);
+            }
+        }
+        
+        if (!currentUser) return;
 
         setIsLoading(true);
         try {
-            const response = await cartService.getCartItems(user.accountId);
+            const response = await cartService.getCartItems(currentUser.accountId);
 
             if (response.success && response.data) {
                 let items: CartItemType[] = [];
@@ -95,11 +127,20 @@ const CheckoutPage: React.FC = () => {
     };
 
     const fetchShippingAddresses = async () => {
-        if (!user) return;
+        // Get user from Redux or localStorage
+        let currentUser = user;
+        if (!currentUser) {
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                currentUser = JSON.parse(userStr);
+            }
+        }
+        
+        if (!currentUser) return;
 
         setIsLoadingShipping(true);
         try {
-            const response = await shippingService.getShippingByAccount(user.accountId);
+            const response = await shippingService.getShippingByAccount(currentUser.accountId);
 
             if (response.success && response.data) {
                 setSavedShippingAddresses(response.data);
@@ -237,7 +278,19 @@ const CheckoutPage: React.FC = () => {
     };
 
     const handlePlaceOrder = async () => {
-        if (!user) return;
+        // Get user from Redux or localStorage
+        let currentUser = user;
+        if (!currentUser) {
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                currentUser = JSON.parse(userStr);
+            }
+        }
+        
+        if (!currentUser) {
+            toast.error('Vui lòng đăng nhập để đặt hàng');
+            return;
+        }
 
         // Validation
         if (
@@ -268,7 +321,7 @@ const CheckoutPage: React.FC = () => {
 
                 // Create new shipping address
                 const createShippingRequest: CreateShippingRequest = {
-                    accountId: user.accountId,
+                    accountId: currentUser.accountId,
                     receiverName: shippingData.receiverName,
                     receiverPhone: shippingData.receiverPhone,
                     receiverAddress: fullAddress, // Combined: address + ward + district
@@ -301,7 +354,7 @@ const CheckoutPage: React.FC = () => {
             }
 
             const createOrderRequest: CreateOrderRequest = {
-                accountId: user.accountId,
+                accountId: currentUser.accountId,
                 shippingId: finalShippingId,
                 paymentMethod: shippingData.paymentMethod,
                 items: cartItems.map((item) => ({
@@ -327,7 +380,7 @@ const CheckoutPage: React.FC = () => {
 
             console.log('Creating order with data:', createOrderRequest);
             console.log('Cart items for order:', cartItems);
-            console.log('User account ID:', user.accountId);
+            console.log('User account ID:', currentUser.accountId);
             console.log('Payment method:', shippingData.paymentMethod);
 
             // Detailed validation logging
@@ -351,7 +404,7 @@ const CheckoutPage: React.FC = () => {
             // Validate account exists before creating order
             try {
                 console.log('Validating account existence...');
-                const accountCheck = await accountService.getAccountById(user.accountId);
+                const accountCheck = await accountService.getAccountById(currentUser.accountId);
                 console.log('Account validation successful:', accountCheck);
             } catch (accountError) {
                 console.error('Account validation failed:', accountError);
@@ -451,9 +504,9 @@ const CheckoutPage: React.FC = () => {
                 } else {
                     // COD - Clear cart and navigate to orders
                     console.log('Order created successfully with COD, now clearing cart...');
-                    console.log('🧹 Calling clearCart for accountId:', user.accountId);
+                    console.log('🧹 Calling clearCart for accountId:', currentUser.accountId);
 
-                    const clearCartResponse = await cartService.clearCart(user.accountId);
+                    const clearCartResponse = await cartService.clearCart(currentUser.accountId);
                     console.log('🧹 Clear cart response:', clearCartResponse);
 
                     if (clearCartResponse.success) {

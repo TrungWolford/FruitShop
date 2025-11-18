@@ -83,6 +83,12 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- H2 Database for Testing -->
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 		<!-- Cloudinary -->
 		<dependency>
 			<groupId>com.cloudinary</groupId>
@@ -123,6 +129,10 @@
 							<artifactId>lombok</artifactId>
 						</exclude>
 					</excludes>
+					<jvmArguments>-Duser.timezone=UTC</jvmArguments>
+					<environmentVariables>
+						<PGTZ>UTC</PGTZ>
+					</environmentVariables>
 				</configuration>
 			</plugin>
 		</plugins>

@@ -127,12 +127,18 @@ const TopNavigation: React.FC = () => {
       setIsCartOpen(false);
     };
 
+    const handleOpenLoginDialog = () => {
+      setIsLoginDialogOpen(true);
+    };
+
     window.addEventListener('cartUpdated', handleCartUpdate);
     window.addEventListener('closeCartModal', handleCloseCartModal);
+    window.addEventListener('openLoginDialog', handleOpenLoginDialog);
 
     return () => {
       window.removeEventListener('cartUpdated', handleCartUpdate);
       window.removeEventListener('closeCartModal', handleCloseCartModal);
+      window.removeEventListener('openLoginDialog', handleOpenLoginDialog);
     };
   }, [isAuthenticated, user]);
 

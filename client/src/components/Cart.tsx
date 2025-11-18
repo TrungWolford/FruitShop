@@ -96,8 +96,9 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
         setCartItems(updatedCart);
         toast.success('Đã cập nhật số lượng sản phẩm');
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
     } catch (error) {
-      console.error('Error updating cart item:', error);
+      // console.error('Error updating cart item:', error);
       toast.error('Đã xảy ra lỗi khi cập nhật');
     } finally {
       setIsUpdating(null);
@@ -123,8 +124,9 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
         setCartItems(updatedCart);
         toast.success('Đã xóa sản phẩm khỏi giỏ hàng');
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
     } catch (error) {
-      console.error('Error removing cart item:', error);
+      // console.error('Error removing cart item:', error);
       toast.error('Đã xảy ra lỗi khi xóa sản phẩm');
     } finally {
       setIsUpdating(null);
@@ -226,8 +228,17 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
               </Button>
               <Button
                 onClick={() => {
-                  onClose();
-                  navigate('/checkout');
+                  if (!isAuthenticated || !user) {
+                    // Lưu ý định đi đến checkout
+                    sessionStorage.setItem('intendedRoute', '/checkout');
+                    toast.error('Vui lòng đăng nhập để thanh toán');
+                    onClose();
+                    // Dispatch event để mở LoginDialog
+                    window.dispatchEvent(new CustomEvent('openLoginDialog'));
+                  } else {
+                    onClose();
+                    navigate('/checkout');
+                  }
                 }}
                 className="bg-blue-600 text-white"
               >
