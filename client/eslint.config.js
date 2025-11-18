@@ -23,7 +23,7 @@ export default tseslint.config([
     //React rules
 
     //Common rules
-    'no-console': 'warn',
+    // 'no-console': 'warn',
     'no-lonely-if': 'warn',
     'no-unused-vars': 'warn',
   }

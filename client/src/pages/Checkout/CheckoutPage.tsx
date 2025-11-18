@@ -19,6 +19,12 @@ import type { CreateOrderRequest } from '../../services/orderService';
 import type { CartItem as CartItemType } from '../../types/cart';
 import { toast } from 'sonner';
 
+// Interface for cart response variations
+interface CartResponse {
+    items?: CartItemType[];
+    cartItems?: CartItemType[];
+}
+
 // Shipping method options
 const SHIPPING_METHODS = [
     { id: 'super_fast', name: 'HCM - Siêu tốc', fee: 50000, description: 'Giao hàng trong 2 giờ' },
@@ -105,11 +111,13 @@ const CheckoutPage: React.FC = () => {
                 if (Array.isArray(response.data)) {
                     items = response.data;
                 } else if (typeof response.data === 'object' && 'items' in response.data) {
-                    items = (response.data as any).items || [];
+                    const cartResponse = response.data as CartResponse;
+                    items = cartResponse.items || [];
                 } else if (typeof response.data === 'object' && 'cartItems' in response.data) {
-                    items = (response.data as any).cartItems || [];
+                    const cartResponse = response.data as CartResponse;
+                    items = cartResponse.cartItems || [];
                 } else {
-                    items = [response.data as any];
+                    items = [response.data as CartItemType];
                 }
 
                 setCartItems(items);
@@ -473,8 +481,8 @@ const CheckoutPage: React.FC = () => {
                             console.log('✅ MoMo payment created successfully:', momoResponse.data);
                             
                             // Clear cart sau khi tạo MoMo payment thành công
-                            console.log('🧹 Clearing cart for MoMo payment, accountId:', user.accountId);
-                            const clearCartResponse = await cartService.clearCart(user.accountId);
+                            console.log('🧹 Clearing cart for MoMo payment, accountId:', currentUser.accountId);
+                            const clearCartResponse = await cartService.clearCart(currentUser.accountId);
                             console.log('🧹 Clear cart response:', clearCartResponse);
 
                             if (clearCartResponse.success) {
@@ -921,7 +929,7 @@ const CheckoutPage: React.FC = () => {
                             <Button
                                 onClick={handlePlaceOrder}
                                 disabled={isProcessing}
-                                className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-none"
+                                className="w-full mt-6 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-none"
                             >
                                 {isProcessing ? (
                                     <div className="flex items-center gap-2">

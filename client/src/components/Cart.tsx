@@ -153,7 +153,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
       {/* Cart Dialog */}
       <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[650px] h-[85vh] bg-white rounded-lg shadow-2xl z-50 border border-gray-100 flex flex-col">
         {/* Header */}
-        <div className="relative px-6 py-4 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 rounded-t-lg flex-shrink-0 shadow-lg">
+        <div className="relative px-6 py-4 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 rounded-t-lg flex-shrink-0 shadow-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-white/25 rounded-full flex items-center justify-center shadow-inner">
@@ -240,7 +240,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
                     navigate('/checkout');
                   }
                 }}
-                className="bg-blue-600 text-white"
+                className="bg-orange-600 text-white"
               >
                 Thanh toán
               </Button>
