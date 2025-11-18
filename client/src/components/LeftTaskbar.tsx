@@ -13,7 +13,9 @@ import {
   Home,
   ShoppingBag,
   Truck,
-  Star
+  Star,
+  RefreshCcw,
+  CreditCard
 } from 'lucide-react'
 
 const LeftTaskbar: React.FC = () => {
@@ -47,6 +49,16 @@ const LeftTaskbar: React.FC = () => {
       icon: ShoppingBag,
       label: 'Đơn hàng',
       path: '/admin/orders'
+    },
+    {
+      icon: CreditCard,
+      label: 'Thanh toán',
+      path: '/admin/payments'
+    },
+    {
+      icon: RefreshCcw,
+      label: 'Hoàn trả',
+      path: '/admin/refunds'
     },
     {
       icon: Truck,

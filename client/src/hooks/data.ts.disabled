@@ -1,10 +1,21 @@
 import type { Account } from '../types/account';
 import type { Category, Product } from '../types/product';
 
-// ==================== ACCOUNTS ====================
-export const mockAccounts: Account[] = [];
+export const mockAccounts: Account[] = [
+  // Mock data disabled - using real API
+  /*
+  {
+    accountId: 'ACC001',
+    accountName: 'admin',
+    phone: '0901234567',
+    password: 'admin123',
+    status: 1, // ACTIVE
+    roles: [{ roleId: 'ROLE_ADMIN', roleName: 'ADMIN' }]
+  }
+  */
+];
 
-// Helper functions for accounts
+// Helper functions disabled - using real API
 export const getAccountById = (_id: string): Account | undefined => {
   return undefined;
 };
@@ -104,8 +115,8 @@ export const mockProducts: Product[] = [
     productName: 'Đắc Nhân Tâm',
     categories: [mockCategories[3]], // Tâm lý - Kỹ năng sống
     images: [
-      { id: 1, imageUrl: '/images/dac-nhan-tam-1.jpg', imageOrder: 0 },
-      { id: 2, imageUrl: '/images/dac-nhan-tam-2.jpg', imageOrder: 1 }
+      '/images/dac-nhan-tam-1.jpg',
+      '/images/dac-nhan-tam-2.jpg'
     ],
     price: 89000,
     stock: 150,
@@ -118,9 +129,9 @@ export const mockProducts: Product[] = [
     productName: 'Sapiens: Lược sử loài người',
     categories: [mockCategories[5]], // Lịch sử
     images: [
-      { id: 3, imageUrl: '/images/sapiens-1.jpg', imageOrder: 0 },
-      { id: 4, imageUrl: '/images/sapiens-2.jpg', imageOrder: 1 },
-      { id: 5, imageUrl: '/images/sapiens-3.jpg', imageOrder: 2 }
+      '/images/sapiens-1.jpg',
+      '/images/sapiens-2.jpg',
+      '/images/sapiens-3.jpg'
     ],
     price: 299000,
     stock: 75,
@@ -133,7 +144,7 @@ export const mockProducts: Product[] = [
     productName: 'Tôi Tài Giỏi, Bạn Cũng Thế',
     categories: [mockCategories[3]], // Tâm lý - Kỹ năng sống
     images: [
-      { id: 6, imageUrl: '/images/toi-tai-gioi-1.jpg', imageOrder: 0 }
+      '/images/toi-tai-gioi-1.jpg'
     ],
     price: 79000,
     stock: 200,
@@ -146,8 +157,8 @@ export const mockProducts: Product[] = [
     productName: 'Kinh Tế Học Vĩ Mô',
     categories: [mockCategories[2]], // Kinh tế - Quản lý
     images: [
-      { id: 7, imageUrl: '/images/kinh-te-vi-mo-1.jpg', imageOrder: 0 },
-      { id: 8, imageUrl: '/images/kinh-te-vi-mo-2.jpg', imageOrder: 1 }
+      '/images/kinh-te-vi-mo-1.jpg',
+      '/images/kinh-te-vi-mo-2.jpg'
     ],
     price: 450000,
     stock: 50,
@@ -160,7 +171,7 @@ export const mockProducts: Product[] = [
     productName: 'Thành Phố Tình Yêu',
     categories: [mockCategories[0]], // Văn học
     images: [
-      { id: 9, imageUrl: '/images/thanh-pho-tinh-yeu-1.jpg', imageOrder: 0 }
+      '/images/thanh-pho-tinh-yeu-1.jpg'
     ],
     price: 65000,
     stock: 120,
@@ -173,8 +184,8 @@ export const mockProducts: Product[] = [
     productName: 'Lập Trình Python Cơ Bản',
     categories: [mockCategories[1]], // Khoa học công nghệ
     images: [
-      { id: 10, imageUrl: '/images/python-co-ban-1.jpg', imageOrder: 0 },
-      { id: 11, imageUrl: '/images/python-co-ban-2.jpg', imageOrder: 1 }
+      '/images/python-co-ban-1.jpg',
+      '/images/python-co-ban-2.jpg'
     ],
     price: 199000,
     stock: 80,
@@ -187,7 +198,7 @@ export const mockProducts: Product[] = [
     productName: 'Doraemon - Tập 15',
     categories: [mockCategories[4], mockCategories[9]], // Thiếu nhi + Truyện tranh
     images: [
-      { id: 12, imageUrl: '/images/doraemon-15-1.jpg', imageOrder: 0 }
+      '/images/doraemon-15-1.jpg'
     ],
     price: 25000,
     stock: 300,
@@ -200,8 +211,8 @@ export const mockProducts: Product[] = [
     productName: 'Triết Học Phương Đông',
     categories: [mockCategories[6]], // Triết học
     images: [
-      { id: 13, imageUrl: '/images/triet-hoc-phuong-dong-1.jpg', imageOrder: 0 },
-      { id: 14, imageUrl: '/images/triet-hoc-phuong-dong-2.jpg', imageOrder: 1 }
+      '/images/triet-hoc-phuong-dong-1.jpg',
+      '/images/triet-hoc-phuong-dong-2.jpg'
     ],
     price: 350000,
     stock: 45,
@@ -214,7 +225,7 @@ export const mockProducts: Product[] = [
     productName: 'English Grammar in Use',
     categories: [mockCategories[7]], // Ngoại ngữ
     images: [
-      { id: 15, imageUrl: '/images/english-grammar-1.jpg', imageOrder: 0 }
+      '/images/english-grammar-1.jpg'
     ],
     price: 180000,
     stock: 95,
@@ -227,7 +238,7 @@ export const mockProducts: Product[] = [
     productName: 'Toán Lớp 12 - Sách Giáo Khoa',
     categories: [mockCategories[8]], // Sách giáo khoa
     images: [
-      { id: 16, imageUrl: '/images/toan-12-sgk-1.jpg', imageOrder: 0 }
+      '/images/toan-12-sgk-1.jpg'
     ],
     price: 45000,
     stock: 250,
@@ -240,8 +251,8 @@ export const mockProducts: Product[] = [
     productName: 'Người Khổng Lồ Sa Ngã',
     categories: [mockCategories[0]], // Văn học
     images: [
-      { id: 17, imageUrl: '/images/nguoi-khong-lo-1.jpg', imageOrder: 0 },
-      { id: 18, imageUrl: '/images/nguoi-khong-lo-2.jpg', imageOrder: 1 }
+      '/images/nguoi-khong-lo-1.jpg',
+      '/images/nguoi-khong-lo-2.jpg'
     ],
     price: 420000,
     stock: 30,
@@ -254,7 +265,7 @@ export const mockProducts: Product[] = [
     productName: 'Kỹ Năng Quản Lý Thời Gian',
     categories: [mockCategories[3]], // Tâm lý - Kỹ năng sống
     images: [
-      { id: 19, imageUrl: '/images/quan-ly-thoi-gian-1.jpg', imageOrder: 0 }
+      '/images/quan-ly-thoi-gian-1.jpg'
     ],
     price: 95000,
     stock: 110,
@@ -314,7 +325,7 @@ export const searchProducts = (keyword: string): Product[] => {
   );
 };
 
-export const getProductsByAuthor = (_author: string): Product[] => {
+export const getProductsByAuthor = (author: string): Product[] => {
   // This helper is deprecated after removing author field; return empty list
   return [];
 };
@@ -367,14 +378,14 @@ export const mockOrders: Order[] = [
     items: [
       {
         id: 1,
-        product: { ...mockProducts[0], images: [{ id: 1, imageUrl: '/banner1.jpg', imageOrder: 0 }] },
+        product: { ...mockProducts[0], images: ['/banner1.jpg'] },
         quantity: 2,
         price: 89000,
         total: 178000
       },
       {
         id: 2,
-        product: { ...mockProducts[2], images: [{ id: 2, imageUrl: '/banner2.jpg', imageOrder: 0 }] },
+        product: { ...mockProducts[2], images: ['/banner2.jpg'] },
         quantity: 1,
         price: 79000,
         total: 79000
@@ -400,21 +411,21 @@ export const mockOrders: Order[] = [
     items: [
       {
         id: 3,
-        product: { ...mockProducts[1], images: [{ id: 3, imageUrl: '/banner3.jpg', imageOrder: 0 }] },
+        product: { ...mockProducts[1], images: ['/banner3.jpg'] },
         quantity: 1,
         price: 299000,
         total: 299000
       },
       {
         id: 4,
-        product: { ...mockProducts[5], images: [{ id: 4, imageUrl: '/banner4.jpg', imageOrder: 0 }] },
+        product: { ...mockProducts[5], images: ['/banner4.jpg'] },
         quantity: 1,
         price: 65000,
         total: 65000
       },
       {
         id: 5,
-        product: { ...mockProducts[6], images: [{ id: 5, imageUrl: '/banner1.jpg', imageOrder: 0 }] },
+        product: { ...mockProducts[6], images: ['/banner1.jpg'] },
         quantity: 1,
         price: 199000,
         total: 199000
@@ -439,7 +450,7 @@ export const mockOrders: Order[] = [
     items: [
       {
         id: 6,
-        product: { ...mockProducts[3], images: [{ id: 6, imageUrl: '/banner2.jpg', imageOrder: 0 }] },
+        product: { ...mockProducts[3], images: ['/banner2.jpg'] },
         quantity: 1,
         price: 450000,
         total: 450000
@@ -464,21 +475,21 @@ export const mockOrders: Order[] = [
     items: [
       {
         id: 7,
-        product: { ...mockProducts[7], images: [{ id: 7, imageUrl: '/banner3.jpg', imageOrder: 0 }] },
+        product: { ...mockProducts[7], images: ['/banner3.jpg'] },
         quantity: 3,
         price: 25000,
         total: 75000
       },
       {
         id: 8,
-        product: { ...mockProducts[8], images: [{ id: 8, imageUrl: '/banner4.jpg', imageOrder: 0 }] },
+        product: { ...mockProducts[8], images: ['/banner4.jpg'] },
         quantity: 1,
         price: 350000,
         total: 350000
       },
       {
         id: 9,
-        product: { ...mockProducts[9], images: [{ id: 9, imageUrl: '/banner1.jpg', imageOrder: 0 }] },
+        product: { ...mockProducts[9], images: ['/banner1.jpg'] },
         quantity: 1,
         price: 180000,
         total: 180000
@@ -503,14 +514,14 @@ export const mockOrders: Order[] = [
     items: [
       {
         id: 10,
-        product: { ...mockProducts[10], images: [{ id: 10, imageUrl: '/banner2.jpg', imageOrder: 0 }] },
+        product: { ...mockProducts[10], images: ['/banner2.jpg'] },
         quantity: 2,
         price: 45000,
         total: 90000
       },
       {
         id: 11,
-        product: { ...mockProducts[11], images: [{ id: 11, imageUrl: '/banner3.jpg', imageOrder: 0 }] },
+        product: { ...mockProducts[11], images: ['/banner3.jpg'] },
         quantity: 1,
         price: 420000,
         total: 420000

@@ -173,14 +173,15 @@ public class MomoController {
 
             // Update payment status based on MoMo result
             if (resultCode != null && resultCode == 0) {
-                // Payment successful
+                // Payment successful - Set status to COMPLETED (1)
                 log.info("✅ Payment successful for orderId: {}", orderId);
 
                 if (order.getPayment() != null) {
                     Payment payment = order.getPayment();
-                    payment.setPaymentStatus(1); // Completed
+                    payment.setPaymentStatus(1); // Completed - Thanh toán thành công
                     payment.setPaymentDate(new Date());
                     payment.setTransactionId(String.valueOf(transactionId));
+                    payment.setPaymentMethod("MOMO"); // MoMo payment
                     
                     // Convert amount to BigDecimal
                     long amount = 0;
@@ -192,21 +193,27 @@ public class MomoController {
                     payment.setAmount(BigDecimal.valueOf(amount));
                     
                     paymentRepository.save(payment);
-                    log.info("✅ Payment updated to COMPLETED");
+                    log.info("✅ Payment status updated to COMPLETED (1) via MoMo");
                 }
 
-                // Keep order status as is (don't change order flow)
-                // Admin will confirm and ship the order separately
+                // Update order status to confirmed (2) - ready for admin to process
+                if (order.getStatus() == 1) { // Only if pending
+                    order.setStatus(2); // Confirmed
+                    orderRepository.save(order);
+                    log.info("✅ Order status updated to CONFIRMED (2)");
+                }
 
             } else {
-                // Payment failed
+                // Payment failed - Set status to FAILED (2)
                 log.warn("❌ Payment failed for orderId: {}. ResultCode: {}, Message: {}", 
                         orderId, resultCode, message);
 
                 if (order.getPayment() != null) {
                     Payment payment = order.getPayment();
-                    payment.setPaymentStatus(2); // Failed
+                    payment.setPaymentStatus(2); // Failed - Thanh toán thất bại
+                    payment.setPaymentDate(new Date());
                     paymentRepository.save(payment);
+                    log.info("❌ Payment status updated to FAILED (2) via MoMo");
                 }
 
                 // Set order status to cancelled (0)

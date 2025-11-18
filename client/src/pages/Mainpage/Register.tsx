@@ -118,8 +118,7 @@ const Register: React.FC = () => {
          password: formData.password
        }
 
-       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-       const result = await registerService.registerAccount(registerData)
+       await registerService.registerAccount(registerData)
       
       toast.success('Đăng ký tài khoản thành công! Vui lòng đăng nhập.')
       

@@ -16,6 +16,7 @@ public class OrderItemResponse {
     private long unitPrice;
     private long totalPrice;
     private List<String> productImages;
+    private String status; // Status của orderItem (null, "returned", "returning", etc.)
 
     public static OrderItemResponse fromEntity(OrderItem orderItem) {
         OrderItemResponse response = new OrderItemResponse();
@@ -23,6 +24,7 @@ public class OrderItemResponse {
         response.setQuantity(orderItem.getQuantity());
         response.setUnitPrice(orderItem.getUnitPrice());
         response.setTotalPrice(orderItem.getUnitPrice() * orderItem.getQuantity());
+        response.setStatus(orderItem.getStatus()); // Map status field
 
         if (orderItem.getProduct() != null) {
             response.setProductId(orderItem.getProduct().getProductId());

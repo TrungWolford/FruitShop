@@ -147,14 +147,24 @@ public class OrderServiceImpl implements OrderService {
                 })
                 .collect(Collectors.toList());
 
-        // Calculate total amount
+        // Calculate total amount from products
         totalAmount = orderItems.stream()
                 .mapToLong(detail -> detail.getUnitPrice() * detail.getQuantity())
                 .sum();
 
+        // Add shipping fee to total amount
+        if (shipping != null) {
+            long shippingFee = shipping.getShippingFee();
+            totalAmount += shippingFee;
+            System.out.println("💰 Order total calculation:");
+            System.out.println("   - Products subtotal: " + (totalAmount - shippingFee) + " VND");
+            System.out.println("   - Shipping fee: " + shippingFee + " VND");
+            System.out.println("   - Total amount: " + totalAmount + " VND");
+        }
+
         savedOrder.setTotalAmount(totalAmount);
         savedOrder.setOrderItems(orderItems);
-        // Update payment amount with total
+        // Update payment amount with total (products + shipping)
         if (paymentEntity != null) {
             paymentEntity.setAmount(java.math.BigDecimal.valueOf(totalAmount));
             paymentRepository.save(paymentEntity);
@@ -423,6 +433,22 @@ public class OrderServiceImpl implements OrderService {
             orderShipping.setStatus(4); // Đã giao
             shippingRepository.save(orderShipping);
             System.out.println("✅ Shipping status updated to: 4 (Đã giao)");
+        }
+
+        // Update payment status to "Hoàn thành" (1) when order is completed
+        Payment orderPayment = order.getPayment();
+        if (orderPayment != null) {
+            // Only update if payment is still pending (0) or failed before (2)
+            if (orderPayment.getPaymentStatus() == 0 || orderPayment.getPaymentStatus() == 2) {
+                orderPayment.setPaymentStatus(1); // Completed
+                orderPayment.setPaymentDate(new Date()); // Update payment date
+                paymentRepository.save(orderPayment);
+                System.out.println("✅ Payment status updated to: 1 (Hoàn thành) for payment: " + orderPayment.getPaymentId());
+            } else {
+                System.out.println("ℹ️ Payment already in final state: " + orderPayment.getPaymentStatus());
+            }
+        } else {
+            System.out.println("⚠️ No payment found for order: " + orderId);
         }
 
         return OrderResponse.fromEntity(savedOrder);

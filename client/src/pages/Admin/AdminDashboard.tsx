@@ -1,7 +1,13 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppSelector } from '../../hooks/redux'
-import { mockProducts, mockCategories, mockAccounts } from '../../hooks/data'
+import { productService } from '../../services/productService'
+import { categoryService } from '../../services/categoryService'
+import { accountService } from '../../services/adminAccountService'
+import { orderService } from '../../services/orderService'
+import type { Product } from '../../types/product'
+import type { Category } from '../../services/categoryService'
+import type { Account } from '../../types/account'
 import LeftTaskbar from '../../components/LeftTaskbar'
 import { 
   BarChart, 
@@ -17,6 +23,13 @@ import {
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate()
   const { user, isAuthenticated } = useAppSelector((state) => state.auth)
+  
+  // State for data from API
+  const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [accounts, setAccounts] = useState<Account[]>([])
+  const [orders, setOrders] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     document.title = 'BookCity - Dashboard'
@@ -32,14 +45,57 @@ const AdminDashboard: React.FC = () => {
     
     if (!isAdmin) {
       navigate('/')
+      return
     }
+
+    // Load data from APIs
+    loadDashboardData()
   }, [isAuthenticated, user, navigate])
 
-  const totalProducts = mockProducts.length
-  const activeProducts = mockProducts.filter(p => p.status === 1).length
-  const totalCategories = mockCategories.filter(c => c.status === 1).length
-  const totalUsers = mockAccounts.filter(a => a.roles?.some(role => role.roleName === 'CUSTOMER')).length
-  const totalRevenue = mockProducts.reduce((sum, p) => sum + (p.price * (p.stock > 100 ? 10 : p.stock > 50 ? 5 : 2)), 0)
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true)
+      
+      // Load products
+      const productsResponse = await productService.getAllProducts(0, 100)
+      const productsData = productsResponse.content || productsResponse
+      setProducts(Array.isArray(productsData) ? productsData : [])
+      
+      // Load categories
+      const categoriesResponse = await categoryService.getAllCategories(0, 100)
+      const categoriesData = categoriesResponse.content || categoriesResponse
+      setCategories(Array.isArray(categoriesData) ? categoriesData : [])
+      
+      // Load accounts
+      const accountsResponse = await accountService.getAllAccounts(0, 100)
+      const accountsData = accountsResponse.content || accountsResponse
+      setAccounts(Array.isArray(accountsData) ? accountsData : [])
+      
+      // Load orders
+      try {
+        const ordersResponse = await orderService.getAllOrders(0, 100)
+        if (ordersResponse.success && ordersResponse.data) {
+          setOrders(ordersResponse.data)
+        } else {
+          setOrders([])
+        }
+      } catch (error) {
+        console.log('Could not load orders:', error)
+        setOrders([])
+      }
+      
+    } catch (error) {
+      console.error('Error loading dashboard data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const totalProducts = products.length
+  const activeProducts = products.filter(p => p.status === 1).length
+  const totalCategories = categories.filter(c => c.status === 1).length
+  const totalUsers = accounts.filter(a => a.roles?.some(role => role.roleName === 'CUSTOMER')).length
+  const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0)
 
   const stats = [
     {
@@ -76,8 +132,8 @@ const AdminDashboard: React.FC = () => {
     }
   ]
 
-  const recentProducts = mockProducts.slice(0, 5)
-  const lowStockProducts = mockProducts.filter(p => p.stock < 20 && p.status === 1)
+  const recentProducts = products.slice(0, 5)
+  const lowStockProducts = products.filter((p: Product) => p.stock < 20 && p.status === 1)
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -90,6 +146,20 @@ const AdminDashboard: React.FC = () => {
   // if (!isAuthenticated || !user || user.role !== 'ADMIN') {
   //   return null
   // }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <LeftTaskbar />
+        <div className="ml-64 p-8 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -188,7 +258,7 @@ const AdminDashboard: React.FC = () => {
               </div>
               <div className="p-6">
                 <div className="space-y-4">
-                  {recentProducts.map((product) => (
+                  {recentProducts.map((product: Product) => (
                     <div key={product.productId} className="flex items-center justify-between">
                       <div>
                         <p className="font-medium text-gray-800">{product.productName}</p>
@@ -215,7 +285,7 @@ const AdminDashboard: React.FC = () => {
               <div className="p-6">
                 {lowStockProducts.length > 0 ? (
                   <div className="space-y-4">
-                    {lowStockProducts.slice(0, 5).map((product) => (
+                    {lowStockProducts.slice(0, 5).map((product: Product) => (
                       <div key={product.productId} className="flex items-center justify-between">
                         <div>
                           <p className="font-medium text-gray-800">{product.productName}</p>

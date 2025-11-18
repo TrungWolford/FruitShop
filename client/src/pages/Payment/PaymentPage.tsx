@@ -113,11 +113,18 @@ const PaymentPage: React.FC = () => {
         });
     };
 
-    // Generate QR Code from payUrl
+    // Generate QR Code from deeplink (for MoMo app) or payUrl (fallback)
     useEffect(() => {
-        if (payUrl) {
-            console.log('🎨 Generating QR code from payUrl:', payUrl);
-            generateQRWithLogo(payUrl)
+        // Priority: deeplink > qrCodeUrl > payUrl
+        const qrData = deeplink || qrCodeUrl || payUrl;
+        
+        if (qrData) {
+            console.log('🎨 Generating QR code from:', {
+                type: deeplink ? 'deeplink' : (qrCodeUrl ? 'qrCodeUrl' : 'payUrl'),
+                data: qrData
+            });
+            
+            generateQRWithLogo(qrData)
                 .then((url: string) => {
                     console.log('✅ QR Code with logo generated successfully');
                     setGeneratedQrDataUrl(url);
@@ -125,7 +132,7 @@ const PaymentPage: React.FC = () => {
                 .catch((err: Error) => {
                     console.error('❌ Error generating QR code:', err);
                     // Fallback: generate simple QR without logo
-                    QRCode.toDataURL(payUrl, {
+                    QRCode.toDataURL(qrData, {
                         width: 300,
                         margin: 2,
                         color: {
@@ -135,7 +142,7 @@ const PaymentPage: React.FC = () => {
                     }).then((url: string) => setGeneratedQrDataUrl(url));
                 });
         }
-    }, [payUrl]);
+    }, [deeplink, qrCodeUrl, payUrl]);
 
     // Check payment status
     const checkStatus = useCallback(async () => {
@@ -152,8 +159,8 @@ const PaymentPage: React.FC = () => {
             if (statusResponse.paymentStatus === 'COMPLETED') {
                 toast.success('✅ Thanh toán thành công!');
                 setTimeout(() => {
-                    navigate('/order-success', { 
-                        state: { orderId }, 
+                    navigate('/customer/orders', { 
+                        state: { orderId, paymentSuccess: true }, 
                         replace: true 
                     });
                 }, 1000);
@@ -204,12 +211,15 @@ const PaymentPage: React.FC = () => {
     };
 
     const handleOpenMoMoApp = () => {
-        if (deeplink) {
+        if (payUrl) {
+            // Mở trang thanh toán MoMo để nhập thẻ ATM
+            console.log('🔗 Opening MoMo payment page:', payUrl);
+            window.location.href = payUrl; // Chuyển trang hiện tại (không mở tab mới)
+        } else if (deeplink) {
+            // Fallback: Mở app MoMo (nếu trên mobile)
             window.location.href = deeplink;
         } else if (deeplinkMiniApp) {
             window.location.href = deeplinkMiniApp;
-        } else if (payUrl) {
-            window.open(payUrl, '_blank');
         } else {
             toast.error('Không tìm thấy link thanh toán');
         }
@@ -299,13 +309,33 @@ const PaymentPage: React.FC = () => {
                                 </svg>
                                 Hướng dẫn thanh toán
                             </h3>
-                            <ol className="list-decimal list-inside space-y-2 text-sm text-blue-900">
-                                <li>Mở ứng dụng <strong>MoMo</strong> trên điện thoại</li>
-                                <li>Chọn <strong>"Quét mã"</strong> hoặc nhấn nút <strong>"Mở App MoMo"</strong> bên dưới</li>
-                                <li>Quét mã QR phía trên</li>
-                                <li>Xác nhận thanh toán trong ứng dụng MoMo</li>
-                                <li>Chờ hệ thống xác nhận (tự động chuyển trang)</li>
-                            </ol>
+                            
+                            {/* Cách 1: QR Code */}
+                            <div className="mb-4">
+                                <h4 className="font-semibold text-blue-800 mb-2">📱 Cách 1: Quét mã QR (Ví MoMo)</h4>
+                                <ol className="list-decimal list-inside space-y-1 text-sm text-blue-900 ml-4">
+                                    <li>Mở ứng dụng <strong>MoMo</strong> trên điện thoại</li>
+                                    <li>Chọn <strong>"Quét mã QR"</strong></li>
+                                    <li>Quét mã QR phía trên</li>
+                                    <li>Xác nhận thanh toán trong ví MoMo</li>
+                                </ol>
+                            </div>
+
+                            {/* Cách 2: Thẻ ATM */}
+                            <div>
+                                <h4 className="font-semibold text-blue-800 mb-2">💳 Cách 2: Thanh toán bằng thẻ ATM</h4>
+                                <ol className="list-decimal list-inside space-y-1 text-sm text-blue-900 ml-4">
+                                    <li>Nhấn nút <strong>"Thanh Toán Bằng Thẻ ATM"</strong> bên dưới</li>
+                                    <li>Chọn ngân hàng của bạn</li>
+                                    <li>Nhập số thẻ ATM, tên chủ thẻ, ngày hết hạn</li>
+                                    <li>Nhập mã OTP từ ngân hàng</li>
+                                    <li>Hoàn tất thanh toán</li>
+                                </ol>
+                            </div>
+
+                            <p className="text-xs text-blue-700 mt-3 italic">
+                                💡 Sau khi thanh toán thành công, hệ thống sẽ tự động chuyển trang
+                            </p>
                         </div>
 
                         {/* Payment Status */}
@@ -350,9 +380,9 @@ const PaymentPage: React.FC = () => {
                             >
                                 <span className="flex items-center justify-center gap-2">
                                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
                                     </svg>
-                                    Mở Ứng Dụng MoMo
+                                    Thanh Toán Bằng Thẻ ATM
                                 </span>
                             </Button>
                             <Button 

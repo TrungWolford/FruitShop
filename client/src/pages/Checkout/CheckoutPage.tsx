@@ -472,6 +472,27 @@ const CheckoutPage: React.FC = () => {
                         if (momoResponse.success && momoResponse.data) {
                             console.log('✅ MoMo payment created successfully:', momoResponse.data);
                             
+                            // Clear cart sau khi tạo MoMo payment thành công
+                            console.log('🧹 Clearing cart for MoMo payment, accountId:', user.accountId);
+                            const clearCartResponse = await cartService.clearCart(user.accountId);
+                            console.log('🧹 Clear cart response:', clearCartResponse);
+
+                            if (clearCartResponse.success) {
+                                console.log('Cart cleared successfully for MoMo payment');
+                                
+                                // Dispatch events để refresh cart UI
+                                console.log('🔔 Dispatching cart update events');
+                                window.dispatchEvent(new CustomEvent('cartUpdated'));
+                                window.dispatchEvent(
+                                    new CustomEvent('cartItemsUpdated', {
+                                        detail: { items: [], count: 0 },
+                                    }),
+                                );
+                                window.dispatchEvent(new CustomEvent('closeCartModal'));
+                            } else {
+                                console.error('Failed to clear cart for MoMo:', clearCartResponse.message);
+                            }
+                            
                             // Navigate to payment page with payment data
                             navigate('/payment', {
                                 state: {
@@ -802,7 +823,7 @@ const CheckoutPage: React.FC = () => {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="0">Thanh toán khi nhận hàng (COD)</SelectItem>
-                                            <SelectItem value="1">Chuyển khoản ngân hàng</SelectItem>
+                                            <SelectItem value="1">Thanh toán Momo</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>

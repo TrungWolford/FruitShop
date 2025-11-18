@@ -27,7 +27,7 @@
 		<url/>
 	</scm>
 	<properties>
-		<java.version>21</java.version>
+		<java.version>22</java.version>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
@@ -104,9 +104,9 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.13.0</version>
 				<configuration>
-					<source>21</source>
-					<target>21</target>
-					<release>21</release>
+					<source>22</source>
+					<target>22</target>
+					<release>22</release>
 					<compilerArgs>
 						<arg>-parameters</arg>
 					</compilerArgs>

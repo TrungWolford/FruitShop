@@ -10,6 +10,7 @@ export interface OrderDetailResponse {
   unitPrice: number;
   totalPrice: number;
   productImages: string[];
+  status?: string; // Status của orderItem: null, "returned", "returning", etc.
 }
 
 export interface ShippingInfo {
@@ -102,7 +103,8 @@ export function mapBackendOrderToFrontend(o: any): OrderResponse {
     quantity: it.quantity,
     unitPrice: it.unitPrice ?? it.price ?? 0,
     totalPrice: it.totalPrice ?? (it.unitPrice ? it.unitPrice * (it.quantity || 0) : 0),
-    productImages: it.productImages || []
+    productImages: it.productImages || [],
+    status: it.status // Map status field from backend
   }));
 
   return {
@@ -257,13 +259,45 @@ export const orderService = {
       const response = await axiosInstance.put(API.CANCEL_ORDER(orderId));
       return {
         success: true,
-        data: mapBackendOrderToFrontend(response.data)
+        data: mapBackendOrderToFrontend(response.data),
+        message: 'Đơn hàng đã được hủy thành công'
       };
     } catch (error: any) {
       console.error('Error canceling order:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể hủy đơn hàng'
+      };
+    }
+  },
+
+  // Return order with reason and images - Create refund request
+  returnOrder: async (
+    orderItemId: string,  // OrderItem ID for per-item refund
+    orderId: string,      // Order ID for refund
+    reason: string, 
+    refundAmount: number,
+    imageUrls?: string[]  // Changed from images to imageUrls to match backend
+  ): Promise<{ success: boolean; data?: any; message?: string }> => {
+    try {
+      // Create refund request via POST /api/refund with orderItemId and imageUrls
+      const response = await axiosInstance.post(API.REFUND, {
+        orderId: orderId,
+        orderItemId: orderItemId,  // Now sending orderItemId for per-item refund
+        reason,
+        refundAmount: refundAmount,
+        imageUrls: imageUrls || []  // Send imageUrls array
+      });
+      return {
+        success: true,
+        data: response.data,
+        message: 'Yêu cầu trả hàng đã được gửi thành công'
+      };
+    } catch (error: any) {
+      console.error('Error returning order:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Không thể gửi yêu cầu trả hàng'
       };
     }
   },

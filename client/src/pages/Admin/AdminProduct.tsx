@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../hooks/redux';
 import { toast } from 'sonner';
-import { mockProducts, searchProducts } from '../../hooks/data';
+// Remove mock data imports - using productService instead
 import LeftTaskbar from '../../components/LeftTaskbar';
 import AddProductModal from '../../components/modals/AddProductModal';
 import EditProductModal from '../../components/modals/EditProductModal';
@@ -108,22 +108,10 @@ const AdminProduct: React.FC = () => {
             }
         } catch (error) {
             console.error('Error loading products:', error);
-            // Fallback to mock data
-            let filteredProducts = mockProducts;
-
-            // Apply filters to mock data
-            if (searchTerm.trim()) {
-                filteredProducts = searchProducts(searchTerm);
-            }
-
-            if (statusFilter !== 'all') {
-                const status = statusFilter === 'active' ? 1 : 0;
-                filteredProducts = filteredProducts.filter((product) => product.status === status);
-            }
-
-            setProducts(filteredProducts);
-            setTotalPages(Math.ceil(filteredProducts.length / itemsPerPage));
-            setTotalItems(filteredProducts.length);
+            toast.error('Không thể tải danh sách sản phẩm từ server');
+            setProducts([]);
+            setTotalPages(1);
+            setTotalItems(0);
         } finally {
             setLoading(false);
         }
