@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../hooks/redux';
 import { categoryService } from '../../services/categoryService';
 import type { Category } from '../../types/category';
-import LeftTaskbar from '../../components/LeftTaskbar';
+import LeftTaskbar from '../../components/Admin/LeftTaskbar';
 import AddCategoryModal from '../../components/modals/AddCategoryModal';
 import EditCategoryModal from '../../components/modals/EditCategoryModal';
 import DeleteCategoryModal from '../../components/modals/DeleteCategoryModal';

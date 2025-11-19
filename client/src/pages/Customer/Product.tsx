@@ -7,7 +7,7 @@ import TopNavigation from '../../components/ui/Header/Header';
 import Footer from '../../components/ui/Footer/Footer';
 import { categoryService } from '../../services/categoryService';
 import { productService } from '../../services/productService';
-import ProductItem from '../../components/ProductItem';
+import ProductItem from '../../components/Product/ProductItem';
 
 // Mock data for products
 const mockProducts: Product[] = [

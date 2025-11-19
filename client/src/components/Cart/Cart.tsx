@@ -2,13 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { X, ShoppingCart, Package, RefreshCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from './ui/Button/Button';
-import { useAppSelector } from '../hooks/redux';
-import { cartService } from '../services/cartService';
-import { localStorageCartService } from '../services/localStorageCartService';
+import { Button } from '../ui/Button/Button';
+import { useAppSelector } from '../../hooks/redux';
+import { cartService } from '../../services/cartService';
+import { localStorageCartService } from '../../services/localStorageCartService';
 import { toast } from 'sonner';
 import CartItem from './CartItem';
-import type { CartItem as CartItemType } from '../types/cart';
+import type { CartItem as CartItemType } from '../../types/cart';
 
 interface CartProps {
   isOpen: boolean;

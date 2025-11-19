@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../hooks/redux';
 import { toast } from 'sonner';
 // Remove mock data imports - using productService instead
-import LeftTaskbar from '../../components/LeftTaskbar';
+import LeftTaskbar from '../../components/Admin/LeftTaskbar';
 import AddProductModal from '../../components/modals/AddProductModal';
 import EditProductModal from '../../components/modals/EditProductModal';
 import ViewProductModal from '../../components/modals/ViewProductModal';

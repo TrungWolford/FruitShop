@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
-import { useAppDispatch } from '../hooks/redux'
-import { loadUserFromStorage } from '../store/slices/authSlice'
-import { authService } from '../services/authService'
+import { useAppDispatch } from '../../hooks/redux'
+import { loadUserFromStorage } from '../../store/slices/authSlice'
+import { authService } from '../../services/authService'
 
 const AuthInitializer: React.FC = () => {
   const dispatch = useAppDispatch()

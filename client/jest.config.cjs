@@ -1,7 +1,10 @@
 module.exports = {
   preset: 'ts-jest',
-  testEnvironment: 'node',
+  testEnvironment: 'jsdom',
   roots: ['<rootDir>/src'],
+  
+  // Setup files
+  setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
   
   // Cấu hình ts-jest sử dụng tsconfig.app.json
   globals: {
@@ -20,6 +23,8 @@ module.exports = {
   
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+    '\\.(jpg|jpeg|png|gif|svg)$': '<rootDir>/src/test-utils/fileMock.js',
   },
   
   // Bỏ qua các file/thư mục này khi tìm test
@@ -29,12 +34,15 @@ module.exports = {
     '/build/',
   ],
   
-  // CHỈ collect coverage từ file được import trong test
+  // CHỈ collect coverage từ file được test
   collectCoverage: true,
   collectCoverageFrom: [
-    'src/components/tessJest/**/*.{ts,tsx}',  // CHỈ folder tessJest
+    'src/components/**/*.{ts,tsx}',
+    'src/services/**/*.{ts,tsx}',
+    'src/hooks/**/*.{ts,tsx}',
     '!src/**/*.d.ts',
     '!src/**/*.test.{ts,tsx}',
     '!src/**/*.spec.{ts,tsx}',
+    '!src/test-utils/**',
   ],
 };

@@ -2,9 +2,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopNavigation from '../../components/ui/Header/Header';
-import MainBanner from '../../components/MainBanner';
-import ProductGrid from '../../components/ProductGrid';
-import CategoryMainPage from '../../components/CategoryMainPage';
+import MainBanner from '../../components/Home/MainBanner';
+import ProductGrid from '../../components/Product/ProductGrid';
+import CategoryMainPage from '../../components/Category/CategoryMainPage';
 import Footer from '../../components/ui/Footer/Footer';
 
 const Home: React.FC = () => {

@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, ShoppingBag } from 'lucide-react';
-import { useAppSelector } from '../hooks/redux';
+import { useAppSelector } from '../../hooks/redux';
 import { toast } from 'sonner';
 
 import { localStorageCartService } from '@/services/localStorageCartService';
-import { cartService } from '../services/cartService';
-import './ProductItem.css';
+import { cartService } from '../../services/cartService';
 
 interface ProductItemProps {
   product: {

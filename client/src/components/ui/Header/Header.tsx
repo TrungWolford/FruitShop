@@ -15,7 +15,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '../dropdowns/hove
 import { useAppSelector, useAppDispatch } from '../../../hooks/redux';
 import { logout } from '../../../store/slices/authSlice';
 import LoginDialog from '../../../pages/Mainpage/Login';
-import Cart from '../../Cart';
+import Cart from '../../Cart/Cart';
 import { cartService } from '../../../services/cartService';
 import { productService } from '../../../services/productService';
 import { toast } from 'sonner';
