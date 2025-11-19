@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import LeftTaskbar from '../../components/LeftTaskbar';
+import LeftTaskbar from '../../components/Admin/LeftTaskbar';
 import { Button } from '../../components/ui/Button/Button';
 import { Input } from '../../components/ui/input';
 import { Badge } from '../../components/ui/badge';

@@ -8,7 +8,7 @@ import { orderService } from '../../services/orderService'
 import type { Product } from '../../types/product'
 import type { Category } from '../../services/categoryService'
 import type { Account } from '../../types/account'
-import LeftTaskbar from '../../components/LeftTaskbar'
+import LeftTaskbar from '../../components/Admin/LeftTaskbar'
 import { 
   BarChart, 
   Package, 

@@ -4,7 +4,7 @@ import { ChevronRight, Plus, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 // import { categoryService } from '../services/categoryService';
 import { toast } from 'sonner';
-import { categoryService } from '../services/categoryService';
+import { categoryService } from '../../services/categoryService';
 
 interface Category {
   categoryId: string;
