@@ -56,6 +56,23 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
         dispatch(loginSuccess(response.user))
         onClose()
         
+        // Check for intended route (from checkout button)
+        const intendedRoute = sessionStorage.getItem('intendedRoute')
+        if (intendedRoute) {
+          sessionStorage.removeItem('intendedRoute')
+          toast.success('Đăng nhập thành công!')
+          console.log('🔐 Login success, navigating to:', intendedRoute)
+          console.log('🔐 User data:', response.user)
+          console.log('🔐 localStorage user:', localStorage.getItem('user'))
+          console.log('🔐 localStorage isAuthenticated:', localStorage.getItem('isAuthenticated'))
+          // Add a delay to ensure Redux state is updated
+          setTimeout(() => {
+            console.log('🔐 Navigating to:', intendedRoute)
+            navigate(intendedRoute)
+          }, 300)
+          return
+        }
+        
         // Check user roles and navigate accordingly
         const userRoles = response.user.roles || []
         const isAdmin = userRoles.some(role => role.roleName === 'ADMIN')

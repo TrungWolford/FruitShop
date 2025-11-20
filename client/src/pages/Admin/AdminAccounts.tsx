@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../hooks/redux';
 import { accountService, roleService } from '../../services/adminAccountService';
 import type { Account, Role, PaginatedResponse } from '../../types/account';
-import LeftTaskbar from '../../components/LeftTaskbar';
+import LeftTaskbar from '../../components/Admin/LeftTaskbar';
 import AddAccountModal from '../../components/modals/AddAccountModal';
 import EditAccountModal from '../../components/modals/EditAccountModal';
 import { Button } from '../../components/ui/Button/Button';

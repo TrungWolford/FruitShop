@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../hooks/redux';
 import { toast } from 'sonner';
-import LeftTaskbar from '../../components/LeftTaskbar';
+import LeftTaskbar from '../../components/Admin/LeftTaskbar';
 import { ratingService } from '../../services/ratingService';
 import type { Rating } from '../../types/rating';
 import { Button } from '../../components/ui/Button/Button';

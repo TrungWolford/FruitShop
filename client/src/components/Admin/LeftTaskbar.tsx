@@ -1,7 +1,7 @@
 import React from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useAppSelector, useAppDispatch } from '../hooks/redux'
-import { logout } from '../store/slices/authSlice'
+import { useAppSelector, useAppDispatch } from '../../hooks/redux'
+import { logout } from '../../store/slices/authSlice'
 import { 
   LayoutDashboard, 
   Package, 

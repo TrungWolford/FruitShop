@@ -2,13 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { X, ShoppingCart, Package, RefreshCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from './ui/Button/Button';
-import { useAppSelector } from '../hooks/redux';
-import { cartService } from '../services/cartService';
-import { localStorageCartService } from '../services/localStorageCartService';
+import { Button } from '../ui/Button/Button';
+import { useAppSelector } from '../../hooks/redux';
+import { cartService } from '../../services/cartService';
+import { localStorageCartService } from '../../services/localStorageCartService';
 import { toast } from 'sonner';
 import CartItem from './CartItem';
-import type { CartItem as CartItemType } from '../types/cart';
+import type { CartItem as CartItemType } from '../../types/cart';
 
 interface CartProps {
   isOpen: boolean;
@@ -96,8 +96,9 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
         setCartItems(updatedCart);
         toast.success('Đã cập nhật số lượng sản phẩm');
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
     } catch (error) {
-      console.error('Error updating cart item:', error);
+      // console.error('Error updating cart item:', error);
       toast.error('Đã xảy ra lỗi khi cập nhật');
     } finally {
       setIsUpdating(null);
@@ -123,8 +124,9 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
         setCartItems(updatedCart);
         toast.success('Đã xóa sản phẩm khỏi giỏ hàng');
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
     } catch (error) {
-      console.error('Error removing cart item:', error);
+      // console.error('Error removing cart item:', error);
       toast.error('Đã xảy ra lỗi khi xóa sản phẩm');
     } finally {
       setIsUpdating(null);
@@ -151,7 +153,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
       {/* Cart Dialog */}
       <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[650px] h-[85vh] bg-white rounded-lg shadow-2xl z-50 border border-gray-100 flex flex-col">
         {/* Header */}
-        <div className="relative px-6 py-4 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 rounded-t-lg flex-shrink-0 shadow-lg">
+        <div className="relative px-6 py-4 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 rounded-t-lg flex-shrink-0 shadow-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-white/25 rounded-full flex items-center justify-center shadow-inner">
@@ -226,10 +228,19 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
               </Button>
               <Button
                 onClick={() => {
-                  onClose();
-                  navigate('/checkout');
+                  if (!isAuthenticated || !user) {
+                    // Lưu ý định đi đến checkout
+                    sessionStorage.setItem('intendedRoute', '/checkout');
+                    toast.error('Vui lòng đăng nhập để thanh toán');
+                    onClose();
+                    // Dispatch event để mở LoginDialog
+                    window.dispatchEvent(new CustomEvent('openLoginDialog'));
+                  } else {
+                    onClose();
+                    navigate('/checkout');
+                  }
                 }}
-                className="bg-blue-600 text-white"
+                className="bg-orange-600 text-white"
               >
                 Thanh toán
               </Button>

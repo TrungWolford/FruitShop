@@ -15,7 +15,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '../dropdowns/hove
 import { useAppSelector, useAppDispatch } from '../../../hooks/redux';
 import { logout } from '../../../store/slices/authSlice';
 import LoginDialog from '../../../pages/Mainpage/Login';
-import Cart from '../../Cart';
+import Cart from '../../Cart/Cart';
 import { cartService } from '../../../services/cartService';
 import { productService } from '../../../services/productService';
 import { toast } from 'sonner';
@@ -32,6 +32,7 @@ const TopNavigation: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [cartItemCount, setCartItemCount] = useState(0);
   const [hoverCartItems, setHoverCartItems] = useState<CartItem[]>([]);
+  const [hasLoadedHoverCart, setHasLoadedHoverCart] = useState(false);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -120,19 +121,26 @@ const TopNavigation: React.FC = () => {
         const count = localStorageCartService.getItemCount();
         setCartItemCount(count);
       }
-      fetchHoverCartItems();
+      // Reset flag để fetch lại khi cart update
+      setHasLoadedHoverCart(false);
     };
 
     const handleCloseCartModal = () => {
       setIsCartOpen(false);
     };
 
+    const handleOpenLoginDialog = () => {
+      setIsLoginDialogOpen(true);
+    };
+
     window.addEventListener('cartUpdated', handleCartUpdate);
     window.addEventListener('closeCartModal', handleCloseCartModal);
+    window.addEventListener('openLoginDialog', handleOpenLoginDialog);
 
     return () => {
       window.removeEventListener('cartUpdated', handleCartUpdate);
       window.removeEventListener('closeCartModal', handleCloseCartModal);
+      window.removeEventListener('openLoginDialog', handleOpenLoginDialog);
     };
   }, [isAuthenticated, user]);
 
@@ -160,6 +168,9 @@ const TopNavigation: React.FC = () => {
 
   // Fetch cart items for hover preview (chỉ lấy 3 items đầu)
   const fetchHoverCartItems = async () => {
+    // Chỉ fetch nếu chưa load hoặc cart vừa update
+    if (hasLoadedHoverCart && hoverCartItems.length > 0) return;
+    
     try {
       if (isAuthenticated && user) {
         const response = await cartService.getCartItems(user.accountId);
@@ -172,20 +183,24 @@ const TopNavigation: React.FC = () => {
             items = (response.data as any).items || [];
           }
           setHoverCartItems(items.slice(0, 3));
+          setHasLoadedHoverCart(true);
         }
       } else {
         const localCart = localStorageCartService.getCartItems();
         setHoverCartItems(localCart.slice(0, 3));
+        setHasLoadedHoverCart(true);
       }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      //   console.error('Error fetching hover cart items:', error);
       setHoverCartItems([]);
     }
   };
 
   // Helper function to get correct image URL
-  const getImageUrl = (imageUrl?: string) => {
+  const getImageUrl = (item: CartItem) => {
+    // Lấy image đầu tiên từ images array
+    const imageUrl = item.images?.[0];
+    
     if (!imageUrl) {
       return '/placeholder-image.svg';
     }
@@ -413,12 +428,16 @@ const TopNavigation: React.FC = () => {
                         <div key={item.cartItemId} className="flex items-start justify-between w-full">
                           <div className="flex">
                             <img
-                              src={getImageUrl(item.images?.[0])}
+                              src={getImageUrl(item)}
                               alt={item.productName}
                               className="w-20 h-20 object-cover rounded"
                               onError={(e) => {
-                                console.error('❌ Header hover cart - Image failed to load:', item.images?.[0]);
-                                e.currentTarget.src = '/placeholder-image.svg';
+                                const target = e.currentTarget;
+                                // Chỉ set placeholder 1 lần để tránh loop
+                                if (!target.dataset.errorHandled) {
+                                  target.dataset.errorHandled = 'true';
+                                  target.src = '/placeholder-image.svg';
+                                }
                               }}
                             />
                             <div className="flex flex-col ml-2">

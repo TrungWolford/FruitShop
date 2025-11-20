@@ -27,7 +27,7 @@
 		<url/>
 	</scm>
 	<properties>
-		<java.version>22</java.version>
+		<java.version>21</java.version>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
@@ -83,6 +83,12 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- H2 Database for Testing -->
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 		<!-- Cloudinary -->
 		<dependency>
 			<groupId>com.cloudinary</groupId>
@@ -98,9 +104,9 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.13.0</version>
 				<configuration>
-					<source>22</source>
-					<target>22</target>
-					<release>22</release>
+					<source>21</source>
+					<target>21</target>
+					<release>21</release>
 					<compilerArgs>
 						<arg>-parameters</arg>
 					</compilerArgs>
@@ -123,6 +129,10 @@
 							<artifactId>lombok</artifactId>
 						</exclude>
 					</excludes>
+					<jvmArguments>-Duser.timezone=UTC</jvmArguments>
+					<environmentVariables>
+						<PGTZ>UTC</PGTZ>
+					</environmentVariables>
 				</configuration>
 			</plugin>
 		</plugins>

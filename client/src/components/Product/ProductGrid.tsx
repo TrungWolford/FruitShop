@@ -2,10 +2,10 @@
 import React, { useEffect, useState } from 'react';
 import ProductItem from './ProductItem';
 import { useNavigate } from 'react-router-dom';
-import { Button } from './ui/Button/Button';
+import { Button } from '../ui/Button/Button';
 import { ArrowRight } from 'lucide-react';
-import { productService } from '../services/productService';
-import type { Product as ApiProduct } from '../types/product';
+import { productService } from '../../services/productService';
+import type { Product as ApiProduct } from '../../types/product';
 
 interface ProductGridProps {
   title?: string;
