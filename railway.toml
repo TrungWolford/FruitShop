@@ -1,0 +1,16 @@
+[build]
+  builder = "nixpacks"
+  buildCommand = "chmod +x mvnw && ./mvnw clean package -DskipTests"
+
+[deploy]
+  startCommand = "java -Dserver.port=$PORT -jar target/FruitShop-0.0.1-SNAPSHOT.jar"
+  healthcheckPath = "/actuator/health"
+  healthcheckTimeout = 100
+  restartPolicyType = "always"
+
+[env]
+  PGTZ = "UTC"
+
+# Chỉ định thư mục root cho Railway
+[source]
+  rootDirectory = "server"
