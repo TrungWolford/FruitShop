@@ -1,13 +1,9 @@
-# Chỉ định thư mục root cho Railway - PHẢI ĐẶT TRƯỚC
-[source]
-  rootDirectory = "server"
-
 [build]
   builder = "nixpacks"
-  buildCommand = "cd /app && chmod +x mvnw && ./mvnw clean package -DskipTests"
+  buildCommand = "cd server && chmod +x mvnw && ./mvnw clean package -DskipTests"
 
 [deploy]
-  startCommand = "java -Dserver.port=$PORT -jar target/FruitShop-0.0.1-SNAPSHOT.jar"
+  startCommand = "cd server && java -Dserver.port=$PORT -jar target/FruitShop-0.0.1-SNAPSHOT.jar"
   healthcheckPath = "/actuator/health"
   healthcheckTimeout = 100
   restartPolicyType = "always"
