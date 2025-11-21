@@ -1,3 +1,7 @@
+# Chỉ định thư mục root cho Railway - PHẢI ĐẶT TRƯỚC
+[source]
+  rootDirectory = "server"
+
 [build]
   builder = "nixpacks"
   buildCommand = "chmod +x mvnw && ./mvnw clean package -DskipTests"
@@ -10,7 +14,3 @@
 
 [env]
   PGTZ = "UTC"
-
-# Chỉ định thư mục root cho Railway
-[source]
-  rootDirectory = "server"
