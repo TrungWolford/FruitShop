@@ -5,7 +5,7 @@
 [deploy]
   startCommand = "java -Dserver.port=$PORT -jar target/FruitShop-0.0.1-SNAPSHOT.jar"
   restartPolicyType = "always"
-  healthcheckPath = "/"
+  healthcheckPath = "/actuator/health"
   healthcheckTimeout = 300
 
 [app]
