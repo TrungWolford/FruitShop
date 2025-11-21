@@ -1,6 +1,8 @@
 package server.FruitShop.service.Impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import server.FruitShop.dto.request.Cart.CreateCartItemRequest;
@@ -35,6 +37,12 @@ public class CartServiceImpl implements CartService {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Override
+    public Page<CartResponse> getAllCart(Pageable pageable) {
+        Page<Cart> cartPage = cartRepository.findAll(pageable);
+        return cartPage.map(CartResponse::fromEntity);
+    }
 
     @Override
     public CartResponse getCartByAccountId(String accountId) {
@@ -195,6 +203,45 @@ public class CartServiceImpl implements CartService {
         } else {
             System.out.println("🧹 No cart found for accountId: " + accountId);
         }
+    }
+
+    @Override
+    public CartResponse disableCart(String cartId) {
+        Optional<Cart> cartOptional = cartRepository.findById(cartId);
+        if (cartOptional.isEmpty()) {
+            throw new RuntimeException("Cart not found with id: " + cartId);
+        }
+        
+        Cart cart = cartOptional.get();
+        cart.setStatus(0); // 0 = Disabled
+        Cart savedCart = cartRepository.save(cart);
+        return CartResponse.fromEntity(savedCart);
+    }
+
+    @Override
+    public CartResponse enableCart(String cartId) {
+        Optional<Cart> cartOptional = cartRepository.findById(cartId);
+        if (cartOptional.isEmpty()) {
+            throw new RuntimeException("Cart not found with id: " + cartId);
+        }
+        
+        Cart cart = cartOptional.get();
+        cart.setStatus(1); // 1 = Active
+        Cart savedCart = cartRepository.save(cart);
+        return CartResponse.fromEntity(savedCart);
+    }
+
+    @Override
+    public CartResponse updateCartStatus(String cartId, int status) {
+        Optional<Cart> cartOptional = cartRepository.findById(cartId);
+        if (cartOptional.isEmpty()) {
+            throw new RuntimeException("Cart not found with id: " + cartId);
+        }
+        
+        Cart cart = cartOptional.get();
+        cart.setStatus(status);
+        Cart savedCart = cartRepository.save(cart);
+        return CartResponse.fromEntity(savedCart);
     }
 
     private Cart getOrCreateCart(String accountId) {

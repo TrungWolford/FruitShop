@@ -1,5 +1,8 @@
 package server.FruitShop.controller;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 // import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +21,22 @@ public class CartController {
 
     @Autowired
     private CartService cartService;
+
+    // Admin endpoint - Get all carts with pagination
+    // @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping
+    public ResponseEntity<Page<CartResponse>> getAllCarts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<CartResponse> carts = cartService.getAllCart(pageable);
+            return ResponseEntity.ok(carts);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
+        }
+    }
 
     // Cart endpoints - requires CUSTOMER role
     // @PreAuthorize("hasRole('CUSTOMER')")
@@ -96,5 +115,44 @@ public class CartController {
     public ResponseEntity<Void> clearCart(@PathVariable String accountId) {
         cartService.clearCart(accountId);
         return ResponseEntity.ok().build();
+    }
+
+    // Admin endpoints - vô hiệu hóa giỏ hàng
+    // @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{cartId}/disable")
+    public ResponseEntity<CartResponse> disableCart(@PathVariable String cartId) {
+        try {
+            CartResponse cart = cartService.disableCart(cartId);
+            return ResponseEntity.ok(cart);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    // @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{cartId}/enable")
+    public ResponseEntity<CartResponse> enableCart(@PathVariable String cartId) {
+        try {
+            CartResponse cart = cartService.enableCart(cartId);
+            return ResponseEntity.ok(cart);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    // @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{cartId}/status/{status}")
+    public ResponseEntity<CartResponse> updateCartStatus(
+            @PathVariable String cartId,
+            @PathVariable int status) {
+        try {
+            CartResponse cart = cartService.updateCartStatus(cartId, status);
+            return ResponseEntity.ok(cart);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
+        }
     }
 }
