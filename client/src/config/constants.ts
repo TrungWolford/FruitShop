@@ -79,6 +79,7 @@ export const API = {
   SEARCH_AND_FILTER_ORDERS: '/order/search-filter', // GET /api/order/search-filter?keyword=xxx&status=xxx&page=0&size=10 (Admin only)
 
   // Cart - Theo CartController.java
+  GET_ALL_CARTS: '/cart', // GET /api/cart?page=0&size=10 (Admin only)
   GET_CART_BY_ACCOUNT: (accountId: string) => `/cart/account/${accountId}`, // GET /api/cart/account/{accountId}
   CREATE_CART: (accountId: string) => `/cart/account/${accountId}`, // POST /api/cart/account/{accountId}
   DELETE_CART: (cartId: string) => `/cart/${cartId}`, // DELETE /api/cart/{cartId}
@@ -87,6 +88,9 @@ export const API = {
   REMOVE_ITEM_FROM_CART: (cartItemId: string) => `/cart/items/${cartItemId}`, // DELETE /api/cart/items/{cartItemId}
   GET_CART_ITEMS: (accountId: string) => `/cart/account/${accountId}/items`, // GET /api/cart/account/{accountId}/items
   CLEAR_CART: (accountId: string) => `/cart/account/${accountId}/clear`, // DELETE /api/cart/account/{accountId}/clear
+  DISABLE_CART: (cartId: string) => `/cart/${cartId}/disable`, // PUT /api/cart/{cartId}/disable (Admin only)
+  ENABLE_CART: (cartId: string) => `/cart/${cartId}/enable`, // PUT /api/cart/{cartId}/enable (Admin only)
+  UPDATE_CART_STATUS: (cartId: string, status: number) => `/cart/${cartId}/status/${status}`, // PUT /api/cart/{cartId}/status/{status} (Admin only)
 
   // Roles - Theo RoleController.java
   GET_ALL_ROLES: '/role', // GET /api/role
