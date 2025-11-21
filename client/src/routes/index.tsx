@@ -10,6 +10,7 @@ import AdminProduct from '../pages/Admin/AdminProduct';
 import AdminAccounts from '../pages/Admin/AdminAccounts';
 import AdminRoles from '../pages/Admin/AdminRoles';
 import AdminCategory from '../pages/Admin/AdminCategory';
+import AdminCart from '../pages/Admin/AdminCart';
 import AdminOrder from '../pages/Admin/AdminOrder';
 import AdminPayment from '../pages/Admin/AdminPayment';
 import AdminRefund from '../pages/Admin/AdminRefund';
@@ -75,6 +76,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/admin" element={<AdminDashboard />} />
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
       <Route path="/admin/products" element={<AdminProduct />} />
+      <Route path="/admin/carts" element={<AdminCart />} />
       <Route path="/admin/orders" element={<AdminOrder />} />
       <Route path="/admin/payments" element={<AdminPayment />} />
       <Route path="/admin/refunds" element={<AdminRefund />} />

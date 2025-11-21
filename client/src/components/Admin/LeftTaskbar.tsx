@@ -12,6 +12,7 @@ import {
   User,
   Home,
   ShoppingBag,
+  ShoppingCart,
   Truck,
   Star,
   RefreshCcw,
@@ -44,6 +45,11 @@ const LeftTaskbar: React.FC = () => {
       icon: Tags,
       label: 'Thể loại',
       path: '/admin/categories'
+    },
+    {
+      icon: ShoppingCart,
+      label: 'Giỏ hàng',
+      path: '/admin/carts'
     },
     {
       icon: ShoppingBag,

@@ -12,11 +12,17 @@ export interface CartItem {
 export interface Cart {
   cartId: string;
   accountId: string;
+  account?: {
+    accountId: string;
+    accountName: string;
+    accountPhone: string;
+  };
   items: CartItem[];
   totalAmount: number;
   itemCount: number;
   createdAt: Date;
   updatedAt: Date;
+  status: number; // 0: Disabled, 1: Active
 }
 
 export interface AddToCartRequest {
@@ -33,8 +39,19 @@ export interface UpdateCartItemRequest {
 export interface CartResponse {
   success: boolean;
   message: string;
-  data?: Cart | CartItem[] | CartItem;
+  data?: Cart | CartItem[] | CartItem | PaginatedCartResponse;
   error?: string;
+}
+
+export interface PaginatedCartResponse {
+  content: Cart[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
 }
 
 export interface AddToCartResponse {

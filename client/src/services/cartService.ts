@@ -8,13 +8,43 @@ import type {
 } from '../types/cart';
 
 export const cartService = {
+  // Admin: Lấy tất cả giỏ hàng với phân trang
+  async getAllCarts(page: number = 0, size: number = 10): Promise<CartResponse> {
+    try {
+      console.log('🔄 CartService: Getting all carts with URL:', `${CONFIG.API_GATEWAY}${API.GET_ALL_CARTS}?page=${page}&size=${size}`);
+      
+      const response = await axios.get(`${CONFIG.API_GATEWAY}${API.GET_ALL_CARTS}`, {
+        params: { page, size }
+      });
+      
+      console.log('✅ CartService: Get all carts success:', response.data);
+      
+      return {
+        success: true,
+        message: 'Lấy danh sách giỏ hàng thành công',
+        data: response.data
+      };
+    } catch (error: any) {
+      console.error('❌ CartService: Error getting all carts:', error);
+      
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message || 'Lỗi khi lấy danh sách giỏ hàng',
+        error: error.message
+      };
+    }
+  },
+
   // Lấy giỏ hàng theo account ID
   async getCartByAccount(accountId: string): Promise<CartResponse> {
     try {
       const response = await axios.get(`${CONFIG.API_GATEWAY}${API.GET_CART_BY_ACCOUNT(accountId)}`);
       return response.data;
     } catch (error: any) {
-      console.error('Error getting cart:', error);
+      // Don't log 404 errors - it's normal for accounts to not have carts yet
+      if (error.response?.status !== 404) {
+        console.error('Error getting cart:', error);
+      }
       return {
         success: false,
         message: error.response?.data?.message || 'Lỗi khi lấy giỏ hàng',
@@ -230,6 +260,81 @@ export const cartService = {
       return {
         success: false,
         message: error.response?.data?.message || error.message || 'Lỗi khi xóa giỏ hàng',
+        error: error.message
+      };
+    }
+  },
+
+  // Admin: Vô hiệu hóa giỏ hàng
+  async disableCart(cartId: string): Promise<CartResponse> {
+    try {
+      console.log('🔄 CartService: Disabling cart with URL:', `${CONFIG.API_GATEWAY}${API.DISABLE_CART(cartId)}`);
+      
+      const response = await axios.put(`${CONFIG.API_GATEWAY}${API.DISABLE_CART(cartId)}`);
+      
+      console.log('✅ CartService: Disable cart success:', response.data);
+      
+      return {
+        success: true,
+        message: 'Vô hiệu hóa giỏ hàng thành công',
+        data: response.data
+      };
+    } catch (error: any) {
+      console.error('❌ CartService: Error disabling cart:', error);
+      
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message || 'Lỗi khi vô hiệu hóa giỏ hàng',
+        error: error.message
+      };
+    }
+  },
+
+  // Admin: Kích hoạt lại giỏ hàng
+  async enableCart(cartId: string): Promise<CartResponse> {
+    try {
+      console.log('🔄 CartService: Enabling cart with URL:', `${CONFIG.API_GATEWAY}${API.ENABLE_CART(cartId)}`);
+      
+      const response = await axios.put(`${CONFIG.API_GATEWAY}${API.ENABLE_CART(cartId)}`);
+      
+      console.log('✅ CartService: Enable cart success:', response.data);
+      
+      return {
+        success: true,
+        message: 'Kích hoạt giỏ hàng thành công',
+        data: response.data
+      };
+    } catch (error: any) {
+      console.error('❌ CartService: Error enabling cart:', error);
+      
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message || 'Lỗi khi kích hoạt giỏ hàng',
+        error: error.message
+      };
+    }
+  },
+
+  // Admin: Cập nhật trạng thái giỏ hàng
+  async updateCartStatus(cartId: string, status: number): Promise<CartResponse> {
+    try {
+      console.log('🔄 CartService: Updating cart status with URL:', `${CONFIG.API_GATEWAY}${API.UPDATE_CART_STATUS(cartId, status)}`);
+      
+      const response = await axios.put(`${CONFIG.API_GATEWAY}${API.UPDATE_CART_STATUS(cartId, status)}`);
+      
+      console.log('✅ CartService: Update cart status success:', response.data);
+      
+      return {
+        success: true,
+        message: 'Cập nhật trạng thái giỏ hàng thành công',
+        data: response.data
+      };
+    } catch (error: any) {
+      console.error('❌ CartService: Error updating cart status:', error);
+      
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message || 'Lỗi khi cập nhật trạng thái giỏ hàng',
         error: error.message
       };
     }
