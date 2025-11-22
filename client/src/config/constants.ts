@@ -80,6 +80,7 @@ export const API = {
 
   // Cart - Theo CartController.java
   GET_ALL_CARTS: '/cart', // GET /api/cart?page=0&size=10 (Admin only)
+  GET_CART_BY_ID: (cartId: string) => `/cart/${cartId}`, // GET /api/cart/{cartId} (Admin only)
   GET_CART_BY_ACCOUNT: (accountId: string) => `/cart/account/${accountId}`, // GET /api/cart/account/{accountId}
   CREATE_CART: (accountId: string) => `/cart/account/${accountId}`, // POST /api/cart/account/{accountId}
   DELETE_CART: (cartId: string) => `/cart/${cartId}`, // DELETE /api/cart/{cartId}

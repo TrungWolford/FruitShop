@@ -21,6 +21,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
   const [cartItems, setCartItems] = useState<CartItemType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
+  const [cartStatus, setCartStatus] = useState<number | null>(null);
 
   // Fetch cart items when cart opens
   useEffect(() => {
@@ -47,22 +48,32 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
         const response = await cartService.getCartItems(user.accountId);
         if (response.success && response.data) {
           let items: CartItemType[] = [];
-          if (Array.isArray(response.data)) {
-            items = response.data;
-          } else if (typeof response.data === 'object' && 'items' in response.data) {
+          let status: number | null = null;
+          if (typeof response.data === 'object' && 'items' in response.data) {
+            // Full cart object
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             items = (response.data as any).items || [];
+            status = (response.data as any).status ?? null;
+          } else if (Array.isArray(response.data)) {
+            items = response.data;
           }
           setCartItems(items);
+          setCartStatus(status);
+          // Nếu cart bị khóa thì báo lỗi
+          if (status !== null && status !== 1) {
+            toast.error('Giỏ hàng đã bị vô hiệu hóa do vi phạm chính sách, vui lòng liên hệ VuaTraiCay để biết thêm chi tiết');
+          }
         }
       } else {
         // Lấy từ localStorage nếu chưa đăng nhập
         const localCart = localStorageCartService.getCartItems();
         setCartItems(localCart);
+        setCartStatus(null);
       }
-      // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
+    // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
     } catch (error) {
       setCartItems([]);
+      setCartStatus(null);
     } finally {
       setIsLoading(false);
     }
@@ -143,7 +154,24 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
     }).format(price);
   };
 
+  // Nếu cart bị khóa thì chỉ hiển thị thông báo, không cho thao tác
   if (!isOpen) return null;
+  if (cartStatus !== null && cartStatus !== 1) {
+    return (
+      <>
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-all duration-300" onClick={onClose} />
+        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] bg-white rounded-lg shadow-2xl z-50 border border-gray-100 flex flex-col items-center justify-center p-8">
+          <ShoppingCart className="w-16 h-16 text-red-500 mb-4" />
+          <h3 className="text-2xl font-bold mb-3 text-red-600">Giỏ hàng đã bị vô hiệu hóa</h3>
+          <p className="text-gray-700 mb-6 text-center leading-relaxed">
+            Giỏ hàng của bạn đã bị vô hiệu hóa do vi phạm chính sách.<br/>
+            Vui lòng liên hệ <span className="font-semibold text-orange-600">VuaTraiCay</span> để biết thêm chi tiết.
+          </p>
+          <Button onClick={onClose} className="bg-orange-600 hover:bg-orange-700 text-white px-8">Đóng</Button>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

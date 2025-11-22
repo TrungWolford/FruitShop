@@ -514,6 +514,17 @@ const ProductDetail: React.FC = () => {
 
         setIsAddingToCart(true);
         try {
+            // Kiểm tra trạng thái giỏ hàng trước khi thêm
+            const cartResponse = await cartService.getCartByAccount(user.accountId);
+            if (cartResponse.success && cartResponse.data) {
+                const cartData = cartResponse.data as any;
+                if (cartData.status !== undefined && cartData.status !== 1) {
+                    toast.error('Giỏ hàng đã bị vô hiệu hóa do vi phạm chính sách, vui lòng liên hệ VuaTraiCay để biết thêm chi tiết');
+                    setIsAddingToCart(false);
+                    return;
+                }
+            }
+
             const response = await cartService.addToCart({
                 productId: product.productId,
                 quantity: quantity,
@@ -546,6 +557,16 @@ const ProductDetail: React.FC = () => {
         }
 
         try {
+            // Kiểm tra trạng thái giỏ hàng trước
+            const cartResponse = await cartService.getCartByAccount(user.accountId);
+            if (cartResponse.success && cartResponse.data) {
+                const cartData = cartResponse.data as any;
+                if (cartData.status !== undefined && cartData.status !== 1) {
+                    toast.error('Giỏ hàng đã bị vô hiệu hóa do vi phạm chính sách, vui lòng liên hệ VuaTraiCay để biết thêm chi tiết');
+                    return;
+                }
+            }
+
             // Clear current cart first
             await cartService.clearCart(user.accountId);
 

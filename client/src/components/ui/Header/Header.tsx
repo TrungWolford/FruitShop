@@ -33,6 +33,7 @@ const TopNavigation: React.FC = () => {
   const [cartItemCount, setCartItemCount] = useState(0);
   const [hoverCartItems, setHoverCartItems] = useState<CartItem[]>([]);
   const [hasLoadedHoverCart, setHasLoadedHoverCart] = useState(false);
+  const [cartStatus, setCartStatus] = useState<number | null>(null);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -151,18 +152,24 @@ const TopNavigation: React.FC = () => {
       const response = await cartService.getCartItems(user.accountId);
       if (response.success && response.data) {
         let count = 0;
+        let status: number | null = null;
+        
         if (Array.isArray(response.data)) {
           count = response.data.reduce((total, item) => total + item.quantity, 0);
         } else if (typeof response.data === 'object' && 'items' in response.data) {
-          count =
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (response.data as any).items?.reduce((total: number, item: any) => total + item.quantity, 0) || 0;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const cartData = response.data as any;
+          count = cartData.items?.reduce((total: number, item: any) => total + item.quantity, 0) || 0;
+          status = cartData.status ?? null;
         }
+        
         setCartItemCount(count);
+        setCartStatus(status);
       }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       setCartItemCount(0);
+      setCartStatus(null);
     }
   };
 
@@ -197,7 +204,7 @@ const TopNavigation: React.FC = () => {
   };
 
   // Helper function to get correct image URL
-  const getImageUrl = (item: CartItem) => {
+  const getImageUrl = (item: CartItem): string => {
     // Lấy image đầu tiên từ images array
     const imageUrl = item.images?.[0];
     
@@ -218,6 +225,15 @@ const TopNavigation: React.FC = () => {
     // Clean and add /products/ prefix
     const cleanUrl = imageUrl.startsWith('/') ? imageUrl.slice(1) : imageUrl;
     return `/products/${cleanUrl}`;
+  };
+
+  const handleCartClick = () => {
+    // Check if cart is disabled
+    if (isAuthenticated && user && cartStatus !== null && cartStatus !== 1) {
+      toast.error('Giỏ hàng đã bị vô hiệu hóa do vi phạm chính sách, vui lòng liên hệ VuaTraiCay để biết thêm chi tiết');
+      return;
+    }
+    setIsCartOpen(true);
   };
 
   const handleUpdateQuantity = async (cartItemId: string, currentQuantity: number, delta: number) => {
@@ -396,9 +412,18 @@ const TopNavigation: React.FC = () => {
             <HoverCard openDelay={200} closeDelay={300}>
               <HoverCardTrigger asChild>
                 <div
-                  className="flex items-center group cursor-pointer"
-                  onClick={() => setIsCartOpen(true)}
-                  onMouseEnter={fetchHoverCartItems}
+                  className={`flex items-center group ${
+                    isAuthenticated && user && cartStatus !== null && cartStatus !== 1 
+                      ? 'cursor-not-allowed opacity-60' 
+                      : 'cursor-pointer'
+                  }`}
+                  onClick={handleCartClick}
+                  onMouseEnter={() => {
+                    // Chỉ fetch hover cart nếu cart không bị khóa
+                    if (!isAuthenticated || !user || cartStatus === null || cartStatus === 1) {
+                      fetchHoverCartItems();
+                    }
+                  }}
                 >
                   <ShoppingCart className="w-8 h-8 group-hover:text-amber-400" />
                   <div className="text-white  group-hover:text-amber-400">
@@ -414,7 +439,14 @@ const TopNavigation: React.FC = () => {
                 </div>
               </HoverCardTrigger>
               <HoverCardContent className="w-[420px]" side="bottom" align="end" sideOffset={10} alignOffset={-20}>
-                <div className="flex flex-col items-start justify-center">
+                {isAuthenticated && user && cartStatus !== null && cartStatus !== 1 ? (
+                  <div className="w-full text-center py-8">
+                    <ShoppingCart className="w-12 h-12 mx-auto mb-2 text-red-400" />
+                    <p className="text-red-600 font-semibold">Giỏ hàng đã bị vô hiệu hóa</p>
+                    <p className="text-sm text-gray-600 mt-2">Vui lòng liên hệ VuaTraiCay để biết thêm chi tiết</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-start justify-center">
                   <h1 className="text-[#F36F40] text-center w-full mb-4">GIỎ HÀNG</h1>
 
                   {hoverCartItems.length === 0 ? (
@@ -497,6 +529,7 @@ const TopNavigation: React.FC = () => {
                     </div>
                   )}
                 </div>
+                )}
               </HoverCardContent>
             </HoverCard>
           </div>
