@@ -20,18 +20,18 @@ ENV VITE_CLOUDINARY_UPLOAD_PRESET=$VITE_CLOUDINARY_UPLOAD_PRESET
 ENV VITE_ENVIRONMENT=production
 
 # Copy package files
-COPY package*.json ./
+COPY package.json ./
 COPY pnpm-lock.yaml ./
 
 # Install pnpm and dependencies
 RUN npm install -g pnpm
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --shamefully-hoist
 
 # Copy source code
 COPY . .
 
-# Build application
-RUN pnpm run build
+# Build application (use Docker-specific build script)
+RUN pnpm run build:docker
 
 # Production stage
 FROM nginx:alpine
