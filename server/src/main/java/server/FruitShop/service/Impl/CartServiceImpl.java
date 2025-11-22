@@ -19,6 +19,7 @@ import server.FruitShop.repository.CartRepository;
 import server.FruitShop.repository.ProductRepository;
 import server.FruitShop.service.CartService;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -42,6 +43,18 @@ public class CartServiceImpl implements CartService {
     public Page<CartResponse> getAllCart(Pageable pageable) {
         Page<Cart> cartPage = cartRepository.findAll(pageable);
         return cartPage.map(CartResponse::fromEntity);
+    }
+
+    @Override
+    public CartResponse getCartById(String cartId) {
+        try {
+            Optional<Cart> cartOptional = cartRepository.findById(cartId);
+            return cartOptional.map(CartResponse::fromEntity).orElse(null);
+        } catch (Exception e) {
+            System.err.println("Error fetching cart for cartId " + cartId + ": " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @Override
@@ -71,6 +84,8 @@ public class CartServiceImpl implements CartService {
 
         Cart cart = new Cart();
         cart.setAccount(accountOptional.get());
+        cart.setCreatedAt(new Date());
+        cart.setStatus(1);
         Cart savedCart = cartRepository.save(cart);
         return CartResponse.fromEntity(savedCart);
     }
@@ -91,6 +106,11 @@ public class CartServiceImpl implements CartService {
     public CartItemResponse addCartItem(String accountId, CreateCartItemRequest request) {
         // Get or create cart for account
         Cart cart = getOrCreateCart(accountId);
+
+        // Check if cart is disabled
+        if (cart.getStatus() != 1) {
+            throw new RuntimeException("Giỏ hàng đã bị vô hiệu hóa do vi phạm chính sách, vui lòng liên hệ VuaTraiCay để biết thêm chi tiết");
+        }
 
         // Check if product exists
         Optional<Product> productOptional = productRepository.findById(request.getProductId());
@@ -128,6 +148,13 @@ public class CartServiceImpl implements CartService {
         }
 
         CartItem cartItem = cartItemOptional.get();
+        
+        // Check if cart is disabled
+        Cart cart = cartItem.getCart();
+        if (cart != null && cart.getStatus() != 1) {
+            throw new RuntimeException("Giỏ hàng đã bị vô hiệu hóa do vi phạm chính sách, vui lòng liên hệ VuaTraiCay để biết thêm chi tiết");
+        }
+        
         cartItem.setQuantity(request.getQuantity());
 
         CartItem savedItem = cartItemRepository.save(cartItem);
@@ -138,6 +165,14 @@ public class CartServiceImpl implements CartService {
     public void removeCartItem(String cartItemId) {
         Optional<CartItem> cartItemOptional = cartItemRepository.findById(cartItemId);
         if (cartItemOptional.isPresent()) {
+            CartItem cartItem = cartItemOptional.get();
+            
+            // Check if cart is disabled
+            Cart cart = cartItem.getCart();
+            if (cart != null && cart.getStatus() != 1) {
+                throw new RuntimeException("Giỏ hàng đã bị vô hiệu hóa do vi phạm chính sách, vui lòng liên hệ VuaTraiCay để biết thêm chi tiết");
+            }
+            
             cartItemRepository.deleteById(cartItemId);
         }
     }
@@ -258,6 +293,8 @@ public class CartServiceImpl implements CartService {
 
         Cart cart = new Cart();
         cart.setAccount(accountOptional.get());
+        cart.setCreatedAt(new Date());
+        cart.setStatus(1);
         return cartRepository.save(cart);
     }
 }
