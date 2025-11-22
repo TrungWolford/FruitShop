@@ -24,8 +24,8 @@ WORKDIR /app
 # Copy jar from build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Expose port
-EXPOSE 8080
+# Expose port (Railway sets $PORT dynamically)
+EXPOSE ${PORT:-8080}
 
-# Run application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Run application with dynamic port
+ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-8080} -jar app.jar"]
