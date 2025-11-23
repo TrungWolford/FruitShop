@@ -64,7 +64,13 @@ export const cartService = {
   async getCartByAccount(accountId: string): Promise<CartResponse> {
     try {
       const response = await axios.get(`${CONFIG.API_GATEWAY}${API.GET_CART_BY_ACCOUNT(accountId)}`);
-      return response.data;
+      
+      // Backend trả về CartResponse object trực tiếp, wrap nó trong success response
+      return {
+        success: true,
+        message: 'Lấy giỏ hàng thành công',
+        data: response.data
+      };
     } catch (error: any) {
       // Don't log 404 errors - it's normal for accounts to not have carts yet
       if (error.response?.status !== 404) {

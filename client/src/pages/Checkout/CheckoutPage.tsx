@@ -19,12 +19,6 @@ import type { CreateOrderRequest } from '../../services/orderService';
 import type { CartItem as CartItemType } from '../../types/cart';
 import { toast } from 'sonner';
 
-// Interface for cart response variations
-interface CartResponse {
-    items?: CartItemType[];
-    cartItems?: CartItemType[];
-}
-
 // Shipping method options
 const SHIPPING_METHODS = [
     { id: 'super_fast', name: 'HCM - Siêu tốc', fee: 50000, description: 'Giao hàng trong 2 giờ' },
@@ -55,6 +49,16 @@ const CheckoutPage: React.FC = () => {
     const [isLoadingShipping, setIsLoadingShipping] = useState(false);
     const [selectedShippingMethod, setSelectedShippingMethod] = useState<string>(SHIPPING_METHODS[0].id);
     const [cartStatus, setCartStatus] = useState<number | null>(null);
+
+    // Auto redirect về trang chủ sau 5 giây nếu cart bị vô hiệu hóa
+    useEffect(() => {
+        if (cartStatus !== null && cartStatus !== 1) {
+            const timer = setTimeout(() => {
+                navigate('/');
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [cartStatus, navigate]);
 
     // Fetch cart items and shipping addresses
     useEffect(() => {
@@ -104,26 +108,30 @@ const CheckoutPage: React.FC = () => {
 
         setIsLoading(true);
         try {
-            const response = await cartService.getCartItems(currentUser.accountId);
+            // Dùng getCartByAccount để lấy cả status
+            const response = await cartService.getCartByAccount(currentUser.accountId);
 
             if (response.success && response.data) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const cartData = response.data as any;
+                
                 let items: CartItemType[] = [];
                 let status: number | null = null;
 
-                if (typeof response.data === 'object' && 'items' in response.data) {
-                    const cartResponse = response.data as any;
-                    items = cartResponse.items || [];
-                    status = cartResponse.status ?? null;
-                } else if (Array.isArray(response.data)) {
-                    items = response.data;
-                } else if (typeof response.data === 'object' && 'cartItems' in response.data) {
-                    const cartResponse = response.data as CartResponse;
-                    items = cartResponse.cartItems || [];
-                } else {
-                    items = [response.data as CartItemType];
+                // Lấy items từ cart object
+                if (cartData.items && Array.isArray(cartData.items)) {
+                    items = cartData.items;
                 }
+                
+                // Lấy status từ cart object
+                status = cartData.status ?? null;
+                
                 setCartItems(items);
                 setCartStatus(status);
+                
+                console.log('🛒 Checkout page - Cart status:', status); // Debug log
+                
+                // Nếu cart bị vô hiệu hóa thì báo lỗi
                 if (status !== null && status !== 1) {
                     toast.error('Giỏ hàng đã bị vô hiệu hóa do vi phạm chính sách, vui lòng liên hệ VuaTraiCay để biết thêm chi tiết');
                 }
@@ -632,7 +640,7 @@ const CheckoutPage: React.FC = () => {
         );
     }
 
-    // Nếu cart bị khóa thì chỉ hiển thị thông báo, không cho thao tác
+    // Nếu cart bị vô hiệu hóa thì chỉ hiển thị thông báo, không cho thao tác
     if (cartStatus !== null && cartStatus !== 1) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-8">
@@ -643,6 +651,7 @@ const CheckoutPage: React.FC = () => {
                     Vui lòng liên hệ <span className="font-semibold text-orange-600">VuaTraiCay</span> để biết thêm chi tiết.
                 </p>
                 <Button onClick={() => navigate('/')} className="bg-orange-600 hover:bg-orange-700 text-white px-8">Về trang chủ</Button>
+                <p className="text-sm text-gray-500 mt-4">Tự động quay về trang chủ sau 5 giây...</p>
             </div>
         );
     }
