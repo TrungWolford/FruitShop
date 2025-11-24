@@ -439,7 +439,7 @@ INSERT INTO "product_category" ("productid", "categoryid") VALUES
 ('3IRUZBRW', 'CCJ234C'),
 ('3IRUZBRW', 'C8G0KJ9'),
 ('JW15K72N', 'C8ES8Q6'),
-('JW1Keyboards, a symphony of clicking,
+('JW15K72N', 'C8G0KJ9'),
 ('9MULRQZG', 'C6CRI4F'),
 ('9MULRQZG', 'C9PZL0O'),
 ('MISB0QRM', 'C7G4S0P'),
