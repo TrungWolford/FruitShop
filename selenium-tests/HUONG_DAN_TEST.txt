@@ -1,0 +1,109 @@
+========================================
+HƯỚNG DẪN TEST ĐĂNG NHẬP BẰNG SELENIUM
+========================================
+
+BƯỚC 1: CÀI ĐẶT
+----------------
+1. Đảm bảo đã cài Chrome browser
+2. Kiểm tra Java 21:
+   java -version
+
+3. Cài đặt dependencies Maven:
+   cd C:\Users\ADMIN\FruitShop\selenium-tests
+   mvn clean install
+
+
+BƯỚC 2: CHẠY BACKEND & FRONTEND
+---------------------------------
+Trước khi test, cần chạy cả Backend và Frontend:
+
+Terminal 1 - Backend:
+cd C:\Users\ADMIN\FruitShop\server
+.\mvnw spring-boot:run
+
+Terminal 2 - Frontend:
+cd C:\Users\ADMIN\FruitShop\client
+npm run dev
+
+Chờ cả 2 service khởi động xong:
+- Backend: http://localhost:8080
+- Frontend: http://localhost:5173
+
+
+BƯỚC 3: CHẠY TEST
+------------------
+Mở Terminal thứ 3:
+cd C:\Users\ADMIN\FruitShop\selenium-tests
+
+# Chạy tất cả test đăng nhập:
+mvn test
+
+# Chạy test cụ thể:
+mvn test -Dtest=LoginTest
+
+
+BƯỚC 4: XEM KẾT QUẢ
+--------------------
+- Kết quả hiển thị trên console
+- Chi tiết báo cáo HTML: selenium-tests\target\surefire-reports\index.html
+
+
+CÁC TEST CASE ĐĂNG NHẬP
+------------------------
+1. testLoginSuccessAsCustomer     - Đăng nhập Customer thành công
+2. testLoginSuccessAsAdmin        - Đăng nhập Admin thành công  
+3. testLoginWithWrongPassword     - Đăng nhập mật khẩu sai
+4. testLoginWithInvalidPhone      - Đăng nhập SĐT không tồn tại
+5. testLoginWithEmptyFields       - Đăng nhập để trống thông tin
+
+
+TÀI KHOẢN TEST
+--------------
+Customer 1: 0123456789 / 123456
+Customer 2: 0111111111 / 123456
+Customer 3: 0222222222 / 123456
+Admin 1:    0987654321 / 123456
+Admin 2:    0999999999 / 123456
+
+
+CHỈNH SỬA LOCATORS
+-------------------
+File: src\test\java\com\fruitshop\pages\LoginPage.java
+
+Cần kiểm tra và chỉnh sửa các locator cho đúng với HTML của bạn:
+- phoneNumberInput: id/name/xpath của ô nhập SĐT
+- passwordInput: id/name/xpath của ô nhập mật khẩu  
+- loginButton: xpath/css của nút đăng nhập
+- errorMessage: class/xpath của thông báo lỗi
+
+Cách tìm locator:
+1. Mở http://localhost:5173/login trên Chrome
+2. Nhấn F12 mở DevTools
+3. Click icon mũi tên góc trái DevTools
+4. Click vào element cần test
+5. Copy id/class/xpath trong HTML
+
+
+GỠ LỖI
+------
+1. Nếu Chrome không mở:
+   - Kiểm tra Chrome đã cài đặt chưa
+   - WebDriverManager sẽ tự động tải ChromeDriver
+
+2. Nếu không tìm thấy element:
+   - Kiểm tra lại locator trong LoginPage.java
+   - Tăng thời gian wait nếu trang load chậm
+
+3. Nếu test fail:
+   - Xem log console để biết lỗi cụ thể
+   - Kiểm tra Backend/Frontend đang chạy
+   - Kiểm tra URL đăng nhập có đúng không
+
+
+CHẠY Ở CHẾ ĐỘ DEBUG
+---------------------
+Trong IntelliJ IDEA:
+1. Mở file LoginTest.java
+2. Click chuột phải vào tên test method
+3. Chọn "Debug 'testLoginSuccessAsCustomer()'"
+4. Đặt breakpoint để xem từng bước

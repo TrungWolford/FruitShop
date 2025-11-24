@@ -1,0 +1,95 @@
+================================================================================
+                    HƯỚNG DẪN CHẠY VÀ DỪNG PROJECT FRUITSHOP
+================================================================================
+
+📦 THÔNG TIN PROJECT:
+- Backend: Spring Boot (Java 21) - Port 8080
+- Frontend: React + Vite - Port 5173
+- Database: PostgreSQL - Port 5432
+
+================================================================================
+                            🚀 CÁCH CHẠY PROJECT
+================================================================================
+2️⃣ CHẠY BACKEND (Spring Boot):
+   
+   📂 Mở Terminal 1 (PowerShell):
+   
+   cd C:\Users\ADMIN\FruitShop\server
+   .\mvnw spring-boot:run
+   
+   ✅ Đợi đến khi thấy dòng:
+   "Started FruitShopApplication in X.XXX seconds"
+   
+   ➡️ Backend sẽ chạy tại: http://localhost:8080
+
+3️⃣ CHẠY FRONTEND (React + Vite):
+   
+   📂 Mở Terminal 2 (PowerShell):
+   
+   cd C:\Users\ADMIN\FruitShop\client
+   npm run dev
+   
+   ✅ Đợi đến khi thấy:
+   "Local: http://localhost:5173/"
+   
+   ➡️ Frontend sẽ chạy tại: http://localhost:5173
+
+4️⃣ MỞ TRÌNH DUYỆT:
+   
+   Truy cập: http://localhost:5173
+   
+   📌 ĐĂNG NHẬP VỚI TÀI KHOẢN:
+   
+   ┌─────────────┬────────────────┬──────────┬─────────────────┐
+   │ Tài khoản   │ Số điện thoại  │ Mật khẩu │ Vai trò         │
+   ├─────────────┼────────────────┼──────────┼─────────────────┤
+   │ Customer 1  │ 0123456789     │ 123456   │ Khách hàng      │
+   │ Admin 1     │ 0987654321     │ 123456   │ Quản trị viên   │
+   │ Admin 2     │ 0912345678     │ 123456   │ Quản trị viên   │
+   │ Customer 2  │ 0934567890     │ 123456   │ Khách hàng      │
+   │ Customer 3  │ 0945678901     │ 123456   │ Khách hàng      │
+   └─────────────┴────────────────┴──────────┴─────────────────┘
+
+================================================================================
+                            ⛔ CÁCH DỪNG PROJECT
+================================================================================
+
+1️⃣ DỪNG FRONTEND:
+   
+   - Vào Terminal đang chạy Frontend (Terminal 2)
+   - Nhấn: Ctrl + C
+   - Khi hỏi "Terminate batch job (Y/N)?", nhấn: Y
+
+2️⃣ DỪNG BACKEND:
+   
+   - Vào Terminal đang chạy Backend (Terminal 1)
+   - Nhấn: Ctrl + C
+   - Khi hỏi "Terminate batch job (Y/N)?", nhấn: Y
+
+3️⃣ HOẶC KILL TẤT CẢ PROCESS JAVA (Nếu Ctrl+C không work):
+   
+   Mở PowerShell mới và chạy:
+   
+   taskkill /F /IM java.exe
+   taskkill /F /IM node.exe
+================================================================================
+                        🎯 LƯU Ý QUAN TRỌNG
+================================================================================
+
+⚠️ KHI ĐANG PHÁT TRIỂN:
+   - KHÔNG đóng 2 terminal đang chạy Backend và Frontend
+   - Nếu thay đổi code Backend → Ctrl+C và chạy lại .\mvnw spring-boot:run
+   - Nếu thay đổi code Frontend → Vite tự động reload (Hot Module Replacement)
+
+⚠️ KHI KHÔNG SỬ DỤNG:
+   - Dừng cả Backend và Frontend (Ctrl + C)
+   - Có thể tắt PostgreSQL để tiết kiệm tài nguyên:
+     Stop-Service postgresql-x64-13
+
+⚠️ TRƯỚC KHI DEPLOY PRODUCTION:
+   - Đổi password database mạnh hơn
+   - Update Spring Security password (không dùng generated password)
+   - Configure CORS phù hợp
+   - Enable HTTPS
+
+
