@@ -17,7 +17,8 @@ public class LoginPage {
     private By phoneNumberInput = By.id("username");
     private By passwordInput = By.id("password");
     private By loginButton = By.xpath("//button[@type='submit']");
-    private By errorMessage = By.cssSelector(".text-red-500");
+    // Thử nhiều locator cho error message
+    private By errorMessage = By.xpath("//*[contains(@class, 'text-red-500') or contains(text(), 'Invalid') or contains(text(), 'Sai') or contains(text(), 'lỗi')]");
 
     public LoginPage(WebDriver driver) {
         this.driver = driver;
@@ -54,7 +55,9 @@ public class LoginPage {
 
     public boolean isErrorMessageDisplayed() {
         try {
-            return driver.findElement(errorMessage).isDisplayed();
+            // Đợi thông báo lỗi xuất hiện (tối đa 5 giây)
+            WebElement error = wait.until(ExpectedConditions.visibilityOfElementLocated(errorMessage));
+            return error.isDisplayed();
         } catch (Exception e) {
             return false;
         }

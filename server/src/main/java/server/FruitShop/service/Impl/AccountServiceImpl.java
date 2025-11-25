@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import server.FruitShop.dto.request.Account.CreateAccountRequest;
@@ -29,6 +30,9 @@ public class AccountServiceImpl implements AccountService {
 
     @Autowired
     private RoleRepository roleRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public Page<AccountResponse> getAllAccounts(Pageable pageable) {
@@ -59,7 +63,7 @@ public class AccountServiceImpl implements AccountService {
         Account account = new Account();
         account.setAccountName(request.getAccountName());
         account.setAccountPhone(request.getAccountPhone());
-        account.setPassword(request.getPassword());
+        account.setPassword(passwordEncoder.encode(request.getPassword()));
         account.setStatus(1);
 
         // Set roles if provided
@@ -84,7 +88,7 @@ public class AccountServiceImpl implements AccountService {
 
         account.setAccountName(request.getAccountName());
         account.setAccountPhone(request.getAccountPhone());
-        account.setPassword(request.getPassword());
+        account.setPassword(passwordEncoder.encode(request.getPassword()));
         account.setStatus(request.getStatus());
 
         // Update roles if provided
@@ -136,8 +140,13 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public AccountResponse authenticateAccount(String accountPhone, String password) {
-        Account account = accountRepository.findByAccountPhoneAndPassword(accountPhone, password)
+        Account account = accountRepository.findByAccountPhone(accountPhone)
                 .orElseThrow(() -> new RuntimeException("Invalid phone or password"));
+        
+        if (!passwordEncoder.matches(password, account.getPassword())) {
+            throw new RuntimeException("Invalid phone or password");
+        }
+        
         return AccountResponse.fromEntity(account);
     }
 
