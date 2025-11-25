@@ -16,11 +16,12 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Cho phép tất cả origins trong development
-        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
-
-        // Hoặc chỉ định cụ thể frontend URL
-        // configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:3000"));
+        // Cho phép frontend URLs cụ thể
+        configuration.setAllowedOrigins(Arrays.asList(
+            "http://localhost:5173", 
+            "http://localhost:3000",
+            "https://fruitshop-c4.vercel.app"
+        ));
 
         // Cho phép tất cả HTTP methods
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));

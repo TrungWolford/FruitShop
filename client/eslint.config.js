@@ -25,7 +25,7 @@ export default tseslint.config([
     //Common rules
     // 'no-console': 'warn',
     'no-lonely-if': 'warn',
-    'no-unused-vars': 'warn',
+    // 'no-unused-vars': 'warn',
   }
   },
 ])

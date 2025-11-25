@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import server.FruitShop.dto.request.Account.CreateAccountRequest;
@@ -31,8 +31,7 @@ public class AccountServiceImpl implements AccountService {
     @Autowired
     private RoleRepository roleRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Override
     public Page<AccountResponse> getAllAccounts(Pageable pageable) {
@@ -60,9 +59,15 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public AccountResponse createAccount(CreateAccountRequest request) {
+        // Kiểm tra phone đã tồn tại chưa
+        if (accountRepository.findByAccountPhone(request.getAccountPhone()).isPresent()) {
+            throw new RuntimeException("Phone number already exists");
+        }
+        
         Account account = new Account();
         account.setAccountName(request.getAccountName());
         account.setAccountPhone(request.getAccountPhone());
+        // Hash password trước khi lưu
         account.setPassword(passwordEncoder.encode(request.getPassword()));
         account.setStatus(1);
 
@@ -140,11 +145,18 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public AccountResponse authenticateAccount(String accountPhone, String password) {
+        // Tìm account theo phone
         Account account = accountRepository.findByAccountPhone(accountPhone)
                 .orElseThrow(() -> new RuntimeException("Invalid phone or password"));
         
+        // Kiểm tra password hash
         if (!passwordEncoder.matches(password, account.getPassword())) {
             throw new RuntimeException("Invalid phone or password");
+        }
+        
+        // Kiểm tra trạng thái active
+        if (account.getStatus() != 1) {
+            throw new RuntimeException("Account is deactivated");
         }
         
         return AccountResponse.fromEntity(account);
