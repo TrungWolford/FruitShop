@@ -33,91 +33,56 @@ public class LoginTest extends BaseTest {
         }
     }
 
-    @Test(priority = 1, description = "Đăng nhập thành công với tài khoản Customer")
+    @Test(priority = 1, description = "Đăng nhập thành công với thông tin hợp lệ")
     public void testLoginSuccessAsCustomer() {
-        System.out.println("Test: Đăng nhập với SĐT 0355142890");
+        System.out.println("Test: Đăng nhập thành công - SĐT 0355142890");
         
         loginPage.login("0355142890", "123456");
         
-        // Đợi chuyển trang
         try {
             Thread.sleep(3000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
         
-        // Kiểm tra URL sau khi đăng nhập (điều chỉnh theo app của bạn)
         String currentUrl = driver.getCurrentUrl();
         System.out.println("URL sau đăng nhập: " + currentUrl);
         
-        // Kiểm tra đã chuyển trang (không còn ở /login)
+        // Kiểm tra đã đăng nhập thành công
         Assert.assertFalse(currentUrl.contains("/login"), "Đăng nhập thất bại, vẫn ở trang login");
     }
 
-    // Tạm thời comment các test khác, chỉ test Customer trước
-    /*
-    @Test(priority = 2, description = "Đăng nhập thành công với tài khoản Admin")
-    public void testLoginSuccessAsAdmin() {
-        System.out.println("Test: Đăng nhập với Admin 1");
-        
-        loginPage.login("0987654321", "123456");
-        
-        // Đợi chuyển trang
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        
-        String currentUrl = driver.getCurrentUrl();
-        System.out.println("URL sau đăng nhập: " + currentUrl);
-        
-        // Kiểm tra đã chuyển trang
-        Assert.assertFalse(currentUrl.contains("/login"), "Đăng nhập Admin thất bại");
-    }
-
-    @Test(priority = 3, description = "Đăng nhập thất bại với mật khẩu sai")
+    @Test(priority = 2, description = "Đăng nhập thất bại - Sai mật khẩu")
     public void testLoginWithWrongPassword() {
         System.out.println("Test: Đăng nhập với mật khẩu sai");
         
-        loginPage.login("0123456789", "wrongpassword");
+        loginPage.login("0355142890", "SaiMatKhau123");
         
-        // Đợi thông báo lỗi
+        // Tăng thời gian chờ để backend trả lỗi và Redux update
         try {
-            Thread.sleep(2000);
+            Thread.sleep(4000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
         
-        // Kiểm tra vẫn ở trang login hoặc có thông báo lỗi
-        String currentUrl = driver.getCurrentUrl();
-        System.out.println("URL hiện tại: " + currentUrl);
+        boolean hasError = loginPage.isErrorMessageDisplayed();
+        System.out.println("Có thông báo lỗi: " + hasError);
         
-        boolean hasError = loginPage.isErrorMessageDisplayed() || currentUrl.contains("/login");
+        if (hasError) {
+            System.out.println("Nội dung lỗi: " + loginPage.getErrorMessage());
+        }
+        
         Assert.assertTrue(hasError, "Không có thông báo lỗi khi nhập sai mật khẩu");
     }
 
-    @Test(priority = 4, description = "Đăng nhập với số điện thoại không tồn tại")
-    public void testLoginWithInvalidPhone() {
-        System.out.println("Test: Đăng nhập với SĐT không tồn tại");
+    @Test(priority = 3, description = "Đăng nhập thất bại - Bỏ trống trường mật khẩu bắt buộc")
+    public void testLoginWithEmptyPassword() {
+        System.out.println("Test: Kiểm tra HTML5 validation - Bỏ trống mật khẩu");
         
-        loginPage.login("0999999999", "123456");
+        // Nhập SĐT nhưng không nhập mật khẩu
+        loginPage.enterPhoneNumber("0355142890");
         
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        
-        String currentUrl = driver.getCurrentUrl();
-        boolean hasError = loginPage.isErrorMessageDisplayed() || currentUrl.contains("/login");
-        Assert.assertTrue(hasError, "Không có thông báo lỗi khi nhập SĐT không tồn tại");
-    }
-
-    @Test(priority = 5, description = "Đăng nhập với thông tin để trống")
-    public void testLoginWithEmptyFields() {
-        System.out.println("Test: Đăng nhập với thông tin trống");
-        
+        // Thử click nút đăng nhập
         loginPage.clickLoginButton();
         
         try {
@@ -126,9 +91,14 @@ public class LoginTest extends BaseTest {
             e.printStackTrace();
         }
         
-        // Kiểm tra vẫn ở trang login
+        // Kiểm tra vẫn ở modal login (không submit được do HTML5 validation)
         String currentUrl = driver.getCurrentUrl();
-        Assert.assertTrue(currentUrl.contains("/login"), "Không kiểm tra validation khi để trống");
+        System.out.println("URL hiện tại: " + currentUrl);
+        
+        // Kiểm tra form không submit được (vẫn ở trang chủ)
+        Assert.assertTrue(currentUrl.equals(baseUrl) || currentUrl.equals(baseUrl + "/"), 
+            "HTML5 validation không hoạt động - form đã submit được khi mật khẩu trống");
+        
+        System.out.println("✓ HTML5 validation hoạt động đúng - không cho submit khi mật khẩu trống");
     }
-    */
 }

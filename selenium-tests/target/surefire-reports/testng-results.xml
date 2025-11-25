@@ -1,29 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testng-results ignored="0" total="1" passed="1" failed="0" skipped="0">
+<testng-results ignored="0" total="3" passed="3" failed="0" skipped="0">
   <reporter-output>
   </reporter-output>
-  <suite started-at="2025-11-24T09:09:57 GMT+07:00" name="FruitShop Test Suite" finished-at="2025-11-24T09:10:16 GMT+07:00" duration-ms="18375">
+  <suite started-at="2025-11-25T09:46:22 GMT+07:00" name="Surefire suite" finished-at="2025-11-25T09:46:54 GMT+07:00" duration-ms="32773">
     <groups>
     </groups>
-    <test started-at="2025-11-24T09:09:57 GMT+07:00" name="Login Tests" finished-at="2025-11-24T09:10:16 GMT+07:00" duration-ms="18375">
+    <test started-at="2025-11-25T09:46:22 GMT+07:00" name="Surefire test" finished-at="2025-11-25T09:46:54 GMT+07:00" duration-ms="32773">
       <class name="com.fruitshop.tests.LoginTest">
-        <test-method is-config="true" signature="setUp()[pri:0, instance:com.fruitshop.tests.LoginTest@3835c46]" started-at="2025-11-24T09:09:57 GMT+07:00" name="setUp" finished-at="2025-11-24T09:10:05 GMT+07:00" duration-ms="7870" status="PASS">
+        <test-method is-config="true" signature="setUp()[pri:0, instance:com.fruitshop.tests.LoginTest@163e4e87]" started-at="2025-11-25T09:46:22 GMT+07:00" name="setUp" finished-at="2025-11-25T09:46:27 GMT+07:00" duration-ms="5174" status="PASS">
           <reporter-output>
           </reporter-output>
         </test-method> <!-- setUp -->
-        <test-method is-config="true" signature="setUpLoginTest()[pri:0, instance:com.fruitshop.tests.LoginTest@3835c46]" started-at="2025-11-24T09:10:05 GMT+07:00" name="setUpLoginTest" finished-at="2025-11-24T09:10:10 GMT+07:00" duration-ms="4713" status="PASS">
+        <test-method is-config="true" signature="setUpLoginTest()[pri:0, instance:com.fruitshop.tests.LoginTest@163e4e87]" started-at="2025-11-25T09:46:27 GMT+07:00" name="setUpLoginTest" finished-at="2025-11-25T09:46:32 GMT+07:00" duration-ms="4692" status="PASS">
           <reporter-output>
           </reporter-output>
         </test-method> <!-- setUpLoginTest -->
-        <test-method signature="testLoginSuccessAsCustomer()[pri:1, instance:com.fruitshop.tests.LoginTest@3835c46]" started-at="2025-11-24T09:10:10 GMT+07:00" name="testLoginSuccessAsCustomer" description="Đăng nhập thành công với tài khoản Customer" finished-at="2025-11-24T09:10:14 GMT+07:00" duration-ms="4152" status="PASS">
+        <test-method signature="testLoginSuccessAsCustomer()[pri:1, instance:com.fruitshop.tests.LoginTest@163e4e87]" started-at="2025-11-25T09:46:32 GMT+07:00" name="testLoginSuccessAsCustomer" description="Đăng nhập thành công với thông tin hợp lệ" finished-at="2025-11-25T09:46:35 GMT+07:00" duration-ms="3897" status="PASS">
           <reporter-output>
           </reporter-output>
         </test-method> <!-- testLoginSuccessAsCustomer -->
-        <test-method is-config="true" signature="tearDown()[pri:0, instance:com.fruitshop.tests.LoginTest@3835c46]" started-at="2025-11-24T09:10:14 GMT+07:00" name="tearDown" finished-at="2025-11-24T09:10:16 GMT+07:00" duration-ms="1569" status="PASS">
+        <test-method is-config="true" signature="tearDown()[pri:0, instance:com.fruitshop.tests.LoginTest@163e4e87]" started-at="2025-11-25T09:46:35 GMT+07:00" name="tearDown" finished-at="2025-11-25T09:46:36 GMT+07:00" duration-ms="342" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- tearDown -->
+        <test-method is-config="true" signature="setUp()[pri:0, instance:com.fruitshop.tests.LoginTest@163e4e87]" started-at="2025-11-25T09:46:36 GMT+07:00" name="setUp" finished-at="2025-11-25T09:46:38 GMT+07:00" duration-ms="2039" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setUp -->
+        <test-method is-config="true" signature="setUpLoginTest()[pri:0, instance:com.fruitshop.tests.LoginTest@163e4e87]" started-at="2025-11-25T09:46:38 GMT+07:00" name="setUpLoginTest" finished-at="2025-11-25T09:46:42 GMT+07:00" duration-ms="4413" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setUpLoginTest -->
+        <test-method signature="testLoginWithWrongPassword()[pri:2, instance:com.fruitshop.tests.LoginTest@163e4e87]" started-at="2025-11-25T09:46:42 GMT+07:00" name="testLoginWithWrongPassword" description="Đăng nhập thất bại - Sai mật khẩu" finished-at="2025-11-25T09:46:47 GMT+07:00" duration-ms="4600" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testLoginWithWrongPassword -->
+        <test-method is-config="true" signature="tearDown()[pri:0, instance:com.fruitshop.tests.LoginTest@163e4e87]" started-at="2025-11-25T09:46:47 GMT+07:00" name="tearDown" finished-at="2025-11-25T09:46:47 GMT+07:00" duration-ms="318" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- tearDown -->
+        <test-method is-config="true" signature="setUp()[pri:0, instance:com.fruitshop.tests.LoginTest@163e4e87]" started-at="2025-11-25T09:46:47 GMT+07:00" name="setUp" finished-at="2025-11-25T09:46:48 GMT+07:00" duration-ms="1054" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setUp -->
+        <test-method is-config="true" signature="setUpLoginTest()[pri:0, instance:com.fruitshop.tests.LoginTest@163e4e87]" started-at="2025-11-25T09:46:48 GMT+07:00" name="setUpLoginTest" finished-at="2025-11-25T09:46:53 GMT+07:00" duration-ms="4579" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setUpLoginTest -->
+        <test-method signature="testLoginWithEmptyPassword()[pri:3, instance:com.fruitshop.tests.LoginTest@163e4e87]" started-at="2025-11-25T09:46:53 GMT+07:00" name="testLoginWithEmptyPassword" description="Đăng nhập thất bại - Bỏ trống trường mật khẩu bắt buộc" finished-at="2025-11-25T09:46:54 GMT+07:00" duration-ms="1321" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testLoginWithEmptyPassword -->
+        <test-method is-config="true" signature="tearDown()[pri:0, instance:com.fruitshop.tests.LoginTest@163e4e87]" started-at="2025-11-25T09:46:54 GMT+07:00" name="tearDown" finished-at="2025-11-25T09:46:54 GMT+07:00" duration-ms="277" status="PASS">
           <reporter-output>
           </reporter-output>
         </test-method> <!-- tearDown -->
       </class> <!-- com.fruitshop.tests.LoginTest -->
-    </test> <!-- Login Tests -->
-  </suite> <!-- FruitShop Test Suite -->
+    </test> <!-- Surefire test -->
+  </suite> <!-- Surefire suite -->
 </testng-results>
