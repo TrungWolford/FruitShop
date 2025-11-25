@@ -13,6 +13,7 @@ import java.util.List;
 public interface CartService {
     // Cart operations
     Page<CartResponse> getAllCart(Pageable pageable);
+    CartResponse getCartById(String cartId); // Lấy cart theo cartId
     CartResponse getCartByAccountId(String accountId);
     CartResponse createCart(String accountId);
     void deleteCart(String cartId);

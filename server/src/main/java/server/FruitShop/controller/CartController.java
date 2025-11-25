@@ -3,6 +3,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 // import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +11,7 @@ import server.FruitShop.dto.request.Cart.CreateCartItemRequest;
 import server.FruitShop.dto.request.Cart.UpdateCartItemRequest;
 import server.FruitShop.dto.response.Cart.CartItemResponse;
 import server.FruitShop.dto.response.Cart.CartResponse;
+import server.FruitShop.dto.response.ErrorResponse;
 import server.FruitShop.service.CartService;
 
 import java.util.List;
@@ -39,6 +41,16 @@ public class CartController {
     }
 
     // Cart endpoints - requires CUSTOMER role
+    // Admin: Get cart by cartId
+    @GetMapping("/{cartId}")
+    public ResponseEntity<CartResponse> getCartById(@PathVariable String cartId) {
+        CartResponse cart = cartService.getCartById(cartId);
+        if (cart != null) {
+            return ResponseEntity.ok(cart);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
     // @PreAuthorize("hasRole('CUSTOMER')")
     @GetMapping("/account/{accountId}")
     public ResponseEntity<CartResponse> getCartByAccountId(@PathVariable String accountId) {
@@ -70,7 +82,7 @@ public class CartController {
     // CartItem endpoints - requires CUSTOMER role
     // @PreAuthorize("hasRole('CUSTOMER')")
     @PostMapping("/account/{accountId}/items")
-    public ResponseEntity<CartItemResponse> addCartItem(
+    public ResponseEntity<?> addCartItem(
             @PathVariable String accountId,
             @RequestBody CreateCartItemRequest request) {
         try {
@@ -78,13 +90,15 @@ public class CartController {
             return ResponseEntity.ok(cartItem);
         } catch (RuntimeException e) {
             e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(e.getMessage()));
         }
     }
 
     // @PreAuthorize("hasRole('CUSTOMER')")
     @PutMapping("/items/{cartItemId}")
-    public ResponseEntity<CartItemResponse> updateCartItem(
+    public ResponseEntity<?> updateCartItem(
             @PathVariable String cartItemId,
             @RequestBody UpdateCartItemRequest request) {
         try {
@@ -92,15 +106,24 @@ public class CartController {
             return ResponseEntity.ok(cartItem);
         } catch (RuntimeException e) {
             e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(e.getMessage()));
         }
     }
 
     // @PreAuthorize("hasRole('CUSTOMER')")
     @DeleteMapping("/items/{cartItemId}")
-    public ResponseEntity<Void> removeCartItem(@PathVariable String cartItemId) {
-        cartService.removeCartItem(cartItemId);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> removeCartItem(@PathVariable String cartItemId) {
+        try {
+            cartService.removeCartItem(cartItemId);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(e.getMessage()));
+        }
     }
 
     // @PreAuthorize("hasRole('CUSTOMER')")

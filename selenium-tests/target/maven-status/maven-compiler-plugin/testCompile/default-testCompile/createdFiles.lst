@@ -1,0 +1,3 @@
+com\fruitshop\tests\base\BaseTest.class
+com\fruitshop\pages\LoginPage.class
+com\fruitshop\tests\LoginTest.class

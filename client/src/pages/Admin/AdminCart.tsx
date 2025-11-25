@@ -15,7 +15,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '../../components/ui/dropdowns/dropdown-menu';
-import { Search, ShoppingCart, ChevronLeft, ChevronRight, ChevronDown, Ban, CheckCircle } from 'lucide-react';
+import { Search, ShoppingCart, ChevronLeft, ChevronRight, ChevronDown, Ban, CheckCircle, X, RefreshCcw, Package } from 'lucide-react';
 import type { Cart } from '../../types/cart';
 
 interface CartWithAccount extends Cart {
@@ -30,6 +30,11 @@ const AdminCart: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
+    
+    // Modal state
+    const [selectedCart, setSelectedCart] = useState<CartWithAccount | null>(null);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const [loadingDetail, setLoadingDetail] = useState(false);
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
@@ -138,6 +143,33 @@ const AdminCart: React.FC = () => {
         }
     };
 
+    const handleViewDetail = async (cart: CartWithAccount) => {
+        try {
+            setLoadingDetail(true);
+            setIsDetailModalOpen(true);
+            
+            // Fetch full cart details
+            const result = await cartService.getCartById(cart.cartId);
+            if (result.success && result.data) {
+                setSelectedCart(result.data as any);
+            } else {
+                toast.error('Không thể tải chi tiết giỏ hàng');
+                setIsDetailModalOpen(false);
+            }
+        } catch (error) {
+            console.error('Error loading cart detail:', error);
+            toast.error('Lỗi khi tải chi tiết giỏ hàng');
+            setIsDetailModalOpen(false);
+        } finally {
+            setLoadingDetail(false);
+        }
+    };
+
+    const handleCloseDetailModal = () => {
+        setIsDetailModalOpen(false);
+        setSelectedCart(null);
+    };
+
     // Filter carts
     const filteredCarts = carts.filter(cart => {
         const matchesSearch = !searchTerm || 
@@ -158,14 +190,24 @@ const AdminCart: React.FC = () => {
     const endIndex = startIndex + itemsPerPage;
     const currentCarts = filteredCarts.slice(startIndex, endIndex);
 
-    const formatDate = (date: Date) => {
-        return new Intl.DateTimeFormat('vi-VN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        }).format(new Date(date));
+    const formatDate = (date: Date | string | null | undefined) => {
+        if (!date) return 'N/A';
+        
+        try {
+            const dateObj = new Date(date);
+            if (isNaN(dateObj.getTime())) return 'N/A';
+            
+            return new Intl.DateTimeFormat('vi-VN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            }).format(dateObj);
+        } catch (error) {
+            console.error('Error formatting date:', error);
+            return 'N/A';
+        }
     };
 
     const formatPrice = (price: number) => {
@@ -271,41 +313,52 @@ const AdminCart: React.FC = () => {
                                             {formatPrice(cart.totalAmount || 0)}
                                         </TableCell>
                                         <TableCell className="text-sm text-gray-600">
-                                            {cart.createdAt ? formatDate(cart.createdAt) : 'N/A'}
+                                            {formatDate(cart.createdAt)}
                                         </TableCell>
                                         <TableCell>
                                             {cart.status === 1 ? (
                                                 <Badge variant="default" className="bg-green-500">
-                                                    Hoạt động
+                                                    {cart.statusText || 'Hoạt động'}
                                                 </Badge>
                                             ) : (
                                                 <Badge variant="destructive">
-                                                    Vô hiệu hóa
+                                                    {cart.statusText || 'Khóa'}
                                                 </Badge>
                                             )}
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            {cart.status === 1 ? (
+                                            <div className="flex items-center justify-end gap-2">
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
-                                                    onClick={() => handleDisableCart(cart.cartId)}
-                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                    onClick={() => handleViewDetail(cart)}
+                                                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                                                 >
-                                                    <Ban className="w-4 h-4 mr-1" />
-                                                    Vô hiệu hóa
+                                                    <Search className="w-4 h-4 mr-1" />
+                                                    Xem chi tiết
                                                 </Button>
-                                            ) : (
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => handleEnableCart(cart.cartId)}
-                                                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                                                >
-                                                    <CheckCircle className="w-4 h-4 mr-1" />
-                                                    Kích hoạt
-                                                </Button>
-                                            )}
+                                                {cart.status === 1 ? (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleDisableCart(cart.cartId)}
+                                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                    >
+                                                        <Ban className="w-4 h-4 mr-1" />
+                                                        Vô hiệu hóa
+                                                    </Button>
+                                                ) : (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleEnableCart(cart.cartId)}
+                                                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                    >
+                                                        <CheckCircle className="w-4 h-4 mr-1" />
+                                                        Kích hoạt
+                                                    </Button>
+                                                )}
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))
@@ -376,6 +429,134 @@ const AdminCart: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Modal Chi tiết Giỏ hàng */}
+            {isDetailModalOpen && (
+                <>
+                    <div className="fixed inset-0 bg-black/50 z-40" onClick={handleCloseDetailModal} />
+                    <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[900px] max-h-[90vh] bg-white rounded-lg shadow-2xl z-50 overflow-hidden flex flex-col">
+                        {/* Modal Header */}
+                        <div className="px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-between">
+                            <h2 className="text-2xl font-bold text-white">Chi tiết Giỏ hàng</h2>
+                            <button 
+                                onClick={handleCloseDetailModal}
+                                className="text-white hover:bg-white/20 rounded-full p-2 transition"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        {/* Modal Content */}
+                        <div className="flex-1 overflow-y-auto p-6">
+                            {loadingDetail ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <RefreshCcw className="w-8 h-8 animate-spin text-blue-500" />
+                                    <span className="ml-3 text-gray-600">Đang tải dữ liệu...</span>
+                                </div>
+                            ) : selectedCart ? (
+                                <div className="space-y-6">
+                                    {/* Thông tin Account */}
+                                    <div className="bg-gray-50 rounded-lg p-5 border border-gray-200">
+                                        <h3 className="text-lg font-semibold mb-4 flex items-center text-gray-800">
+                                            <ShoppingCart className="w-5 h-5 mr-2 text-blue-500" />
+                                            Thông tin Khách hàng
+                                        </h3>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <p className="text-sm text-gray-500">Tên khách hàng:</p>
+                                                <p className="font-medium text-gray-900">{selectedCart.account?.accountName || selectedCart.accountName || 'N/A'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Số điện thoại:</p>
+                                                <p className="font-medium text-gray-900">{selectedCart.account?.accountPhone || 'N/A'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Account ID:</p>
+                                                <p className="font-mono text-xs text-gray-700">{selectedCart.accountId}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Trạng thái Account:</p>
+                                                {selectedCart.account?.status === 1 ? (
+                                                    <Badge className="bg-green-500">Hoạt động</Badge>
+                                                ) : (
+                                                    <Badge variant="destructive">Khóa</Badge>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Thông tin Giỏ hàng */}
+                                    <div className="bg-gray-50 rounded-lg p-5 border border-gray-200">
+                                        <h3 className="text-lg font-semibold mb-4 flex items-center text-gray-800">
+                                            <Package className="w-5 h-5 mr-2 text-orange-500" />
+                                            Thông tin Giỏ hàng
+                                        </h3>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <p className="text-sm text-gray-500">Cart ID:</p>
+                                                <p className="font-mono text-xs text-gray-700">{selectedCart.cartId}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Ngày tạo:</p>
+                                                <p className="font-medium text-gray-900">{formatDate(selectedCart.createdAt)}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Trạng thái giỏ hàng:</p>
+                                                {selectedCart.status === 1 ? (
+                                                    <Badge className="bg-green-500">{selectedCart.statusText || 'Hoạt động'}</Badge>
+                                                ) : (
+                                                    <Badge variant="destructive">{selectedCart.statusText || 'Khóa'}</Badge>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Tổng giá trị:</p>
+                                                <p className="text-xl font-bold text-green-600">{formatPrice(selectedCart.totalAmount || 0)}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Danh sách sản phẩm */}
+                                    <div>
+                                        <h3 className="text-lg font-semibold mb-4 flex items-center text-gray-800">
+                                            <Package className="w-5 h-5 mr-2 text-purple-500" />
+                                            Sản phẩm trong giỏ ({selectedCart.items?.length || 0})
+                                        </h3>
+                                        {selectedCart.items && selectedCart.items.length > 0 ? (
+                                            <div className="space-y-3">
+                                                {selectedCart.items.map((item) => (
+                                                    <div key={item.cartItemId} className="bg-white border border-gray-200 rounded-lg p-4 flex items-center gap-4">
+                                                        <div className="flex-1">
+                                                            <h4 className="font-medium text-gray-900">{item.productName}</h4>
+                                                            <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                                                                <span>Số lượng: <strong>{item.quantity}</strong></span>
+                                                                <span>Đơn giá: <strong>{formatPrice(item.productPrice)}</strong></span>
+                                                                <span className="text-green-600 font-semibold">
+                                                                    Thành tiền: {formatPrice(item.totalPrice)}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-center text-gray-500 py-8">Giỏ hàng trống</p>
+                                        )}
+                                    </div>
+                                </div>
+                            ) : (
+                                <p className="text-center text-gray-500 py-12">Không có dữ liệu</p>
+                            )}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="px-6 py-4 bg-gray-50 border-t flex justify-end">
+                            <Button onClick={handleCloseDetailModal} className="bg-gray-600 hover:bg-gray-700">
+                                Đóng
+                            </Button>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 };

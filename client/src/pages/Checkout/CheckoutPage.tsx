@@ -19,12 +19,6 @@ import type { CreateOrderRequest } from '../../services/orderService';
 import type { CartItem as CartItemType } from '../../types/cart';
 import { toast } from 'sonner';
 
-// Interface for cart response variations
-interface CartResponse {
-    items?: CartItemType[];
-    cartItems?: CartItemType[];
-}
-
 // Shipping method options
 const SHIPPING_METHODS = [
     { id: 'super_fast', name: 'HCM - Siêu tốc', fee: 50000, description: 'Giao hàng trong 2 giờ' },
@@ -54,6 +48,17 @@ const CheckoutPage: React.FC = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [isLoadingShipping, setIsLoadingShipping] = useState(false);
     const [selectedShippingMethod, setSelectedShippingMethod] = useState<string>(SHIPPING_METHODS[0].id);
+    const [cartStatus, setCartStatus] = useState<number | null>(null);
+
+    // Auto redirect về trang chủ sau 5 giây nếu cart bị vô hiệu hóa
+    useEffect(() => {
+        if (cartStatus !== null && cartStatus !== 1) {
+            const timer = setTimeout(() => {
+                navigate('/');
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [cartStatus, navigate]);
 
     // Fetch cart items and shipping addresses
     useEffect(() => {
@@ -103,31 +108,42 @@ const CheckoutPage: React.FC = () => {
 
         setIsLoading(true);
         try {
-            const response = await cartService.getCartItems(currentUser.accountId);
+            // Dùng getCartByAccount để lấy cả status
+            const response = await cartService.getCartByAccount(currentUser.accountId);
 
             if (response.success && response.data) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const cartData = response.data as any;
+                
                 let items: CartItemType[] = [];
+                let status: number | null = null;
 
-                if (Array.isArray(response.data)) {
-                    items = response.data;
-                } else if (typeof response.data === 'object' && 'items' in response.data) {
-                    const cartResponse = response.data as CartResponse;
-                    items = cartResponse.items || [];
-                } else if (typeof response.data === 'object' && 'cartItems' in response.data) {
-                    const cartResponse = response.data as CartResponse;
-                    items = cartResponse.cartItems || [];
-                } else {
-                    items = [response.data as CartItemType];
+                // Lấy items từ cart object
+                if (cartData.items && Array.isArray(cartData.items)) {
+                    items = cartData.items;
                 }
-
+                
+                // Lấy status từ cart object
+                status = cartData.status ?? null;
+                
                 setCartItems(items);
+                setCartStatus(status);
+                
+                console.log('🛒 Checkout page - Cart status:', status); // Debug log
+                
+                // Nếu cart bị vô hiệu hóa thì báo lỗi
+                if (status !== null && status !== 1) {
+                    toast.error('Giỏ hàng đã bị vô hiệu hóa do vi phạm chính sách, vui lòng liên hệ VuaTraiCay để biết thêm chi tiết');
+                }
             } else {
                 setCartItems([]);
+                setCartStatus(null);
                 toast.error('Không thể tải giỏ hàng');
             }
         } catch (error) {
             console.error('Error fetching cart items:', error);
             setCartItems([]);
+            setCartStatus(null);
             toast.error('Đã xảy ra lỗi khi tải giỏ hàng');
         } finally {
             setIsLoading(false);
@@ -624,6 +640,22 @@ const CheckoutPage: React.FC = () => {
         );
     }
 
+    // Nếu cart bị vô hiệu hóa thì chỉ hiển thị thông báo, không cho thao tác
+    if (cartStatus !== null && cartStatus !== 1) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-8">
+                <ShoppingCart className="w-20 h-20 text-red-500 mb-6" />
+                <h2 className="text-3xl font-bold text-red-600 mb-3">Giỏ hàng đã bị vô hiệu hóa</h2>
+                <p className="text-gray-700 text-center mb-6 max-w-md leading-relaxed">
+                    Giỏ hàng của bạn đã bị vô hiệu hóa do vi phạm chính sách.<br/>
+                    Vui lòng liên hệ <span className="font-semibold text-orange-600">VuaTraiCay</span> để biết thêm chi tiết.
+                </p>
+                <Button onClick={() => navigate('/')} className="bg-orange-600 hover:bg-orange-700 text-white px-8">Về trang chủ</Button>
+                <p className="text-sm text-gray-500 mt-4">Tự động quay về trang chủ sau 5 giây...</p>
+            </div>
+        );
+    }
+
     return (
         <div>
             <TopNavigation />
@@ -835,118 +867,118 @@ const CheckoutPage: React.FC = () => {
                                         </SelectContent>
                                     </Select>
                                 </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-
-                    {/* Right Column - Cart Items and Order Summary */}
-                    <div className="space-y-6">
-                        {/* Cart Items */}
-                        <div className="bg-white  shadow-sm border p-6">
-                            <div className="flex items-center gap-3 mb-6">
-                                <ShoppingCart className="w-6 h-6 text-blue-600" />
-                                <h2 className="text-lg font-semibold text-gray-900">Sản phẩm đã chọn</h2>
-                                <span className="bg-blue-100 text-blue-800 text-sm px-2 py-1 ">
-                                    {cartItems.length} sản phẩm
-                                </span>
-                            </div>
-
-                            <div className="space-y-4">
-                                {cartItems.map((item) => (
-                                    <div
-                                        key={item.cartItemId}
-                                        className="flex items-center gap-4 p-4 border border-gray-200 "
-                                    >
-                                        <div className="w-16 h-16 bg-gray-100  overflow-hidden flex-shrink-0">
-                                            {item.images && item.images.length > 0 ? (
-                                                <img
-                                                    src={getImageUrl(item.images[0])}
-                                                    alt={item.productName}
-                                                    className="w-full h-full object-cover"
-                                                    onError={(e) => {
-                                                        e.currentTarget.src = '/placeholder-image.jpg';
-                                                    }}
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                                                    <span className="text-xs text-gray-400">No image</span>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="text-sm font-medium text-gray-900 line-clamp-2">
-                                                {item.productName}
-                                            </h3>
-                                            <p className="text-sm text-gray-500 mt-1">Số lượng: {item.quantity}</p>
-                                        </div>
-
-                                        <div className="text-right">
-                                            <p className="text-sm font-semibold text-gray-900">
-                                                {formatPrice(item.productPrice * item.quantity)}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Order Summary */}
-                        <div className="bg-white  shadow-sm border p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Tóm tắt đơn hàng</h3>
-
-                            <div className="space-y-3">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">Tạm tính:</span>
-                                    <span className="font-medium">
-                                        {formatPrice(
-                                            cartItems.reduce(
-                                                (total, item) => total + item.productPrice * item.quantity,
-                                                0,
-                                            ),
-                                        )}
+                        
+                        {/* Right Column - Cart Items and Order Summary */}
+                        <div className="space-y-6">
+                            {/* Cart Items */}
+                            <div className="bg-white  shadow-sm border p-6">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <ShoppingCart className="w-6 h-6 text-blue-600" />
+                                    <h2 className="text-lg font-semibold text-gray-900">Sản phẩm đã chọn</h2>
+                                    <span className="bg-blue-100 text-blue-800 text-sm px-2 py-1 ">
+                                        {cartItems.length} sản phẩm
                                     </span>
                                 </div>
 
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">Phí vận chuyển:</span>
-                                    <div className="text-right">
-                                        <div className="font-medium">{formatPrice(calculateShippingFee())}</div>
-                                        <div className="text-xs text-gray-500">
-                                            {SHIPPING_METHODS.find(m => m.id === selectedShippingMethod)?.name}
+                                <div className="space-y-4">
+                                    {cartItems.map((item) => (
+                                        <div
+                                            key={item.cartItemId}
+                                            className="flex items-center gap-4 p-4 border border-gray-200 "
+                                        >
+                                            <div className="w-16 h-16 bg-gray-100  overflow-hidden flex-shrink-0">
+                                                {item.images && item.images.length > 0 ? (
+                                                    <img
+                                                        src={getImageUrl(item.images[0])}
+                                                        alt={item.productName}
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            e.currentTarget.src = '/placeholder-image.jpg';
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                                                        <span className="text-xs text-gray-400">No image</span>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="text-sm font-medium text-gray-900 line-clamp-2">
+                                                    {item.productName}
+                                                </h3>
+                                                <p className="text-sm text-gray-500 mt-1">Số lượng: {item.quantity}</p>
+                                            </div>
+
+                                            <div className="text-right">
+                                                <p className="text-sm font-semibold text-gray-900">
+                                                    {formatPrice(item.productPrice * item.quantity)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Order Summary */}
+                            <div className="bg-white  shadow-sm border p-6">
+                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Tóm tắt đơn hàng</h3>
+
+                                <div className="space-y-3">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-600">Tạm tính:</span>
+                                        <span className="font-medium">
+                                            {formatPrice(
+                                                cartItems.reduce(
+                                                    (total, item) => total + item.productPrice * item.quantity,
+                                                    0,
+                                                ),
+                                            )}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-600">Phí vận chuyển:</span>
+                                        <div className="text-right">
+                                            <div className="font-medium">{formatPrice(calculateShippingFee())}</div>
+                                            <div className="text-xs text-gray-500">
+                                                {SHIPPING_METHODS.find(m => m.id === selectedShippingMethod)?.name}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="border-t pt-3">
+                                        <div className="flex justify-between text-lg font-semibold">
+                                            <span>Tổng cộng:</span>
+                                            <span className="text-red-600">{formatPrice(calculateTotal())}</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="border-t pt-3">
-                                    <div className="flex justify-between text-lg font-semibold">
-                                        <span>Tổng cộng:</span>
-                                        <span className="text-red-600">{formatPrice(calculateTotal())}</span>
-                                    </div>
-                                </div>
+                                <Button
+                                    onClick={handlePlaceOrder}
+                                    disabled={isProcessing}
+                                    className="w-full mt-6 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-none"
+                                >
+                                    {isProcessing ? (
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-4 h-4 border-2 border-white border-t-transparent  animate-spin"></div>
+                                            Đang xử lý...
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-2">
+                                            <CreditCard className="w-4 h-4" />
+                                            Đặt hàng
+                                        </div>
+                                    )}
+                                </Button>
                             </div>
-
-                            <Button
-                                onClick={handlePlaceOrder}
-                                disabled={isProcessing}
-                                className="w-full mt-6 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-none"
-                            >
-                                {isProcessing ? (
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 border-2 border-white border-t-transparent  animate-spin"></div>
-                                        Đang xử lý...
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center gap-2">
-                                        <CreditCard className="w-4 h-4" />
-                                        Đặt hàng
-                                    </div>
-                                )}
-                            </Button>
                         </div>
                     </div>
                 </div>
-            </div>
             </div>
             <Footer />
         </div>

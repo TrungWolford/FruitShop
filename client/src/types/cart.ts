@@ -12,10 +12,12 @@ export interface CartItem {
 export interface Cart {
   cartId: string;
   accountId: string;
+  accountName?: string; // Tên account (backward compatibility)
   account?: {
     accountId: string;
     accountName: string;
     accountPhone: string;
+    status: number; // Account status
   };
   items: CartItem[];
   totalAmount: number;
@@ -23,6 +25,7 @@ export interface Cart {
   createdAt: Date;
   updatedAt: Date;
   status: number; // 0: Disabled, 1: Active
+  statusText?: string; // "Hoạt động" or "Khóa"
 }
 
 export interface AddToCartRequest {

@@ -35,11 +35,42 @@ export const cartService = {
     }
   },
 
+  // Admin: Lấy chi tiết giỏ hàng theo cartId
+  async getCartById(cartId: string): Promise<CartResponse> {
+    try {
+      console.log('🔄 CartService: Getting cart by ID with URL:', `${CONFIG.API_GATEWAY}${API.GET_CART_BY_ID(cartId)}`);
+      
+      const response = await axios.get(`${CONFIG.API_GATEWAY}${API.GET_CART_BY_ID(cartId)}`);
+      
+      console.log('✅ CartService: Get cart by ID success:', response.data);
+      
+      return {
+        success: true,
+        message: 'Lấy thông tin giỏ hàng thành công',
+        data: response.data
+      };
+    } catch (error: any) {
+      console.error('❌ CartService: Error getting cart by ID:', error);
+      
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message || 'Lỗi khi lấy thông tin giỏ hàng',
+        error: error.message
+      };
+    }
+  },
+
   // Lấy giỏ hàng theo account ID
   async getCartByAccount(accountId: string): Promise<CartResponse> {
     try {
       const response = await axios.get(`${CONFIG.API_GATEWAY}${API.GET_CART_BY_ACCOUNT(accountId)}`);
-      return response.data;
+      
+      // Backend trả về CartResponse object trực tiếp, wrap nó trong success response
+      return {
+        success: true,
+        message: 'Lấy giỏ hàng thành công',
+        data: response.data
+      };
     } catch (error: any) {
       // Don't log 404 errors - it's normal for accounts to not have carts yet
       if (error.response?.status !== 404) {
@@ -201,7 +232,7 @@ export const cartService = {
     }
   },
 
-  // Lấy danh sách cart items
+  // Lấy danh sách cart items (và trạng thái cart)
   async getCartItems(accountId: string): Promise<CartResponse> {
     try {
       console.log('🔄 CartService: Getting cart items with URL:', `${CONFIG.API_GATEWAY}${API.GET_CART_ITEMS(accountId)}`);
@@ -209,7 +240,15 @@ export const cartService = {
       const response = await axios.get(`${CONFIG.API_GATEWAY}${API.GET_CART_ITEMS(accountId)}`);
       
       console.log('✅ CartService: Get cart items success:', response.data);
-      
+      // Nếu backend trả về object có status/statusText thì trả về nguyên cart
+      if (response.data && typeof response.data === 'object' && 'status' in response.data) {
+        return {
+          success: true,
+          message: 'Lấy giỏ hàng thành công',
+          data: response.data
+        };
+      }
+      // Nếu chỉ trả về items
       return {
         success: true,
         message: 'Lấy danh sách thành công',
