@@ -7,7 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import server.FruitShop.dto.request.Account.CreateAccountRequest;
 import server.FruitShop.dto.response.Account.AccountResponse;
 import server.FruitShop.entity.Account;
@@ -38,31 +38,32 @@ class AccountServiceImplTest {
     @Mock
     private RoleRepository roleRepository;  // Giả lập Role Repository
 
-    @Mock
-    private PasswordEncoder passwordEncoder;  // Giả lập PasswordEncoder
-
     @InjectMocks
     private AccountServiceImpl accountService;  // Service thật, nhưng dùng mock repository
 
     private Account testAccount;
     private Role customerRole;
+    private BCryptPasswordEncoder passwordEncoder;  // Dùng BCrypt thật để test
 
     /**
      * Chuẩn bị dữ liệu test trước mỗi test case
      */
     @BeforeEach
     void setUp() {
+        // Khởi tạo BCryptPasswordEncoder thật
+        passwordEncoder = new BCryptPasswordEncoder();
+        
         // Tạo role Customer
         customerRole = new Role();
         customerRole.setRoleId("role-customer");
         customerRole.setRoleName("CUSTOMER");
 
-        // Tạo account test
+        // Tạo account test với password đã mã hóa BCrypt
         testAccount = new Account();
         testAccount.setAccountId("acc-001");
         testAccount.setAccountName("Nguyễn Văn A");
         testAccount.setAccountPhone("0355142890");
-        testAccount.setPassword("$2a$10$dummyHashedPassword123456");  // Password đã mã hóa
+        testAccount.setPassword(passwordEncoder.encode("123456"));  // Mã hóa password thật
         testAccount.setStatus(1);
         testAccount.setRoles(new HashSet<>(Collections.singletonList(customerRole)));
     }
@@ -113,7 +114,7 @@ class AccountServiceImplTest {
         request.setPassword("password123");
         request.setRoleIds(new HashSet<>(Collections.singletonList("role-customer")));
 
-        when(passwordEncoder.encode("password123")).thenReturn("$2a$10$encodedPassword");
+        when(accountRepository.findByAccountPhone("0999999999")).thenReturn(Optional.empty());
         when(roleRepository.findById("role-customer")).thenReturn(Optional.of(customerRole));
         when(accountRepository.save(any(Account.class))).thenReturn(testAccount);
 
@@ -123,7 +124,7 @@ class AccountServiceImplTest {
         // ASSERT
         assertNotNull(result);
         assertEquals("Nguyễn Văn A", result.getAccountName());
-        verify(passwordEncoder, times(1)).encode("password123");
+        verify(accountRepository, times(1)).findByAccountPhone("0999999999");
         verify(roleRepository, times(1)).findById("role-customer");
         verify(accountRepository, times(1)).save(any(Account.class));
     }
@@ -138,7 +139,7 @@ class AccountServiceImplTest {
         request.setPassword("password");
         request.setRoleIds(new HashSet<>(Collections.singletonList("invalid-role")));
 
-        when(passwordEncoder.encode("password")).thenReturn("$2a$10$encodedPassword");
+        when(accountRepository.findByAccountPhone("0999999999")).thenReturn(Optional.empty());
         when(roleRepository.findById("invalid-role")).thenReturn(Optional.empty());
 
         // ACT & ASSERT
@@ -147,7 +148,7 @@ class AccountServiceImplTest {
         });
         
         assertTrue(exception.getMessage().contains("Role not found"));
-        verify(passwordEncoder, times(1)).encode("password");
+        verify(accountRepository, times(1)).findByAccountPhone("0999999999");
         verify(roleRepository, times(1)).findById("invalid-role");
         verify(accountRepository, never()).save(any(Account.class));  // Không được lưu
     }
@@ -205,8 +206,6 @@ class AccountServiceImplTest {
         // ARRANGE
         when(accountRepository.findByAccountPhone("0355142890"))
                 .thenReturn(Optional.of(testAccount));
-        when(passwordEncoder.matches("123456", testAccount.getPassword()))
-                .thenReturn(true);
 
         // ACT
         AccountResponse result = accountService.authenticateAccount("0355142890", "123456");
@@ -215,7 +214,6 @@ class AccountServiceImplTest {
         assertNotNull(result);
         assertEquals("0355142890", result.getAccountPhone());
         verify(accountRepository, times(1)).findByAccountPhone("0355142890");
-        verify(passwordEncoder, times(1)).matches("123456", testAccount.getPassword());
     }
 
     @Test
@@ -224,8 +222,6 @@ class AccountServiceImplTest {
         // ARRANGE
         when(accountRepository.findByAccountPhone("0355142890"))
                 .thenReturn(Optional.of(testAccount));
-        when(passwordEncoder.matches("wrong-password", testAccount.getPassword()))
-                .thenReturn(false);
 
         // ACT & ASSERT
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
@@ -234,7 +230,6 @@ class AccountServiceImplTest {
         
         assertTrue(exception.getMessage().contains("Invalid phone or password"));
         verify(accountRepository, times(1)).findByAccountPhone("0355142890");
-        verify(passwordEncoder, times(1)).matches("wrong-password", testAccount.getPassword());
     }
 
     @Test
@@ -247,7 +242,7 @@ class AccountServiceImplTest {
         request.setPassword("password");
         request.setRoleIds(null);  // Không có role
 
-        when(passwordEncoder.encode("password")).thenReturn("$2a$10$encodedPassword");
+        when(accountRepository.findByAccountPhone("0888888888")).thenReturn(Optional.empty());
         when(accountRepository.save(any(Account.class))).thenReturn(testAccount);
 
         // ACT
@@ -255,7 +250,7 @@ class AccountServiceImplTest {
 
         // ASSERT
         assertNotNull(result);
-        verify(passwordEncoder, times(1)).encode("password");
+        verify(accountRepository, times(1)).findByAccountPhone("0888888888");
         verify(roleRepository, never()).findById(anyString());  // Không gọi roleRepository
         verify(accountRepository, times(1)).save(any(Account.class));
     }
