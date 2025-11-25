@@ -21,10 +21,16 @@ export default tseslint.config([
     },
     rules: {
     //React rules
+    'react-hooks/exhaustive-deps': 'warn',
+
+    //TypeScript rules
+    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/no-unused-vars': 'warn',
 
     //Common rules
     // 'no-console': 'warn',
     'no-lonely-if': 'warn',
+    'no-useless-catch': 'off',
     // 'no-unused-vars': 'warn',
   }
   },
