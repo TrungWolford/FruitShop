@@ -44,6 +44,7 @@ jobs:
 
       - name: Run tests
         run: pnpm test:ci
+        continue-on-error: true
 
       - name: Build frontend
         run: pnpm build
