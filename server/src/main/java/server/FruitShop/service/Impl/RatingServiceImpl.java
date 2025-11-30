@@ -17,6 +17,7 @@ import server.FruitShop.repository.OrderItemRepository;
 import server.FruitShop.repository.ProductRepository;
 import server.FruitShop.repository.RatingRepository;
 import server.FruitShop.service.RatingService;
+import server.FruitShop.exception.ResourceNotFoundException;
 
 import java.util.List;
 
@@ -70,7 +71,7 @@ public class RatingServiceImpl implements RatingService {
         try {
             // Validate account exists
             accountRepository.findById(accountId)
-                    .orElseThrow(() -> new RuntimeException("Account not found with id: " + accountId));
+                    .orElseThrow(() -> new ResourceNotFoundException("Account not found with id: " + accountId));
 
             Page<Rating> ratingsPage = ratingRepository.findByAccountAccountId(pageable, accountId);
             if (ratingsPage == null || ratingsPage.isEmpty()) {
@@ -91,7 +92,7 @@ public class RatingServiceImpl implements RatingService {
         try {
             // Validate product exists
             productRepository.findById(productId)
-                    .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
 
             // Only return active ratings (status = 1)
             Page<Rating> ratingsPage = ratingRepository.findByProductProductIdAndStatus(productId, 1, pageable);
@@ -113,11 +114,11 @@ public class RatingServiceImpl implements RatingService {
         try {
             // Validate account exists
             accountRepository.findById(accountId)
-                    .orElseThrow(() -> new RuntimeException("Account not found with id: " + accountId));
+                    .orElseThrow(() -> new ResourceNotFoundException("Account not found with id: " + accountId));
 
             // Validate product exists
             productRepository.findById(productId)
-                    .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
 
             // Find all ratings by account and product (can return multiple)
             List<Rating> ratings = ratingRepository.findByAccountAccountIdAndProductProductId(accountId, productId);
@@ -145,17 +146,17 @@ public class RatingServiceImpl implements RatingService {
         try {
             // Validate account exists
             Account account = accountRepository.findById(request.getAccountId())
-                    .orElseThrow(() -> new RuntimeException("Account not found with id: " + request.getAccountId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Account not found with id: " + request.getAccountId()));
 
             // Validate product exists
             Product product = productRepository.findById(request.getProductId())
-                    .orElseThrow(() -> new RuntimeException("Product not found with id: " + request.getProductId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + request.getProductId()));
 
             // Validate orderItem exists if provided
             OrderItem orderItem = null;
             if (request.getOrderItemId() != null && !request.getOrderItemId().isEmpty()) {
                 orderItem = orderItemRepository.findById(request.getOrderItemId())
-                        .orElseThrow(() -> new RuntimeException("OrderItem not found with id: " + request.getOrderItemId()));
+                        .orElseThrow(() -> new ResourceNotFoundException("OrderItem not found with id: " + request.getOrderItemId()));
                 
                 // Verify this orderItem belongs to this account
                 if (!orderItem.getOrder().getAccount().getAccountId().equals(request.getAccountId())) {
@@ -199,7 +200,7 @@ public class RatingServiceImpl implements RatingService {
     public RatingResponse updateRating(UpdateRatingRequest request, String ratingId) {
         // Find existing rating
         Rating rating = ratingRepository.findById(ratingId)
-                .orElseThrow(() -> new RuntimeException("Rating not found with id: " + ratingId));
+                .orElseThrow(() -> new ResourceNotFoundException("Rating not found with id: " + ratingId));
 
         // Update fields
         if (request.getComment() != null) {
@@ -220,7 +221,7 @@ public class RatingServiceImpl implements RatingService {
     public RatingResponse changeStatus(String ratingId) {
         // Find existing rating
         Rating rating = ratingRepository.findById(ratingId)
-                .orElseThrow(() -> new RuntimeException("Rating not found with id: " + ratingId));
+                .orElseThrow(() -> new ResourceNotFoundException("Rating not found with id: " + ratingId));
 
         // Toggle status: 1 (active) <-> 0 (inactive)
         rating.setStatus(rating.getStatus() == 1 ? 0 : 1);
@@ -236,7 +237,7 @@ public class RatingServiceImpl implements RatingService {
         try {
             // Validate product exists
             productRepository.findById(productId)
-                    .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
 
             // Get all ratings for this product (only active ones with status = 1)
             List<Rating> ratings = ratingRepository.findByProductProductId(productId);

@@ -15,6 +15,8 @@ import server.FruitShop.entity.Role;
 import server.FruitShop.repository.AccountRepository;
 import server.FruitShop.repository.RoleRepository;
 import server.FruitShop.service.AccountService;
+import server.FruitShop.exception.ResourceNotFoundException;
+import server.FruitShop.exception.DuplicateResourceException;
 
 import java.util.HashSet;
 import java.util.List;
@@ -53,7 +55,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public AccountResponse getAccountById(String accountId) {
         Account account = accountRepository.findByIdWithRoles(accountId)
-                .orElseThrow(() -> new RuntimeException("Account not found with id: " + accountId));
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found with id: " + accountId));
         return AccountResponse.fromEntity(account);
     }
 
@@ -61,7 +63,7 @@ public class AccountServiceImpl implements AccountService {
     public AccountResponse createAccount(CreateAccountRequest request) {
         // Kiểm tra phone đã tồn tại chưa
         if (accountRepository.findByAccountPhone(request.getAccountPhone()).isPresent()) {
-            throw new RuntimeException("Phone number already exists");
+            throw new DuplicateResourceException("Phone number already exists");
         }
         
         Account account = new Account();
@@ -76,7 +78,7 @@ public class AccountServiceImpl implements AccountService {
             Set<Role> roles = new HashSet<>();
             for (String roleId : request.getRoleIds()) {
                 Role role = roleRepository.findById(roleId)
-                        .orElseThrow(() -> new RuntimeException("Role not found with id: " + roleId));
+                        .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + roleId));
                 roles.add(role);
             }
             account.setRoles(roles);
@@ -89,7 +91,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public AccountResponse updateAccount(String accountId, UpdateAccountRequest request) {
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new RuntimeException("Account not found with id: " + accountId));
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found with id: " + accountId));
 
         account.setAccountName(request.getAccountName());
         account.setAccountPhone(request.getAccountPhone());
@@ -101,7 +103,7 @@ public class AccountServiceImpl implements AccountService {
             Set<Role> roles = new HashSet<>();
             for (String roleId : request.getRoleIds()) {
                 Role role = roleRepository.findById(roleId)
-                        .orElseThrow(() -> new RuntimeException("Role not found with id: " + roleId));
+                        .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + roleId));
                 roles.add(role);
             }
             account.setRoles(roles);
@@ -114,7 +116,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public void deleteAccount(String accountId) {
         if (!accountRepository.existsById(accountId)) {
-            throw new RuntimeException("Account not found with id: " + accountId);
+            throw new ResourceNotFoundException("Account not found with id: " + accountId);
         }
         accountRepository.deleteById(accountId);
     }
@@ -139,7 +141,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public AccountResponse getAccountByPhone(String accountPhone) {
         Account account = accountRepository.findByAccountPhone(accountPhone)
-                .orElseThrow(() -> new RuntimeException("Account not found with phone: " + accountPhone));
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found with phone: " + accountPhone));
         return AccountResponse.fromEntity(account);
     }
 
@@ -147,16 +149,16 @@ public class AccountServiceImpl implements AccountService {
     public AccountResponse authenticateAccount(String accountPhone, String password) {
         // Tìm account theo phone
         Account account = accountRepository.findByAccountPhone(accountPhone)
-                .orElseThrow(() -> new RuntimeException("Invalid phone or password"));
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid phone or password"));
         
         // Kiểm tra password hash
         if (!passwordEncoder.matches(password, account.getPassword())) {
-            throw new RuntimeException("Invalid phone or password");
+            throw new ResourceNotFoundException("Invalid phone or password");
         }
         
         // Kiểm tra trạng thái active
         if (account.getStatus() != 1) {
-            throw new RuntimeException("Account is deactivated");
+            throw new ResourceNotFoundException("Account is deactivated");
         }
         
         return AccountResponse.fromEntity(account);
