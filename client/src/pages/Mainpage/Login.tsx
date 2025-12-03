@@ -32,22 +32,32 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
     password: '',
     rememberMe: false
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Reset error và clear form khi dialog mở/đóng
+  // Reset error khi dialog mở (không reset khi đóng)
   React.useEffect(() => {
     if (isOpen) {
       // Reset error khi dialog mở
       dispatch(loginFailure(''))
-    } else {
-      // Clear form khi dialog đóng
-      setFormData({
-        username: '',
-        password: '',
-        rememberMe: false
-      })
-      dispatch(loginFailure(''))
     }
   }, [isOpen, dispatch])
+
+  // Custom onClose handler để reset form sau khi đóng
+  const handleClose = () => {
+    // Chỉ đóng nếu không đang submit
+    if (!isSubmitting) {
+      onClose()
+      // Reset form sau khi đóng (dùng timeout để tránh flash)
+      setTimeout(() => {
+        setFormData({
+          username: '',
+          password: '',
+          rememberMe: false
+        })
+        dispatch(loginFailure(''))
+      }, 300)
+    }
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target
@@ -83,6 +93,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
       return
     }
     
+    setIsSubmitting(true)
     dispatch(loginStart())
     
     try {
@@ -93,7 +104,17 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
       
       if (response.success && response.user) {
         dispatch(loginSuccess(response.user))
+        
+        // Đóng dialog và reset form sau khi đăng nhập thành công
         onClose()
+        setTimeout(() => {
+          setFormData({
+            username: '',
+            password: '',
+            rememberMe: false
+          })
+          dispatch(loginFailure(''))
+        }, 300)
         
         // Check for intended route (from checkout button)
         const intendedRoute = sessionStorage.getItem('intendedRoute')
@@ -141,17 +162,19 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
       toast.error(errorMessage)
       
       // KHÔNG redirect khi login failed - giữ user ở trang login
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const navigateToRegister = () => {
-    onClose()
+    handleClose()
     // Navigate to register page using React Router
     navigate('/account/register')
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden rounded-lg">
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-400 to-orange-600 text-white p-6 rounded-t-md">
