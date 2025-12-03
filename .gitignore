@@ -2,7 +2,10 @@
 .env
 .env.local
 .env.docker
+.env.production
 .env.*.local
+client/.env.production
+server/.env.production
 
 # Docker volumes
 postgres_data/
