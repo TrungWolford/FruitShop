@@ -44,8 +44,10 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
 
   // Custom onClose handler để reset form sau khi đóng
   const handleClose = () => {
-    // Chỉ đóng nếu không đang submit
-    if (!isSubmitting) {
+    console.log('🚪 handleClose called - isSubmitting:', isSubmitting, 'loading:', loading, 'error:', error)
+    // Chỉ đóng nếu không đang submit và không có lỗi đang hiển thị
+    if (!isSubmitting && !loading) {
+      console.log('✅ Closing dialog and resetting form')
       onClose()
       // Reset form sau khi đóng (dùng timeout để tránh flash)
       setTimeout(() => {
@@ -56,6 +58,8 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
         })
         dispatch(loginFailure(''))
       }, 300)
+    } else {
+      console.log('❌ Dialog close prevented - still processing or has error')
     }
   }
 
@@ -73,9 +77,11 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log('📝 Form submitted')
     
     // Validation 1: Kiểm tra trường bắt buộc
     if (!formData.username || !formData.password) {
+      console.log('❌ Validation failed: Empty fields')
       toast.error('Vui lòng nhập đầy đủ thông tin')
       return
     }
@@ -83,16 +89,19 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
     // Validation 2: Kiểm tra định dạng số điện thoại (10-11 số)
     const phoneRegex = /^[0-9]{10,11}$/
     if (!phoneRegex.test(formData.username)) {
+      console.log('❌ Validation failed: Invalid phone format')
       toast.error('Số điện thoại hoặc mật khẩu không đúng')
       return
     }
 
     // Validation 3: Kiểm tra độ dài mật khẩu (tối thiểu 6 ký tự)
     if (formData.password.length < 6) {
+      console.log('❌ Validation failed: Password too short')
       toast.error('Số điện thoại hoặc mật khẩu không đúng')
       return
     }
     
+    console.log('🔄 Starting login process...')
     setIsSubmitting(true)
     dispatch(loginStart())
     
@@ -175,7 +184,21 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden rounded-lg">
+      <DialogContent 
+        className="sm:max-w-[500px] p-0 overflow-hidden rounded-lg"
+        onInteractOutside={(e) => {
+          // Ngăn đóng dialog khi click ra ngoài trong lúc đang submit hoặc có lỗi
+          if (isSubmitting || loading || error) {
+            e.preventDefault()
+          }
+        }}
+        onEscapeKeyDown={(e) => {
+          // Ngăn đóng dialog khi nhấn ESC trong lúc đang submit hoặc có lỗi
+          if (isSubmitting || loading || error) {
+            e.preventDefault()
+          }
+        }}
+      >
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-400 to-orange-600 text-white p-6 rounded-t-md">
           <DialogHeader>
