@@ -36,7 +36,7 @@ const AdminDashboard: React.FC = () => {
     
     // Check if user is authenticated and has ADMIN role
     if (!isAuthenticated || !user) {
-      navigate('/')
+      navigate('/admin')
       return
     }
     
@@ -44,7 +44,7 @@ const AdminDashboard: React.FC = () => {
     const isAdmin = userRoles.some(role => role.roleName === 'ADMIN')
     
     if (!isAdmin) {
-      navigate('/')
+      navigate('/admin')
       return
     }
 
