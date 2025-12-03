@@ -31,17 +31,38 @@ const AdminLogin: React.FC = () => {
     e.preventDefault()
     setError('')
 
+    // Validation 1: Kiểm tra trường bắt buộc
     if (!email || !password) {
       setError('Vui lòng nhập đầy đủ thông tin')
       return
     }
 
+    // Validation 2: Kiểm tra định dạng số điện thoại (10-11 số)
+    const phoneRegex = /^[0-9]{10,11}$/
+    if (!phoneRegex.test(email)) {
+      setError('Số điện thoại không đúng định dạng (10-11 số)')
+      return
+    }
+
+    // Validation 3: Kiểm tra độ dài mật khẩu (tối thiểu 6 ký tự)
+    if (password.length < 6) {
+      setError('Mật khẩu phải có ít nhất 6 ký tự')
+      return
+    }
+
+    console.log('🔐 Admin Login - Attempting login with:', { email })
+
     try {
       const result = await dispatch(loginAsync({ email, password })).unwrap()
+      
+      console.log('✅ Admin Login - Response:', result)
       
       if (result.success && result.user) {
         const userRoles = result.user.roles || []
         const isAdmin = userRoles.some(role => role.roleName === 'ADMIN')
+        
+        console.log('👤 User roles:', userRoles)
+        console.log('🔑 Is admin:', isAdmin)
         
         if (isAdmin) {
           navigate('/admin/dashboard', { replace: true })
@@ -52,7 +73,24 @@ const AdminLogin: React.FC = () => {
         setError(result.message || 'Sai tài khoản hoặc mật khẩu')
       }
     } catch (err: any) {
-      setError(err.message || 'Đăng nhập thất bại. Vui lòng thử lại.')
+      console.error('❌ Admin Login - Error:', err)
+      console.error('❌ Error details:', {
+        message: err.message,
+        response: err.response,
+        status: err.response?.status,
+        data: err.response?.data
+      })
+      
+      // Hiển thị thông báo thân thiện dựa trên status code
+      if (err.response?.status === 401) {
+        setError('Tài khoản hoặc mật khẩu không đúng')
+      } else if (err.response?.status === 403) {
+        setError('Tài khoản không có quyền truy cập')
+      } else if (err.response?.status >= 500) {
+        setError('Lỗi hệ thống. Vui lòng thử lại sau')
+      } else {
+        setError(err.message || 'Đăng nhập thất bại. Vui lòng thử lại.')
+      }
     }
   }
 
@@ -80,7 +118,8 @@ const AdminLogin: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Số điện thoại / Email
+              Số điện thoại <span className="text-red-500">*</span>
+              <span className="text-xs text-gray-500 ml-2">(10-11 số)</span>
             </label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -89,14 +128,16 @@ const AdminLogin: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
-                placeholder="Nhập số điện thoại hoặc email"
+                placeholder="Nhập số điện thoại (10-11 số)"
+                maxLength={11}
               />
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Mật khẩu
+              Mật khẩu <span className="text-red-500">*</span>
+              <span className="text-xs text-gray-500 ml-2">(Tối thiểu 6 ký tự)</span>
             </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />

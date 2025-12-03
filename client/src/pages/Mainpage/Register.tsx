@@ -200,7 +200,8 @@ const Register: React.FC = () => {
                   {/* Phone */}
                   <div className="space-y-2">
                     <Label htmlFor="phone" className="text-sm font-medium">
-                      Số điện thoại *
+                      Số điện thoại <span className="text-red-500">*</span>
+                      <span className="text-xs text-gray-500 ml-2">(10-11 số)</span>
                     </Label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -208,10 +209,11 @@ const Register: React.FC = () => {
                         id="phone"
                         name="phone"
                         type="tel"
-                        placeholder="Nhập số điện thoại"
+                        placeholder="Nhập số điện thoại (10-11 số)"
                         value={formData.phone}
                         onChange={handleInputChange}
                         className="pl-10 h-12 text-base"
+                        maxLength={11}
                         required
                       />
                     </div>
@@ -220,7 +222,8 @@ const Register: React.FC = () => {
                   {/* Password */}
                   <div className="space-y-2">
                     <Label htmlFor="password" className="text-sm font-medium">
-                      Mật khẩu *
+                      Mật khẩu <span className="text-red-500">*</span>
+                      <span className="text-xs text-gray-500 ml-2">(Tối thiểu 6 ký tự)</span>
                     </Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
