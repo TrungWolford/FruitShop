@@ -13,6 +13,11 @@ const AdminLogin: React.FC = () => {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
 
+  // Reset error khi component mount
+  useEffect(() => {
+    setError('')
+  }, [])
+
   // Clear error when user types
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value)

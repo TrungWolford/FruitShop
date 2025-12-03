@@ -33,6 +33,22 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
     rememberMe: false
   })
 
+  // Reset error và clear form khi dialog mở/đóng
+  React.useEffect(() => {
+    if (isOpen) {
+      // Reset error khi dialog mở
+      dispatch(loginFailure(''))
+    } else {
+      // Clear form khi dialog đóng
+      setFormData({
+        username: '',
+        password: '',
+        rememberMe: false
+      })
+      dispatch(loginFailure(''))
+    }
+  }, [isOpen, dispatch])
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target
     setFormData(prev => ({
