@@ -36,21 +36,19 @@ const AdminLogin: React.FC = () => {
       return
     }
 
+    console.log('🔐 Admin Login - Attempting login with:', { email })
+
     try {
       const result = await dispatch(loginAsync({ email, password })).unwrap()
       
-      console.log('Login result:', result)
-      console.log('User roles:', result.user?.roles)
+      console.log('✅ Admin Login - Response:', result)
       
       if (result.success && result.user) {
         const userRoles = result.user.roles || []
-        console.log('Checking roles:', userRoles)
-        const isAdmin = userRoles.some(role => {
-          console.log('Role:', role, 'roleName:', role.roleName)
-          return role.roleName === 'ADMIN'
-        })
+        const isAdmin = userRoles.some(role => role.roleName === 'ADMIN')
         
-        console.log('Is admin:', isAdmin)
+        console.log('👤 User roles:', userRoles)
+        console.log('🔑 Is admin:', isAdmin)
         
         if (isAdmin) {
           // Dùng replace để tránh back về trang login
@@ -62,8 +60,24 @@ const AdminLogin: React.FC = () => {
         setError(result.message || 'Sai tài khoản hoặc mật khẩu')
       }
     } catch (err: any) {
-      console.error('Login error:', err)
-      setError(err.message || 'Đăng nhập thất bại. Vui lòng thử lại.')
+      console.error('❌ Admin Login - Error:', err)
+      console.error('❌ Error details:', {
+        message: err.message,
+        response: err.response,
+        status: err.response?.status,
+        data: err.response?.data
+      })
+      
+      // Hiển thị thông báo thân thiện dựa trên status code
+      if (err.response?.status === 401) {
+        setError('Tài khoản hoặc mật khẩu không đúng')
+      } else if (err.response?.status === 403) {
+        setError('Tài khoản không có quyền truy cập')
+      } else if (err.response?.status >= 500) {
+        setError('Lỗi hệ thống. Vui lòng thử lại sau')
+      } else {
+        setError(err.message || 'Đăng nhập thất bại. Vui lòng thử lại.')
+      }
     }
   }
 

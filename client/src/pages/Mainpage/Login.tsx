@@ -75,15 +75,11 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
         
         // Check user roles and navigate accordingly
         const userRoles = response.user.roles || []
-        const isAdmin = userRoles.some(role => role.roleName === 'ADMIN')
         const isCustomer = userRoles.some(role => role.roleName === 'CUSTOMER')
         
         // Add a small delay to ensure Redux state is updated
         setTimeout(() => {
-          if (isAdmin) {
-            toast.success('Đăng nhập thành công! Chào mừng Admin.')
-            navigate('/admin/dashboard')
-          } else if (isCustomer) {
+          if (isCustomer) {
             toast.success('Đăng nhập thành công! Chào mừng bạn trở lại.')
             // Không navigate đến trang customer nữa, ở lại trang hiện tại
           } else {
