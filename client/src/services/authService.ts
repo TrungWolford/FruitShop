@@ -34,12 +34,31 @@ export const authService = {
         user: response.data
       };
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 
-                          error.message || 
-                          'Đăng nhập thất bại';
+      // Parse error message from backend
+      let errorMessage = 'Số điện thoại hoặc mật khẩu không đúng';
       
-      return {
-        success: false,
+      // Nếu backend trả về string trong response.data
+      if (typeof error.response?.data === 'string') {
+        errorMessage = error.response.data;
+      } 
+      // Nếu backend trả về object với message property
+      else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      // Xử lý theo status code
+      else if (error.response?.status === 401) {
+        errorMessage = 'Số điện thoại hoặc mật khẩu không đúng';
+      } else if (error.response?.status === 400) {
+        errorMessage = 'Số điện thoại hoặc mật khẩu không đúng';
+      } else if (error.response?.status === 403) {
+        errorMessage = 'Tài khoản không có quyền truy cập';
+      } else if (error.response?.status >= 500) {
+        errorMessage = 'Lỗi hệ thống. Vui lòng thử lại sau';
+      }
+      
+      // Throw error để component có thể catch và xử lý
+      throw {
+        response: error.response,
         message: errorMessage
       };
     }

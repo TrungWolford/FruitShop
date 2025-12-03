@@ -39,6 +39,10 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }))
+    // Clear error when user types
+    if (error) {
+      dispatch(loginFailure(''))
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,13 +57,13 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
     // Validation 2: Kiểm tra định dạng số điện thoại (10-11 số)
     const phoneRegex = /^[0-9]{10,11}$/
     if (!phoneRegex.test(formData.username)) {
-      toast.error('Số điện thoại không đúng định dạng (10-11 số)')
+      toast.error('Số điện thoại hoặc mật khẩu không đúng')
       return
     }
 
     // Validation 3: Kiểm tra độ dài mật khẩu (tối thiểu 6 ký tự)
     if (formData.password.length < 6) {
-      toast.error('Mật khẩu phải có ít nhất 6 ký tự')
+      toast.error('Số điện thoại hoặc mật khẩu không đúng')
       return
     }
     
@@ -108,27 +112,19 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
           }
         }, 100)
       } else {
-        dispatch(loginFailure(response.message || 'Tài khoản hoặc mật khẩu không đúng'))
-        toast.error(response.message || 'Tài khoản hoặc mật khẩu không đúng')
+        dispatch(loginFailure(response.message || 'Số điện thoại hoặc mật khẩu không đúng'))
+        toast.error(response.message || 'Số điện thoại hoặc mật khẩu không đúng')
       }
     } catch (error: any) {
       console.error('❌ Login Error:', error)
       
-      // Hiển thị thông báo thân thiện dựa trên status code
-      let errorMessage = 'Có lỗi xảy ra khi đăng nhập'
-      
-      if (error.response?.status === 401) {
-        errorMessage = 'Tài khoản hoặc mật khẩu không đúng'
-      } else if (error.response?.status === 403) {
-        errorMessage = 'Tài khoản không có quyền truy cập'
-      } else if (error.response?.status >= 500) {
-        errorMessage = 'Lỗi hệ thống. Vui lòng thử lại sau'
-      } else if (error.message) {
-        errorMessage = error.message
-      }
+      // Sử dụng error message đã được parse từ authService
+      const errorMessage = error.message || 'Số điện thoại hoặc mật khẩu không đúng'
       
       dispatch(loginFailure(errorMessage))
       toast.error(errorMessage)
+      
+      // KHÔNG redirect khi login failed - giữ user ở trang login
     }
   }
 
@@ -231,8 +227,8 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
             {/* Submit Button */}
             <Button 
               type="submit" 
-              disabled={loading}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2.5 rounded-md disabled:opacity-50"
+              disabled={loading || !formData.username || !formData.password}
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2.5 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
             </Button>

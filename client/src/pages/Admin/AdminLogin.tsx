@@ -13,6 +13,17 @@ const AdminLogin: React.FC = () => {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
 
+  // Clear error when user types
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value)
+    if (error) setError('')
+  }
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value)
+    if (error) setError('')
+  }
+
   useEffect(() => {
     document.title = 'Admin - Đăng nhập'
     
@@ -40,13 +51,13 @@ const AdminLogin: React.FC = () => {
     // Validation 2: Kiểm tra định dạng số điện thoại (10-11 số)
     const phoneRegex = /^[0-9]{10,11}$/
     if (!phoneRegex.test(email)) {
-      setError('Số điện thoại không đúng định dạng (10-11 số)')
+      setError('Số điện thoại hoặc mật khẩu không đúng')
       return
     }
 
     // Validation 3: Kiểm tra độ dài mật khẩu (tối thiểu 6 ký tự)
     if (password.length < 6) {
-      setError('Mật khẩu phải có ít nhất 6 ký tự')
+      setError('Số điện thoại hoặc mật khẩu không đúng')
       return
     }
 
@@ -71,7 +82,7 @@ const AdminLogin: React.FC = () => {
           setError('Tài khoản không có quyền truy cập trang quản trị')
         }
       } else {
-        setError(result.message || 'Sai tài khoản hoặc mật khẩu')
+        setError(result.message || 'Số điện thoại hoặc mật khẩu không đúng')
       }
     } catch (err: any) {
       console.error('❌ Admin Login - Error:', err)
@@ -82,16 +93,26 @@ const AdminLogin: React.FC = () => {
         data: err.response?.data
       })
       
-      // Hiển thị thông báo thân thiện dựa trên status code
+      // Hiển thị thông báo thân thiện dựa trên status code theo test case
+      let errorMessage = 'Số điện thoại hoặc mật khẩu không đúng'
+      
       if (err.response?.status === 401) {
-        setError('Tài khoản hoặc mật khẩu không đúng')
+        errorMessage = 'Số điện thoại hoặc mật khẩu không đúng'
+      } else if (err.response?.status === 400) {
+        errorMessage = 'Số điện thoại hoặc mật khẩu không đúng'
       } else if (err.response?.status === 403) {
-        setError('Tài khoản không có quyền truy cập')
+        errorMessage = 'Tài khoản không có quyền truy cập'
       } else if (err.response?.status >= 500) {
-        setError('Lỗi hệ thống. Vui lòng thử lại sau')
-      } else {
-        setError(err.message || 'Đăng nhập thất bại. Vui lòng thử lại.')
+        errorMessage = 'Lỗi hệ thống. Vui lòng thử lại sau'
+      } else if (err.response?.data?.message) {
+        // Nếu có message từ backend, sử dụng message đó
+        errorMessage = err.response.data.message
+      } else if (err.message && !err.message.includes('401') && !err.message.includes('Request failed')) {
+        errorMessage = err.message
       }
+      
+      setError(errorMessage)
+      // KHÔNG redirect khi login failed - giữ user ở trang login
     }
   }
 
@@ -127,7 +148,7 @@ const AdminLogin: React.FC = () => {
               <input
                 type="text"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={handleEmailChange}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
                 placeholder="Nhập số điện thoại (10-11 số)"
                 maxLength={11}
@@ -145,7 +166,7 @@ const AdminLogin: React.FC = () => {
               <input
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handlePasswordChange}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
                 placeholder="Nhập mật khẩu"
               />
@@ -154,7 +175,7 @@ const AdminLogin: React.FC = () => {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !email || !password}
             className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {loading ? (
