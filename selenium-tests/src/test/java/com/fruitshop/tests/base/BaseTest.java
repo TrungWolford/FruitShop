@@ -11,7 +11,7 @@ import java.time.Duration;
 
 public class BaseTest {
     protected WebDriver driver;
-    protected String baseUrl = "http://localhost:5173";
+    protected String baseUrl = "https://fruitshop-c4.vercel.app";
 
     @BeforeMethod
     public void setUp() {

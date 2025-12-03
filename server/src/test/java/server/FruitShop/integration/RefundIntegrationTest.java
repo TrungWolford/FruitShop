@@ -26,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Integration Test cho Refund API
+ * Refund Status: Chờ xác nhận, Đã duyệt, Từ chối, Hoàn thành
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -74,16 +75,8 @@ class RefundIntegrationTest {
     void setUp() {
         passwordEncoder = new BCryptPasswordEncoder();
 
-        // Xóa dữ liệu cũ
-        refundRepository.deleteAll();
-        orderItemRepository.deleteAll();
-        orderRepository.deleteAll();
-        accountRepository.deleteAll();
-        productRepository.deleteAll();
-        categoryRepository.deleteAll();
-        roleRepository.deleteAll();
-        paymentRepository.deleteAll();
-
+        // @Transactional sẽ tự động rollback sau mỗi test
+        
         // Tạo role
         Role customerRole = new Role();
         customerRole.setRoleName("CUSTOMER");
@@ -148,6 +141,11 @@ class RefundIntegrationTest {
         testRefund = refundRepository.save(testRefund);
     }
 
+    /**
+     * Test 1: Lấy tất cả yêu cầu hoàn tiền
+     * Mục đích: Kiểm tra API GET /api/refund lấy danh sách tất cả refunds
+     * Input: page=0, size=10
+     */
     @Test
     @DisplayName("Integration Test 1: Lấy tất cả refunds - Thành công")
     void testGetAllRefunds_Success() throws Exception {
@@ -159,6 +157,11 @@ class RefundIntegrationTest {
                 .andExpect(jsonPath("$.content[0].refundStatus").value("Chờ xác nhận"));
     }
 
+    /**
+     * Test 2: Lấy chi tiết yêu cầu hoàn tiền
+     * Mục đích: Kiểm tra API GET /api/refund/{id} lấy thông tin chi tiết refund
+     * Input: refundId hợp lệ
+     */
     @Test
     @DisplayName("Integration Test 2: Lấy refund theo ID - Thành công")
     void testGetRefundById_Success() throws Exception {
@@ -168,6 +171,11 @@ class RefundIntegrationTest {
                 .andExpect(jsonPath("$.refundStatus").value("Chờ xác nhận"));
     }
 
+    /**
+     * Test 3: Lấy refund với ID không tồn tại
+     * Mục đích: Kiểm tra API GET /api/refund/{id} trả lỗi 404 khi refundId không hợp lệ
+     * Input: refundId không tồn tại
+     */
     @Test
     @DisplayName("Integration Test 3: Lấy refund theo ID - Không tồn tại")
     void testGetRefundById_NotFound() throws Exception {
@@ -175,6 +183,11 @@ class RefundIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
+    /**
+     * Test 4: Tạo yêu cầu hoàn tiền mới
+     * Mục đích: Kiểm tra API POST /api/refund tạo refund mới vào database
+     * Input: CreateRefundRequest (orderId, orderItemId, reason, refundAmount, imageUrls)
+     */
     @Test
     @DisplayName("Integration Test 4: Tạo refund mới - Thành công")
     void testCreateRefund_Success() throws Exception {
@@ -197,6 +210,11 @@ class RefundIntegrationTest {
         assert count == 2;
     }
 
+    /**
+     * Test 5: Lọc refunds theo trạng thái
+     * Mục đích: Kiểm tra API GET /api/refund/status/{status} lấy refunds theo status
+     * Input: status="Chờ xác nhận", page=0, size=10
+     */
     @Test
     @DisplayName("Integration Test 5: Lấy refunds theo status - Thành công")
     void testGetRefundsByStatus_Success() throws Exception {
@@ -208,6 +226,11 @@ class RefundIntegrationTest {
                 .andExpect(jsonPath("$.content[0].refundStatus").value("Chờ xác nhận"));
     }
 
+    /**
+     * Test 6: Lấy refunds của một đơn hàng
+     * Mục đích: Kiểm tra API GET /api/refund/order/{orderId} lấy tất cả refunds của một order
+     * Input: orderId hợp lệ
+     */
     @Test
     @DisplayName("Integration Test 6: Lấy refunds theo orderId - Thành công")
     void testGetRefundsByOrderId_Success() throws Exception {
@@ -217,6 +240,11 @@ class RefundIntegrationTest {
                 .andExpect(jsonPath("$[0].order.orderId").value(testOrder.getOrderId()));
     }
 
+    /**
+     * Test 7: Cập nhật trạng thái hoàn tiền
+     * Mục đích: Kiểm tra API PUT /api/refund/{id}/status cập nhật refundStatus
+     * Input: UpdateRefundStatusRequest (refundStatus="Đã duyệt")
+     */
     @Test
     @DisplayName("Integration Test 7: Cập nhật refund status - Thành công")
     void testUpdateRefundStatus_Success() throws Exception {
@@ -234,6 +262,11 @@ class RefundIntegrationTest {
         assert updated.getRefundStatus().equals("Đã duyệt");
     }
 
+    /**
+     * Test 8: Duyệt yêu cầu hoàn tiền
+     * Mục đích: Kiểm tra API PUT /api/refund/{id}/approve đổi status thành "Đã duyệt"
+     * Input: refundId hợp lệ
+     */
     @Test
     @DisplayName("Integration Test 8: Approve refund - Thành công")
     void testApproveRefund_Success() throws Exception {
@@ -246,6 +279,11 @@ class RefundIntegrationTest {
         assert approved.getRefundStatus().equals("Đã duyệt");
     }
 
+    /**
+     * Test 9: Từ chối yêu cầu hoàn tiền
+     * Mục đích: Kiểm tra API PUT /api/refund/{id}/reject đổi status thành "Từ chối"
+     * Input: refundId hợp lệ
+     */
     @Test
     @DisplayName("Integration Test 9: Reject refund - Thành công")
     void testRejectRefund_Success() throws Exception {
@@ -258,6 +296,11 @@ class RefundIntegrationTest {
         assert rejected.getRefundStatus().equals("Từ chối");
     }
 
+    /**
+     * Test 10: Hoàn tất hoàn tiền
+     * Mục đích: Kiểm tra API PUT /api/refund/{id}/complete đổi status thành "Hoàn thành"
+     * Input: refundId hợp lệ
+     */
     @Test
     @DisplayName("Integration Test 10: Complete refund - Thành công")
     void testCompleteRefund_Success() throws Exception {
@@ -270,6 +313,11 @@ class RefundIntegrationTest {
         assert completed.getRefundStatus().equals("Hoàn thành");
     }
 
+    /**
+     * Test 11: Hủy/Xóa yêu cầu hoàn tiền
+     * Mục đích: Kiểm tra API DELETE /api/refund/{id} xóa refund khỏi database
+     * Input: refundId hợp lệ
+     */
     @Test
     @DisplayName("Integration Test 11: Cancel/Delete refund - Thành công")
     void testCancelRefund_Success() throws Exception {
@@ -281,6 +329,11 @@ class RefundIntegrationTest {
         assert !exists;
     }
 
+    /**
+     * Test 12: Tìm kiếm yêu cầu hoàn tiền
+     * Mục đích: Kiểm tra API GET /api/refund/search tìm refunds theo từ khóa
+     * Input: keyword="Sản phẩm", page=0, size=10
+     */
     @Test
     @DisplayName("Integration Test 12: Search refunds - Thành công")
     void testSearchRefunds_Success() throws Exception {
@@ -292,6 +345,11 @@ class RefundIntegrationTest {
                 .andExpect(jsonPath("$.content").isArray());
     }
 
+    /**
+     * Test 13: Đếm số yêu cầu chờ xác nhận
+     * Mục đích: Kiểm tra API GET /api/refund/stats/pending-count đếm refunds "Chờ xác nhận"
+     * Input: Không có
+     */
     @Test
     @DisplayName("Integration Test 13: Get pending refunds count - Thành công")
     void testGetPendingRefundsCount_Success() throws Exception {
@@ -300,6 +358,11 @@ class RefundIntegrationTest {
                 .andExpect(jsonPath("$").exists());
     }
 
+    /**
+     * Test 14: Tạo refund với đơn hàng không tồn tại
+     * Mục đích: Kiểm tra API POST /api/refund trả lỗi 4xx khi orderId không hợp lệ
+     * Input: orderId không tồn tại
+     */
     @Test
     @DisplayName("Integration Test 14: Tạo refund - Order không tồn tại")
     void testCreateRefund_OrderNotFound() throws Exception {
