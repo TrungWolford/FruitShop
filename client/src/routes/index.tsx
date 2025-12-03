@@ -5,6 +5,7 @@ import Register from '../pages/Mainpage/Register';
 import ProfileCustomer from '../pages/Customer/ProfileCustomer';
 import HistoryReceipt from '../pages/Customer/HistoryOrder';
 import ProductPage from '../pages/Customer/Product';
+import AdminLogin from '../pages/Admin/AdminLogin';
 import AdminDashboard from '../pages/Admin/AdminDashboard';
 import AdminProduct from '../pages/Admin/AdminProduct';
 import AdminAccounts from '../pages/Admin/AdminAccounts';
@@ -73,7 +74,8 @@ const AppRoutes: React.FC = () => {
         }
       />
       {/* Admin routes */}
-      <Route path="/admin" element={<AdminDashboard />} />
+      <Route path="/admin" element={<AdminLogin />} />
+      <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
       <Route path="/admin/products" element={<AdminProduct />} />
       <Route path="/admin/carts" element={<AdminCart />} />

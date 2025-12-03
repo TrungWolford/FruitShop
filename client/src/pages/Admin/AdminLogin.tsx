@@ -1,0 +1,143 @@
+import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAppSelector, useAppDispatch } from '../../hooks/redux'
+import { loginAsync } from '../../store/slices/authSlice'
+import { Lock, User, AlertCircle, Loader2 } from 'lucide-react'
+
+const AdminLogin: React.FC = () => {
+  const navigate = useNavigate()
+  const dispatch = useAppDispatch()
+  const { user, isAuthenticated, loading } = useAppSelector((state) => state.auth)
+  
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    document.title = 'Admin - Đăng nhập'
+    
+    // If already authenticated as admin, redirect to dashboard
+    if (isAuthenticated && user) {
+      const userRoles = user.roles || []
+      const isAdmin = userRoles.some(role => role.roleName === 'ADMIN')
+      
+      if (isAdmin) {
+        navigate('/admin/dashboard')
+      }
+    }
+  }, [isAuthenticated, user, navigate])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+
+    if (!email || !password) {
+      setError('Vui lòng nhập đầy đủ thông tin')
+      return
+    }
+
+    try {
+      const result = await dispatch(loginAsync({ email, password })).unwrap()
+      
+      if (result.success && result.user) {
+        const userRoles = result.user.roles || []
+        const isAdmin = userRoles.some(role => role.roleName === 'ADMIN')
+        
+        if (isAdmin) {
+          navigate('/admin/dashboard')
+        } else {
+          setError('Tài khoản không có quyền truy cập trang quản trị')
+        }
+      } else {
+        setError(result.message || 'Sai tài khoản hoặc mật khẩu')
+      }
+    } catch (err: any) {
+      setError(err.message || 'Đăng nhập thất bại. Vui lòng thử lại.')
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8">
+        {/* Logo/Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-500 rounded-full mb-4">
+            <Lock className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-800">Đăng nhập Admin</h1>
+          <p className="text-gray-500 mt-2">Vui lòng đăng nhập để tiếp tục</p>
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+            <p className="text-red-600 text-sm">{error}</p>
+          </div>
+        )}
+
+        {/* Login Form */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Số điện thoại / Email
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
+                placeholder="Nhập số điện thoại hoặc email"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Mật khẩu
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
+                placeholder="Nhập mật khẩu"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Đang đăng nhập...
+              </>
+            ) : (
+              'Đăng nhập'
+            )}
+          </button>
+        </form>
+
+        {/* Back to Home */}
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => navigate('/')}
+            className="text-amber-600 hover:text-amber-700 text-sm font-medium"
+          >
+            ← Quay về trang chủ
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default AdminLogin
