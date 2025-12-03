@@ -116,7 +116,7 @@ class OrderIntegrationTest {
         testProduct.setPrice(50000);
         testProduct.setStock(100);
         testProduct.setStatus(1);
-        testProduct.setCategories(Collections.singletonList(testCategory));
+        testProduct.setCategories(new ArrayList<>(Collections.singletonList(testCategory)));
         testProduct = productRepository.save(testProduct);
 
         // Tạo payment
@@ -221,7 +221,73 @@ class OrderIntegrationTest {
                 .andExpect(jsonPath("$.content[0].status").value(0));
     }
 
-    // Thiếu 
+    /**
+     * Test Case 4: Tạo đơn hàng mới
+     * Mục đích: Kiểm tra API POST /api/order tạo order thành công
+     * Input: CreateOrderRequest với:
+     * - accountId
+     * - shippingId (phải có sẵn)
+     * - paymentId (phải có sẵn)
+     * - paymentMethod (0=COD, 1=BANK_TRANSFER, 2=MOMO)
+     * - items (productId, quantity, unitPrice)
+     * - totalPrice
+     * Kết quả mong muốn:
+     * - HTTP Status: 200 OK
+     * - Response có orderId
+     * - Database: order được tạo với đầy đủ thông tin
+     * Use case: Khách hàng đặt hàng
+     */
+    @Test
+    @DisplayName("Integration Test 4: Tạo order mới - Thành công")
+    void testCreateOrder_Success() throws Exception {
+        // Tạo payment mới cho order mới
+        Payment newPayment = new Payment();
+        newPayment.setPaymentMethod("COD");
+        newPayment.setPaymentStatus(0);
+        newPayment.setAmount(BigDecimal.valueOf(150000));
+        newPayment.setPaymentDate(new Date());
+        newPayment = paymentRepository.save(newPayment);
+
+        // Tạo shipping mới cho order mới
+        Shipping newShipping = new Shipping();
+        newShipping.setAccount(testAccount);
+        newShipping.setReceiverName("Trần Văn B");
+        newShipping.setReceiverPhone("0909123456");
+        newShipping.setReceiverAddress("456 Đường XYZ, Quận 2");
+        newShipping.setCity("TP.HCM");
+        newShipping.setShipperName("");
+        newShipping.setShippingFee(30000);
+        newShipping.setStatus(1);
+        newShipping = shippingRepository.save(newShipping);
+
+        // Tạo order request
+        CreateOrderRequest request = new CreateOrderRequest();
+        request.setAccountId(testAccount.getAccountId());
+        request.setShippingId(newShipping.getShippingId());
+        request.setPaymentId(newPayment.getPaymentId());
+        request.setPaymentMethod(0); // COD
+        request.setTotalPrice(150000);
+        request.setStatus(1); // Pending
+        
+        // Order items
+        CreateOrderRequest.OrderItemRequest orderItem = new CreateOrderRequest.OrderItemRequest();
+        orderItem.setProductId(testProduct.getProductId());
+        orderItem.setQuantity(3);
+        orderItem.setUnitPrice(50000);
+        orderItem.setTotalPrice(150000);
+        request.setItems(new ArrayList<>(Collections.singletonList(orderItem)));
+
+        mockMvc.perform(post("/api/order")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.orderId").exists())
+                .andExpect(jsonPath("$.accountId").value(testAccount.getAccountId()));
+
+        // Verify trong database
+        long count = orderRepository.count();
+        assert count >= 2; // Ít nhất 2 orders (testOrder + order mới)
+    }
 
     /**
      * Test Case 5: Cập nhật thông tin đơn hàng
