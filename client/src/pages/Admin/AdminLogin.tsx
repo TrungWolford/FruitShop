@@ -39,8 +39,11 @@ const AdminLogin: React.FC = () => {
     try {
       const result = await dispatch(loginAsync({ email, password })).unwrap()
       
-      console.log('Login result:', result)
-      console.log('User roles:', result.user?.roles)
+      console.log('Login result:', JSON.stringify(result, null, 2))
+      console.log('User roles:', JSON.stringify(result.user?.roles, null, 2))
+      
+      // DEBUG: Hiển thị alert để xem kết quả
+      alert('Login result: ' + JSON.stringify(result.user?.roles, null, 2))
       
       if (result.success && result.user) {
         const userRoles = result.user.roles || []
@@ -56,7 +59,7 @@ const AdminLogin: React.FC = () => {
           // Dùng replace để tránh back về trang login
           navigate('/admin/dashboard', { replace: true })
         } else {
-          setError('Tài khoản không có quyền truy cập trang quản trị')
+          setError('Tài khoản không có quyền truy cập trang quản trị. Roles: ' + JSON.stringify(userRoles))
         }
       } else {
         setError(result.message || 'Sai tài khoản hoặc mật khẩu')

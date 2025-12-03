@@ -8,13 +8,21 @@ console.log('VITE_APP_NAME:', import.meta.env.VITE_APP_NAME);
 console.log('VITE_APP_VERSION:', import.meta.env.VITE_APP_VERSION);
 console.log('---');
 
+// Production URL (Railway) hoặc localhost cho development
+const PRODUCTION_API_URL = "https://fruitshop.up.railway.app";
+const DEV_API_URL = "http://localhost:8080";
+
+// Tự động chọn URL dựa trên môi trường
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 
+  (import.meta.env.PROD ? PRODUCTION_API_URL : DEV_API_URL);
+
 export const CONFIG = {
-  API_GATEWAY: (import.meta.env.VITE_API_BASE_URL || "http://localhost:8080") + "/api",
-  WS_ENDPOINT: import.meta.env.VITE_WS_URL || "ws://localhost:8080/ws",
+  API_GATEWAY: BASE_URL + "/api",
+  WS_ENDPOINT: import.meta.env.VITE_WS_URL || BASE_URL.replace('https', 'wss').replace('http', 'ws') + "/ws",
 };
 
 // Debug log để kiểm tra
-export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+export const API_URL = import.meta.env.VITE_API_URL || BASE_URL;
 
 // Debug: Log final config values
 console.log('🔧 Final Config Values:');
