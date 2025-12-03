@@ -1,5 +1,6 @@
 package server.FruitShop.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -54,7 +55,7 @@ public class CategoryController {
     // Admin only endpoints - Tạm thời tắt để test
     // @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<CategoryResponse> createCategory(@RequestBody CreateCategoryRequest request) {
+    public ResponseEntity<CategoryResponse> createCategory(@Valid @RequestBody CreateCategoryRequest request) {
         CategoryResponse createdCategory = categoryService.createCategoryId(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdCategory);
     }

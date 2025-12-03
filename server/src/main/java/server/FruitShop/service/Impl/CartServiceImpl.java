@@ -18,6 +18,7 @@ import server.FruitShop.repository.CartItemRepository;
 import server.FruitShop.repository.CartRepository;
 import server.FruitShop.repository.ProductRepository;
 import server.FruitShop.service.CartService;
+import server.FruitShop.exception.ResourceNotFoundException;
 
 import java.util.Date;
 import java.util.List;
@@ -73,7 +74,7 @@ public class CartServiceImpl implements CartService {
     public CartResponse createCart(String accountId) {
         Optional<Account> accountOptional = accountRepository.findById(accountId);
         if (accountOptional.isEmpty()) {
-            throw new RuntimeException("Account not found with id: " + accountId);
+            throw new ResourceNotFoundException("Account not found with id: " + accountId);
         }
 
         // Check if cart already exists
@@ -115,7 +116,7 @@ public class CartServiceImpl implements CartService {
         // Check if product exists
         Optional<Product> productOptional = productRepository.findById(request.getProductId());
         if (productOptional.isEmpty()) {
-            throw new RuntimeException("Product not found with id: " + request.getProductId());
+            throw new ResourceNotFoundException("Product not found with id: " + request.getProductId());
         }
 
         Product product = productOptional.get();
@@ -144,7 +145,7 @@ public class CartServiceImpl implements CartService {
     public CartItemResponse updateCartItem(String cartItemId, UpdateCartItemRequest request) {
         Optional<CartItem> cartItemOptional = cartItemRepository.findById(cartItemId);
         if (cartItemOptional.isEmpty()) {
-            throw new RuntimeException("Cart item not found with id: " + cartItemId);
+            throw new ResourceNotFoundException("Cart item not found with id: " + cartItemId);
         }
 
         CartItem cartItem = cartItemOptional.get();
@@ -181,23 +182,25 @@ public class CartServiceImpl implements CartService {
     public List<CartItemResponse> getCartItemsByAccountId(String accountId) {
         try {
             System.out.println("📦 GetCartItemsByAccountId called for: " + accountId);
-            Optional<Cart> cartOptional = cartRepository.findByAccountAccountId(accountId);
-            if (cartOptional.isPresent()) {
-                List<CartItem> items = cartOptional.get().getItems();
-                if (items == null || items.isEmpty()) {
-                    System.out.println("📦 Cart found but no items");
-                    return List.of();
-                }
-                System.out.println("📦 Found cart with " + items.size() + " items");
-                for (CartItem item : items) {
-                    System.out.println("📦 Cart item: " + item.getCartItemId() + " - Product: " + item.getProduct().getProductId() + " - Quantity: " + item.getQuantity());
-                }
-                return items.stream()
-                        .map(CartItemResponse::fromEntity)
-                        .collect(Collectors.toList());
-            }
-            System.out.println("📦 No cart found for accountId: " + accountId);
-            return List.of();
+            return cartRepository.findByAccountAccountId(accountId)
+                    .map(cart -> {
+                        List<CartItem> items = cartItemRepository.findByCartCartId(cart.getCartId());
+                        if (items.isEmpty()) {
+                            System.out.println("📦 Cart found but no items");
+                            return List.<CartItemResponse>of();
+                        }
+                        System.out.println("📦 Found cart with " + items.size() + " items");
+                        for (CartItem item : items) {
+                            System.out.println("📦 Cart item: " + item.getCartItemId() + " - Product: " + item.getProduct().getProductId() + " - Quantity: " + item.getQuantity());
+                        }
+                        return items.stream()
+                                .map(CartItemResponse::fromEntity)
+                                .collect(Collectors.toList());
+                    })
+                    .orElseGet(() -> {
+                        System.out.println("📦 No cart found for accountId: " + accountId);
+                        return List.of();
+                    });
         } catch (Exception e) {
             System.err.println("Error fetching cart items for accountId " + accountId + ": " + e.getMessage());
             e.printStackTrace();
@@ -244,7 +247,7 @@ public class CartServiceImpl implements CartService {
     public CartResponse disableCart(String cartId) {
         Optional<Cart> cartOptional = cartRepository.findById(cartId);
         if (cartOptional.isEmpty()) {
-            throw new RuntimeException("Cart not found with id: " + cartId);
+            throw new ResourceNotFoundException("Cart not found with id: " + cartId);
         }
         
         Cart cart = cartOptional.get();
@@ -257,7 +260,7 @@ public class CartServiceImpl implements CartService {
     public CartResponse enableCart(String cartId) {
         Optional<Cart> cartOptional = cartRepository.findById(cartId);
         if (cartOptional.isEmpty()) {
-            throw new RuntimeException("Cart not found with id: " + cartId);
+            throw new ResourceNotFoundException("Cart not found with id: " + cartId);
         }
         
         Cart cart = cartOptional.get();
@@ -270,7 +273,7 @@ public class CartServiceImpl implements CartService {
     public CartResponse updateCartStatus(String cartId, int status) {
         Optional<Cart> cartOptional = cartRepository.findById(cartId);
         if (cartOptional.isEmpty()) {
-            throw new RuntimeException("Cart not found with id: " + cartId);
+            throw new ResourceNotFoundException("Cart not found with id: " + cartId);
         }
         
         Cart cart = cartOptional.get();
@@ -288,7 +291,7 @@ public class CartServiceImpl implements CartService {
         // Create new cart
         Optional<Account> accountOptional = accountRepository.findById(accountId);
         if (accountOptional.isEmpty()) {
-            throw new RuntimeException("Account not found with id: " + accountId);
+            throw new ResourceNotFoundException("Account not found with id: " + accountId);
         }
 
         Cart cart = new Cart();

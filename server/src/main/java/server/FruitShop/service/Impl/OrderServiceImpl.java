@@ -13,6 +13,7 @@ import server.FruitShop.dto.response.Order.OrderResponse;
 import server.FruitShop.entity.*;
 import server.FruitShop.repository.*;
 import server.FruitShop.service.OrderService;
+import server.FruitShop.exception.ResourceNotFoundException;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -51,7 +52,7 @@ public class OrderServiceImpl implements OrderService {
         // Validate account
         Optional<Account> accountOptional = accountRepository.findById(request.getAccountId());
         if (accountOptional.isEmpty()) {
-            throw new RuntimeException("Account not found with id: " + request.getAccountId());
+            throw new ResourceNotFoundException("Account not found with id: " + request.getAccountId());
         }
 
         System.out.println("🛒 Account found: " + accountOptional.get().getAccountName());
@@ -64,7 +65,7 @@ public class OrderServiceImpl implements OrderService {
         if (request.getPaymentId() != null) {
             Optional<Payment> paymentOptional = paymentRepository.findById(request.getPaymentId());
             if (paymentOptional.isEmpty()) {
-                throw new RuntimeException("Payment not found with id: " + request.getPaymentId());
+                throw new ResourceNotFoundException("Payment not found with id: " + request.getPaymentId());
             }
             paymentEntity = paymentOptional.get();
             System.out.println("🛒 Payment found: " + paymentEntity.getPaymentId());
@@ -122,7 +123,7 @@ public class OrderServiceImpl implements OrderService {
         .map(item -> {
                     Optional<Product> productOptional = productRepository.findById(item.getProductId());
                     if (productOptional.isEmpty()) {
-                        throw new RuntimeException("Product not found with id: " + item.getProductId());
+                        throw new ResourceNotFoundException("Product not found with id: " + item.getProductId());
                     }
 
                     Product product = productOptional.get();
@@ -179,7 +180,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse getOrderById(String orderId) {
         Optional<Order> orderOptional = orderRepository.findById(orderId);
         if (orderOptional.isEmpty()) {
-            throw new RuntimeException("Order not found with id: " + orderId);
+            throw new ResourceNotFoundException("Order not found with id: " + orderId);
         }
         return OrderResponse.fromEntity(orderOptional.get());
     }
@@ -188,7 +189,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse updateOrder(String orderId, UpdateOrderRequest request) {
         Optional<Order> orderOptional = orderRepository.findById(orderId);
         if (orderOptional.isEmpty()) {
-            throw new RuntimeException("Order not found with id: " + orderId);
+            throw new ResourceNotFoundException("Order not found with id: " + orderId);
         }
 
         Order order = orderOptional.get();
@@ -288,7 +289,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse updateOrderStatus(String orderId, int newStatus) {
         Optional<Order> orderOptional = orderRepository.findById(orderId);
         if (orderOptional.isEmpty()) {
-            throw new RuntimeException("Order not found with id: " + orderId);
+            throw new ResourceNotFoundException("Order not found with id: " + orderId);
         }
 
         Order order = orderOptional.get();
@@ -301,7 +302,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse cancelOrder(String orderId) {
         Optional<Order> orderOptional = orderRepository.findById(orderId);
         if (orderOptional.isEmpty()) {
-            throw new RuntimeException("Order not found with id: " + orderId);
+            throw new ResourceNotFoundException("Order not found with id: " + orderId);
         }
 
         Order order = orderOptional.get();
@@ -338,7 +339,7 @@ public class OrderServiceImpl implements OrderService {
         Optional<Order> orderOptional = orderRepository.findById(orderId);
         if (orderOptional.isEmpty()) {
             System.err.println("❌ Order not found with id: " + orderId);
-            throw new RuntimeException("Order not found with id: " + orderId);
+            throw new ResourceNotFoundException("Order not found with id: " + orderId);
         }
 
         Order order = orderOptional.get();
@@ -377,7 +378,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse startDelivery(String orderId) {
         Optional<Order> orderOptional = orderRepository.findById(orderId);
         if (orderOptional.isEmpty()) {
-            throw new RuntimeException("Order not found with id: " + orderId);
+            throw new ResourceNotFoundException("Order not found with id: " + orderId);
         }
 
         Order order = orderOptional.get();
@@ -402,7 +403,7 @@ public class OrderServiceImpl implements OrderService {
             System.out.println("✅ Shipping status updated to: 3 (Đang giao)");
         } else {
             System.err.println("❌ Shipping not found for order: " + orderId);
-            throw new RuntimeException("Shipping information not found for this order");
+            throw new ResourceNotFoundException("Shipping information not found for this order");
         }
 
         return OrderResponse.fromEntity(savedOrder);
@@ -412,7 +413,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse completeOrder(String orderId) {
         Optional<Order> orderOptional = orderRepository.findById(orderId);
         if (orderOptional.isEmpty()) {
-            throw new RuntimeException("Order not found with id: " + orderId);
+            throw new ResourceNotFoundException("Order not found with id: " + orderId);
         }
 
         Order order = orderOptional.get();
@@ -528,7 +529,7 @@ public class OrderServiceImpl implements OrderService {
         // Validate order exists
         Optional<Order> orderOptional = orderRepository.findById(orderId);
         if (orderOptional.isEmpty()) {
-            throw new RuntimeException("Order not found with id: " + orderId);
+            throw new ResourceNotFoundException("Order not found with id: " + orderId);
         }
 
         List<OrderItem> orderDetails = orderItemRepository.findByOrderOrderId(orderId);

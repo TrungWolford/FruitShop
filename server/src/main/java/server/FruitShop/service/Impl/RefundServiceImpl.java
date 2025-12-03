@@ -12,6 +12,7 @@ import server.FruitShop.entity.Order;
 import server.FruitShop.entity.OrderItem;
 import server.FruitShop.entity.Payment;
 import server.FruitShop.entity.Refund;
+import server.FruitShop.exception.ResourceNotFoundException;
 import server.FruitShop.repository.OrderRepository;
 import server.FruitShop.repository.OrderItemRepository;
 import server.FruitShop.repository.PaymentRepository;
@@ -47,7 +48,7 @@ public class RefundServiceImpl implements RefundService {
     @Override
     public RefundResponse getRefundById(String refundId) {
         Refund refund = refundRepository.findById(refundId)
-            .orElseThrow(() -> new RuntimeException("Refund not found with id: " + refundId));
+            .orElseThrow(() -> new ResourceNotFoundException("Refund not found with id: " + refundId));
         return RefundResponse.fromEntity(refund);
     }
     
@@ -58,7 +59,7 @@ public class RefundServiceImpl implements RefundService {
         
         // Validate order exists
         Order order = orderRepository.findById(request.getOrderId())
-            .orElseThrow(() -> new RuntimeException("Order not found with id: " + request.getOrderId()));
+            .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + request.getOrderId()));
         
         System.out.println("🔔 Found order: " + order.getOrderId());
         System.out.println("🔔 Order account: " + (order.getAccount() != null ? order.getAccount().getAccountName() : "NULL"));
@@ -67,7 +68,7 @@ public class RefundServiceImpl implements RefundService {
         OrderItem orderItem = null;
         if (request.getOrderItemId() != null) {
             orderItem = orderItemRepository.findById(request.getOrderItemId())
-                .orElseThrow(() -> new RuntimeException("Order item not found with id: " + request.getOrderItemId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Order item not found with id: " + request.getOrderItemId()));
             
             System.out.println("🔔 Found orderItem: " + orderItem.getOrderDetailId());
             System.out.println("🔔 OrderItem product: " + (orderItem.getProduct() != null ? orderItem.getProduct().getProductName() : "NULL"));
@@ -123,7 +124,7 @@ public class RefundServiceImpl implements RefundService {
     @Transactional
     public RefundResponse updateRefundStatus(UpdateRefundStatusRequest request, String refundId) {
         Refund refund = refundRepository.findById(refundId)
-            .orElseThrow(() -> new RuntimeException("Refund not found with id: " + refundId));
+            .orElseThrow(() -> new ResourceNotFoundException("Refund not found with id: " + refundId));
         
         refund.setRefundStatus(request.getRefundStatus());
         
@@ -174,7 +175,7 @@ public class RefundServiceImpl implements RefundService {
     @Transactional
     public RefundResponse approveRefund(String refundId) {
         Refund refund = refundRepository.findById(refundId)
-            .orElseThrow(() -> new RuntimeException("Refund not found with id: " + refundId));
+            .orElseThrow(() -> new ResourceNotFoundException("Refund not found with id: " + refundId));
         
         refund.setRefundStatus("Đã duyệt");
         refund.setProcessedAt(new Date());
@@ -187,7 +188,7 @@ public class RefundServiceImpl implements RefundService {
     @Transactional
     public RefundResponse rejectRefund(String refundId) {
         Refund refund = refundRepository.findById(refundId)
-            .orElseThrow(() -> new RuntimeException("Refund not found with id: " + refundId));
+            .orElseThrow(() -> new ResourceNotFoundException("Refund not found with id: " + refundId));
         
         refund.setRefundStatus("Từ chối");
         refund.setProcessedAt(new Date());
@@ -200,7 +201,7 @@ public class RefundServiceImpl implements RefundService {
     @Transactional
     public RefundResponse completeRefund(String refundId) {
         Refund refund = refundRepository.findById(refundId)
-            .orElseThrow(() -> new RuntimeException("Refund not found with id: " + refundId));
+            .orElseThrow(() -> new ResourceNotFoundException("Refund not found with id: " + refundId));
         
         refund.setRefundStatus("Hoàn thành");
         refund.setProcessedAt(new Date());
@@ -213,7 +214,7 @@ public class RefundServiceImpl implements RefundService {
     @Transactional
     public void cancelRefund(String refundId) {
         Refund refund = refundRepository.findById(refundId)
-            .orElseThrow(() -> new RuntimeException("Refund not found with id: " + refundId));
+            .orElseThrow(() -> new ResourceNotFoundException("Refund not found with id: " + refundId));
         refundRepository.delete(refund);
     }
     

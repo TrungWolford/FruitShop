@@ -10,6 +10,7 @@ import server.FruitShop.dto.response.Category.CategoryResponse;
 import server.FruitShop.entity.Category;
 import server.FruitShop.repository.CategoryRepository;
 import server.FruitShop.service.CategoryService;
+import server.FruitShop.exception.ResourceNotFoundException;
 
 @Service
 public class CategoryServiceImpl implements CategoryService {
@@ -30,7 +31,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryResponse getByCategoryId(String categoryId) {
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new RuntimeException("Category not found: " + categoryId));
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + categoryId));
 
         return CategoryResponse.fromEntity(category);
     }
@@ -49,7 +50,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryResponse updateCategoryId(UpdateCategoryRequest request, String categoryId) {
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new RuntimeException("Category not found: " + categoryId));
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + categoryId));
 
         category.setCategoryName(request.getCategoryName());
         category.setStatus(request.getStatus());
@@ -62,7 +63,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public void deleteCategoryId(String categoryId) {
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new RuntimeException("Category not found: " + categoryId));
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + categoryId));
 
         categoryRepository.delete(category);
     }

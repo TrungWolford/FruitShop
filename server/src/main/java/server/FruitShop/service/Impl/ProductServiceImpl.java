@@ -16,6 +16,7 @@ import server.FruitShop.repository.CategoryRepository;
 import server.FruitShop.repository.ProductImageRepository;
 import server.FruitShop.repository.ProductRepository;
 import server.FruitShop.service.ProductService;
+import server.FruitShop.exception.ResourceNotFoundException;
 
 import java.util.*;
 import java.util.function.Function;
@@ -76,7 +77,7 @@ public class ProductServiceImpl implements ProductService {
         // Load product with categories first
         Product product = productRepository.findByIdWithCategories(productId);
         if (product == null) {
-            throw new RuntimeException("Product not found: " + productId);
+            throw new ResourceNotFoundException("Product not found: " + productId);
         }
 
         // Then load images separately to avoid MultipleBagFetchException
@@ -127,7 +128,7 @@ public class ProductServiceImpl implements ProductService {
             
             // Validate all categories exist
             if (categories.size() != uniqueCategoryIds.size()) {
-                throw new RuntimeException("Some categories were not found");
+                throw new ResourceNotFoundException("Some categories were not found");
             }
             
             // Set categories và save lại
@@ -166,7 +167,7 @@ public class ProductServiceImpl implements ProductService {
             // Load product with categories first
             Product product = productRepository.findByIdWithCategories(productId);
             if (product == null) {
-                throw new RuntimeException("Product not found: " + productId);
+                throw new ResourceNotFoundException("Product not found: " + productId);
             }
 
             // Then load images separately to avoid MultipleBagFetchException
@@ -194,7 +195,7 @@ public class ProductServiceImpl implements ProductService {
                 
                 // Validate all categories exist
                 if (categories.size() != uniqueCategoryIds.size()) {
-                    throw new RuntimeException("Some categories were not found");
+                    throw new ResourceNotFoundException("Some categories were not found");
                 }
                 
                 // Clear existing categories and add new ones
@@ -268,7 +269,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void deleteProduct(String productId) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found: " + productId));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + productId));
 
         // Xóa tất cả images trước
         productImageRepository.deleteByProductProductId(productId);

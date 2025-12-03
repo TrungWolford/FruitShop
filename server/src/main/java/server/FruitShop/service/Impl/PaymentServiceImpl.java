@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import server.FruitShop.dto.request.Payment.PaymentRequest;
 import server.FruitShop.dto.response.Payment.PaymentResponse;
 import server.FruitShop.entity.Payment;
+import server.FruitShop.exception.ResourceNotFoundException;
 import server.FruitShop.repository.PaymentRepository;
 import server.FruitShop.service.PaymentService;
 
@@ -171,7 +172,7 @@ public class PaymentServiceImpl implements PaymentService {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> {
                     log.error("Payment not found with ID: {}", paymentId);
-                    return new RuntimeException("Payment not found with ID: " + paymentId);
+                    return new ResourceNotFoundException("Payment not found with ID: " + paymentId);
                 });
         
         // Update status
@@ -195,7 +196,7 @@ public class PaymentServiceImpl implements PaymentService {
         Payment payment = paymentRepository.findByTransactionId(transactionId)
                 .orElseThrow(() -> {
                     log.error("Payment not found with transaction ID: {}", transactionId);
-                    return new RuntimeException("Payment not found with transaction ID: " + transactionId);
+                    return new ResourceNotFoundException("Payment not found with transaction ID: " + transactionId);
                 });
         
         return PaymentResponse.fromEntity(payment);

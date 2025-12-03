@@ -13,6 +13,7 @@ import server.FruitShop.entity.Shipping;
 import server.FruitShop.repository.AccountRepository;
 import server.FruitShop.repository.ShippingRepository;
 import server.FruitShop.service.ShippingService;
+import server.FruitShop.exception.ResourceNotFoundException;
 
 import java.util.List;
 import java.util.Optional;
@@ -47,7 +48,7 @@ public class ShippingServiceImpl implements ShippingService {
                 if (accountOpt.isPresent()) {
                     shipping.setAccount(accountOpt.get());
                 } else {
-                    throw new RuntimeException("Account not found with id: " + request.getAccountId());
+                    throw new ResourceNotFoundException("Account not found with id: " + request.getAccountId());
                 }
             }
 
@@ -62,7 +63,7 @@ public class ShippingServiceImpl implements ShippingService {
     public ShippingResponse getShippingById(String shippingId) {
         Optional<Shipping> shippingOpt = shippingRepository.findById(shippingId);
         if (shippingOpt.isEmpty()) {
-            throw new RuntimeException("Shipping not found with id: " + shippingId);
+            throw new ResourceNotFoundException("Shipping not found with id: " + shippingId);
         }
         return ShippingResponse.fromEntity(shippingOpt.get());
     }
@@ -71,7 +72,7 @@ public class ShippingServiceImpl implements ShippingService {
     public ShippingResponse updateShipping(String shippingId, ShippingRequest request) {
         Optional<Shipping> shippingOpt = shippingRepository.findById(shippingId);
         if (shippingOpt.isEmpty()) {
-            throw new RuntimeException("Shipping not found with id: " + shippingId);
+            throw new ResourceNotFoundException("Shipping not found with id: " + shippingId);
         }
 
         Shipping shipping = shippingOpt.get();
@@ -98,7 +99,7 @@ public class ShippingServiceImpl implements ShippingService {
     @Override
     public void deleteShipping(String shippingId) {
         if (!shippingRepository.existsById(shippingId)) {
-            throw new RuntimeException("Shipping not found with id: " + shippingId);
+            throw new ResourceNotFoundException("Shipping not found with id: " + shippingId);
         }
         shippingRepository.deleteById(shippingId);
     }
@@ -159,7 +160,7 @@ public class ShippingServiceImpl implements ShippingService {
     public ShippingResponse updateShippingStatus(String shippingId, int status) {
         Optional<Shipping> shippingOpt = shippingRepository.findById(shippingId);
         if (shippingOpt.isEmpty()) {
-            throw new RuntimeException("Shipping not found with id: " + shippingId);
+            throw new ResourceNotFoundException("Shipping not found with id: " + shippingId);
         }
 
         Shipping shipping = shippingOpt.get();

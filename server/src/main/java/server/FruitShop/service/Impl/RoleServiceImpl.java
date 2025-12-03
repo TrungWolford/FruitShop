@@ -9,6 +9,7 @@ import server.FruitShop.dto.response.Role.RoleResponse;
 import server.FruitShop.entity.Role;
 import server.FruitShop.repository.RoleRepository;
 import server.FruitShop.service.RoleService;
+import server.FruitShop.exception.ResourceNotFoundException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,7 +30,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public RoleResponse getRoleById(String roleId) {
         Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new RuntimeException("Role not found with id: " + roleId));
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + roleId));
         return RoleResponse.fromEntity(role);
     }
 
@@ -45,7 +46,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public RoleResponse updateRole(String roleId, UpdateRoleRequest request) {
         Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new RuntimeException("Role not found with id: " + roleId));
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + roleId));
 
         role.setRoleName(request.getRoleName());
 
@@ -56,7 +57,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public void deleteRole(String roleId) {
         if (!roleRepository.existsById(roleId)) {
-            throw new RuntimeException("Role not found with id: " + roleId);
+            throw new ResourceNotFoundException("Role not found with id: " + roleId);
         }
         roleRepository.deleteById(roleId);
     }
@@ -64,7 +65,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public RoleResponse getRoleByName(String roleName) {
         Role role = roleRepository.findByRoleName(roleName)
-                .orElseThrow(() -> new RuntimeException("Role not found with name: " + roleName));
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found with name: " + roleName));
         return RoleResponse.fromEntity(role);
     }
 
