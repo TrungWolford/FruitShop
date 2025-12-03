@@ -39,33 +39,19 @@ const AdminLogin: React.FC = () => {
     try {
       const result = await dispatch(loginAsync({ email, password })).unwrap()
       
-      console.log('Login result:', JSON.stringify(result, null, 2))
-      console.log('User roles:', JSON.stringify(result.user?.roles, null, 2))
-      
-      // DEBUG: Hiển thị alert để xem kết quả
-      alert('Login result: ' + JSON.stringify(result.user?.roles, null, 2))
-      
       if (result.success && result.user) {
         const userRoles = result.user.roles || []
-        console.log('Checking roles:', userRoles)
-        const isAdmin = userRoles.some(role => {
-          console.log('Role:', role, 'roleName:', role.roleName)
-          return role.roleName === 'ADMIN'
-        })
-        
-        console.log('Is admin:', isAdmin)
+        const isAdmin = userRoles.some(role => role.roleName === 'ADMIN')
         
         if (isAdmin) {
-          // Dùng replace để tránh back về trang login
           navigate('/admin/dashboard', { replace: true })
         } else {
-          setError('Tài khoản không có quyền truy cập trang quản trị. Roles: ' + JSON.stringify(userRoles))
+          setError('Tài khoản không có quyền truy cập trang quản trị')
         }
       } else {
         setError(result.message || 'Sai tài khoản hoặc mật khẩu')
       }
     } catch (err: any) {
-      console.error('Login error:', err)
       setError(err.message || 'Đăng nhập thất bại. Vui lòng thử lại.')
     }
   }

@@ -1,13 +1,3 @@
-// Debug: Log environment variables
-console.log('🔍 Environment Variables Debug:');
-console.log('VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
-console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
-console.log('VITE_WS_URL:', import.meta.env.VITE_WS_URL);
-console.log('VITE_DEBUG_API_CALLS:', import.meta.env.VITE_DEBUG_API_CALLS);
-console.log('VITE_APP_NAME:', import.meta.env.VITE_APP_NAME);
-console.log('VITE_APP_VERSION:', import.meta.env.VITE_APP_VERSION);
-console.log('---');
-
 // Production URL (Railway) hoặc localhost cho development
 const PRODUCTION_API_URL = "https://fruitshop.up.railway.app";
 const DEV_API_URL = "http://localhost:8080";
@@ -21,15 +11,7 @@ export const CONFIG = {
   WS_ENDPOINT: import.meta.env.VITE_WS_URL || BASE_URL.replace('https', 'wss').replace('http', 'ws') + "/ws",
 };
 
-// Debug log để kiểm tra
 export const API_URL = import.meta.env.VITE_API_URL || BASE_URL;
-
-// Debug: Log final config values
-console.log('🔧 Final Config Values:');
-console.log('CONFIG.API_GATEWAY:', CONFIG.API_GATEWAY);
-console.log('CONFIG.WS_ENDPOINT:', CONFIG.WS_ENDPOINT);
-console.log('API_URL:', API_URL);
-console.log('---');
 
 export const API = {
   // Accounts - Theo AccountController.java
