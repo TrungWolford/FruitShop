@@ -9,12 +9,12 @@ console.log('VITE_APP_VERSION:', import.meta.env.VITE_APP_VERSION);
 console.log('---');
 
 export const CONFIG = {
-  API_GATEWAY: (import.meta.env.VITE_API_BASE_URL || "http://localhost:8080") + "/api",
-  WS_ENDPOINT: import.meta.env.VITE_WS_URL || "ws://localhost:8080/ws",
+  API_GATEWAY: (import.meta.env.VITE_API_BASE_URL || "http://fruitshop.up.railway.app") + "/api",
+  WS_ENDPOINT: import.meta.env.VITE_WS_URL || "ws://fruitshop.up.railway.app/ws",
 };
 
 // Debug log để kiểm tra
-export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+export const API_URL = import.meta.env.VITE_API_URL || "http://fruitshop.up.railway.app";
 
 // Debug: Log final config values
 console.log('🔧 Final Config Values:');

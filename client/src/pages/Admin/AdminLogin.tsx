@@ -39,9 +39,18 @@ const AdminLogin: React.FC = () => {
     try {
       const result = await dispatch(loginAsync({ email, password })).unwrap()
       
+      console.log('Login result:', result)
+      console.log('User roles:', result.user?.roles)
+      
       if (result.success && result.user) {
         const userRoles = result.user.roles || []
-        const isAdmin = userRoles.some(role => role.roleName === 'ADMIN')
+        console.log('Checking roles:', userRoles)
+        const isAdmin = userRoles.some(role => {
+          console.log('Role:', role, 'roleName:', role.roleName)
+          return role.roleName === 'ADMIN'
+        })
+        
+        console.log('Is admin:', isAdmin)
         
         if (isAdmin) {
           // Dùng replace để tránh back về trang login
@@ -53,6 +62,7 @@ const AdminLogin: React.FC = () => {
         setError(result.message || 'Sai tài khoản hoặc mật khẩu')
       }
     } catch (err: any) {
+      console.error('Login error:', err)
       setError(err.message || 'Đăng nhập thất bại. Vui lòng thử lại.')
     }
   }
