@@ -34,16 +34,22 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     document.title = 'BookCity - Dashboard'
     
+    console.log('AdminDashboard useEffect - isAuthenticated:', isAuthenticated, 'user:', user)
+    
     // Check if user is authenticated and has ADMIN role
     if (!isAuthenticated || !user) {
+      console.log('Not authenticated, redirecting to /admin')
       navigate('/admin')
       return
     }
     
     const userRoles = user.roles || []
+    console.log('User roles in Dashboard:', userRoles)
     const isAdmin = userRoles.some(role => role.roleName === 'ADMIN')
+    console.log('Is admin in Dashboard:', isAdmin)
     
     if (!isAdmin) {
+      console.log('Not admin, redirecting to /admin')
       navigate('/admin')
       return
     }
