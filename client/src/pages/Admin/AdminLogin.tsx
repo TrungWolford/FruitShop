@@ -44,7 +44,8 @@ const AdminLogin: React.FC = () => {
         const isAdmin = userRoles.some(role => role.roleName === 'ADMIN')
         
         if (isAdmin) {
-          navigate('/admin/dashboard')
+          // Dùng replace để tránh back về trang login
+          navigate('/admin/dashboard', { replace: true })
         } else {
           setError('Tài khoản không có quyền truy cập trang quản trị')
         }
