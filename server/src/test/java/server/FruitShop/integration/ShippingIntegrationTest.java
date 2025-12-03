@@ -26,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Integration Test cho Shipping API
+ * Shipping Status: 0=Vô hiệu hóa, 1=Hoạt động
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -56,11 +57,8 @@ class ShippingIntegrationTest {
     void setUp() {
         passwordEncoder = new BCryptPasswordEncoder();
 
-        // Xóa dữ liệu cũ
-        shippingRepository.deleteAll();
-        accountRepository.deleteAll();
-        roleRepository.deleteAll();
-
+        // Không cần deleteAll() vì @Transactional sẽ tự rollback sau mỗi test
+        
         // Tạo role
         Role customerRole = new Role();
         customerRole.setRoleName("CUSTOMER");
@@ -88,6 +86,11 @@ class ShippingIntegrationTest {
         testShipping = shippingRepository.save(testShipping);
     }
 
+    /**
+     * Test 1: Lấy tất cả địa chỉ giao hàng
+     * Mục đích: Kiểm tra API GET /api/shipping lấy danh sách tất cả shippings
+     * Input: page=0, size=10
+     */
     @Test
     @DisplayName("Integration Test 1: Lấy tất cả shippings - Thành công")
     void testGetAllShippings_Success() throws Exception {
@@ -99,6 +102,11 @@ class ShippingIntegrationTest {
                 .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(1))));
     }
 
+    /**
+     * Test 2: Lấy chi tiết địa chỉ giao hàng
+     * Mục đích: Kiểm tra API GET /api/shipping/{id} lấy thông tin shipping theo ID
+     * Input: shippingId hợp lệ
+     */
     @Test
     @DisplayName("Integration Test 2: Lấy shipping theo ID - Thành công")
     void testGetShippingById_Success() throws Exception {
@@ -109,6 +117,11 @@ class ShippingIntegrationTest {
                 .andExpect(jsonPath("$.status").value(1));
     }
 
+    /**
+     * Test 3: Lấy shipping với ID không tồn tại
+     * Mục đích: Kiểm tra API GET /api/shipping/{id} trả lỗi 404 khi shippingId không hợp lệ
+     * Input: shippingId không tồn tại
+     */
     @Test
     @DisplayName("Integration Test 3: Lấy shipping theo ID - Không tồn tại")
     void testGetShippingById_NotFound() throws Exception {
@@ -116,6 +129,11 @@ class ShippingIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
+    /**
+     * Test 4: Lấy địa chỉ giao hàng của một tài khoản
+     * Mục đích: Kiểm tra API GET /api/shipping/account/{accountId} lấy tất cả shippings của account
+     * Input: accountId hợp lệ
+     */
     @Test
     @DisplayName("Integration Test 4: Lấy shippings theo accountId - Thành công")
     void testGetShippingsByAccountId_Success() throws Exception {
@@ -125,6 +143,11 @@ class ShippingIntegrationTest {
                 .andExpect(jsonPath("$[0].accountId").value(testAccount.getAccountId()));
     }
 
+    /**
+     * Test 5: Tạo địa chỉ giao hàng mới
+     * Mục đích: Kiểm tra API POST /api/shipping tạo shipping mới vào database
+     * Input: ShippingRequest (accountId, receiverName, receiverPhone, receiverAddress, city, shippingFee, status)
+     */
     @Test
     @DisplayName("Integration Test 5: Tạo shipping mới - Thành công")
     void testCreateShipping_Success() throws Exception {
@@ -150,6 +173,11 @@ class ShippingIntegrationTest {
         assert count == 2;
     }
 
+    /**
+     * Test 6: Cập nhật địa chỉ giao hàng
+     * Mục đích: Kiểm tra API PUT /api/shipping/{id} cập nhật thông tin shipping
+     * Input: ShippingRequest (receiverName, receiverAddress, shippingFee updated)
+     */
     @Test
     @DisplayName("Integration Test 6: Cập nhật shipping - Thành công")
     void testUpdateShipping_Success() throws Exception {
@@ -175,6 +203,11 @@ class ShippingIntegrationTest {
         assert updated.getReceiverName().equals("Nguyễn Văn A Updated");
     }
 
+    /**
+     * Test 7: Xóa địa chỉ giao hàng
+     * Mục đích: Kiểm tra API DELETE /api/shipping/{id} xóa shipping khỏi database
+     * Input: shippingId hợp lệ
+     */
     @Test
     @DisplayName("Integration Test 7: Xóa shipping - Thành công")
     void testDeleteShipping_Success() throws Exception {
@@ -186,6 +219,11 @@ class ShippingIntegrationTest {
         assert !exists;
     }
 
+    /**
+     * Test 8: Vô hiệu hóa/Kích hoạt địa chỉ
+     * Mục đích: Kiểm tra API PUT /api/shipping/{id}/status cập nhật trạng thái shipping
+     * Input: status=0 (vô hiệu hóa)
+     */
     @Test
     @DisplayName("Integration Test 8: Cập nhật shipping status - Thành công")
     void testUpdateShippingStatus_Success() throws Exception {
@@ -199,6 +237,11 @@ class ShippingIntegrationTest {
         assert updated.getStatus() == 0;
     }
 
+    /**
+     * Test 9: Lọc địa chỉ theo trạng thái
+     * Mục đích: Kiểm tra API GET /api/shipping/filter lọc shippings theo status
+     * Input: status=1, page=0, size=10
+     */
     @Test
     @DisplayName("Integration Test 9: Filter shippings theo status - Thành công")
     void testFilterShippingsByStatus_Success() throws Exception {
@@ -210,6 +253,11 @@ class ShippingIntegrationTest {
                 .andExpect(jsonPath("$.content").isArray());
     }
 
+    /**
+     * Test 10: Tìm kiếm địa chỉ giao hàng
+     * Mục đích: Kiểm tra API GET /api/shipping/search tìm shippings theo keyword
+     * Input: keyword="Nguyễn", page=0, size=10
+     */
     @Test
     @DisplayName("Integration Test 10: Search shippings - Thành công")
     void testSearchShippings_Success() throws Exception {
@@ -221,6 +269,11 @@ class ShippingIntegrationTest {
                 .andExpect(jsonPath("$.content").isArray());
     }
 
+    /**
+     * Test 11: Tìm kiếm và lọc địa chỉ
+     * Mục đích: Kiểm tra API GET /api/shipping/search-filter kết hợp tìm kiếm và lọc
+     * Input: keyword="Nguyễn", status=1, page=0, size=10
+     */
     @Test
     @DisplayName("Integration Test 11: Search và filter shippings - Thành công")
     void testSearchAndFilterShippings_Success() throws Exception {

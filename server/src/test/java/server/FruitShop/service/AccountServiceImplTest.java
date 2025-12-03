@@ -68,6 +68,11 @@ class AccountServiceImplTest {
         testAccount.setRoles(new HashSet<>(Collections.singletonList(customerRole)));
     }
 
+    /**
+     * Test 1: Lấy thông tin tài khoản theo ID
+     * Mục đích: Kiểm tra getAccountById() trả về đúng thông tin account
+     * Input: accountId hợp lệ "acc-001"
+     */
     @Test
     @DisplayName("Test 1: Lấy thông tin account theo ID - Thành công")
     void testGetAccountById_Success() {
@@ -88,6 +93,11 @@ class AccountServiceImplTest {
         verify(accountRepository, times(1)).findByIdWithRoles("acc-001");
     }
 
+    /**
+     * Test 2: Lấy account với ID không tồn tại
+     * Mục đích: Kiểm tra getAccountById() throw exception khi không tìm thấy
+     * Input: accountId không tồn tại "invalid-id"
+     */
     @Test
     @DisplayName("Test 2: Lấy account theo ID - Không tìm thấy (Exception)")
     void testGetAccountById_NotFound() {
@@ -104,6 +114,11 @@ class AccountServiceImplTest {
         verify(accountRepository, times(1)).findByIdWithRoles("invalid-id");
     }
 
+    /**
+     * Test 3: Tạo tài khoản mới
+     * Mục đích: Kiểm tra createAccount() tạo account mới vào database
+     * Input: CreateAccountRequest (name, phone, password, roleIds)
+     */
     @Test
     @DisplayName("Test 3: Tạo account mới - Thành công")
     void testCreateAccount_Success() {
@@ -129,6 +144,11 @@ class AccountServiceImplTest {
         verify(accountRepository, times(1)).save(any(Account.class));
     }
 
+    /**
+     * Test 4: Tạo account với role không tồn tại
+     * Mục đích: Kiểm tra createAccount() throw exception khi roleId không hợp lệ
+     * Input: CreateAccountRequest với roleId không tồn tại
+     */
     @Test
     @DisplayName("Test 4: Tạo account - Role không tồn tại (Exception)")
     void testCreateAccount_RoleNotFound() {
@@ -153,6 +173,11 @@ class AccountServiceImplTest {
         verify(accountRepository, never()).save(any(Account.class));  // Không được lưu
     }
 
+    /**
+     * Test 5: Xóa tài khoản
+     * Mục đích: Kiểm tra deleteAccount() xóa account khỏi database
+     * Input: accountId hợp lệ "acc-001"
+     */
     @Test
     @DisplayName("Test 5: Xóa account - Thành công")
     void testDeleteAccount_Success() {
@@ -168,6 +193,11 @@ class AccountServiceImplTest {
         verify(accountRepository, times(1)).deleteById("acc-001");
     }
 
+    /**
+     * Test 6: Xóa account không tồn tại
+     * Mục đích: Kiểm tra deleteAccount() throw exception khi accountId không hợp lệ
+     * Input: accountId không tồn tại "invalid-id"
+     */
     @Test
     @DisplayName("Test 6: Xóa account - Không tìm thấy (Exception)")
     void testDeleteAccount_NotFound() {
@@ -184,6 +214,11 @@ class AccountServiceImplTest {
         verify(accountRepository, never()).deleteById(anyString());  // Không được xóa
     }
 
+    /**
+     * Test 7: Lấy tài khoản theo số điện thoại
+     * Mục đích: Kiểm tra getAccountByPhone() tìm account bằng phone number
+     * Input: phone "0355142890"
+     */
     @Test
     @DisplayName("Test 7: Lấy account theo SĐT - Thành công")
     void testGetAccountByPhone_Success() {
@@ -200,6 +235,11 @@ class AccountServiceImplTest {
         verify(accountRepository, times(1)).findByAccountPhone("0355142890");
     }
 
+    /**
+     * Test 8: Đăng nhập thành công
+     * Mục đích: Kiểm tra authenticateAccount() xác thực đúng phone và password
+     * Input: phone "0355142890", password "123456"
+     */
     @Test
     @DisplayName("Test 8: Login - Thành công")
     void testAuthenticateAccount_Success() {
@@ -216,6 +256,11 @@ class AccountServiceImplTest {
         verify(accountRepository, times(1)).findByAccountPhone("0355142890");
     }
 
+    /**
+     * Test 9: Đăng nhập với mật khẩu sai
+     * Mục đích: Kiểm tra authenticateAccount() throw exception khi password không khớp
+     * Input: phone đúng, password sai "wrong-password"
+     */
     @Test
     @DisplayName("Test 9: Login - Sai mật khẩu (Exception)")
     void testAuthenticateAccount_WrongPassword() {
@@ -232,6 +277,11 @@ class AccountServiceImplTest {
         verify(accountRepository, times(1)).findByAccountPhone("0355142890");
     }
 
+    /**
+     * Test 10: Tạo tài khoản không gán role
+     * Mục đích: Kiểm tra createAccount() vẫn tạo được account khi không có roleIds
+     * Input: CreateAccountRequest với roleIds = null
+     */
     @Test
     @DisplayName("Test 10: Tạo account không có role - Thành công")
     void testCreateAccount_WithoutRoles() {

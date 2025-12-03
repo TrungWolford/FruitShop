@@ -33,11 +33,11 @@ public class LoginTest extends BaseTest {
         }
     }
 
-    @Test(priority = 1, description = "Đăng nhập thành công với thông tin hợp lệ")
+    @Test(priority = 1, testName = "TC_LOGIN_001", description = "Đăng nhập thành công với thông tin hợp lệ")
     public void testLoginSuccessAsCustomer() {
-        System.out.println("Test: Đăng nhập thành công - SĐT 0355142890");
+        System.out.println("[TC_LOGIN_001] Test: Đăng nhập thành công - SĐT 0483233172");
         
-        loginPage.login("0355142890", "123456");
+        loginPage.login("0483233172", "12345678");
         
         try {
             Thread.sleep(3000);
@@ -52,11 +52,11 @@ public class LoginTest extends BaseTest {
         Assert.assertFalse(currentUrl.contains("/login"), "Đăng nhập thất bại, vẫn ở trang login");
     }
 
-    @Test(priority = 2, description = "Đăng nhập thất bại - Sai mật khẩu")
+    @Test(priority = 2, testName = "TC_LOGIN_002", description = "Đăng nhập thất bại - Sai mật khẩu")
     public void testLoginWithWrongPassword() {
-        System.out.println("Test: Đăng nhập với mật khẩu sai");
+        System.out.println("[TC_LOGIN_002] Test: Đăng nhập với mật khẩu sai");
         
-        loginPage.login("0355142890", "SaiMatKhau123");
+        loginPage.login("0483233172", "SaiMatKhau123");
         
         // Tăng thời gian chờ để backend trả lỗi và Redux update
         try {
@@ -75,12 +75,12 @@ public class LoginTest extends BaseTest {
         Assert.assertTrue(hasError, "Không có thông báo lỗi khi nhập sai mật khẩu");
     }
 
-    @Test(priority = 3, description = "Đăng nhập thất bại - Bỏ trống trường mật khẩu bắt buộc")
+    @Test(priority = 3, testName = "TC_LOGIN_003", description = "Đăng nhập thất bại - Bỏ trống trường mật khẩu bắt buộc")
     public void testLoginWithEmptyPassword() {
-        System.out.println("Test: Kiểm tra HTML5 validation - Bỏ trống mật khẩu");
+        System.out.println("[TC_LOGIN_003] Test: Kiểm tra HTML5 validation - Bỏ trống mật khẩu");
         
         // Nhập SĐT nhưng không nhập mật khẩu
-        loginPage.enterPhoneNumber("0355142890");
+        loginPage.enterPhoneNumber("0483233172");
         
         // Thử click nút đăng nhập
         loginPage.clickLoginButton();

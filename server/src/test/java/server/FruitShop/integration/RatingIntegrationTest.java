@@ -26,6 +26,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Integration Test cho Rating API
+ * Rating Status: 0=Ẩn, 1=Hiển thị
+ * Rating Star: 1-5 sao
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -63,13 +65,8 @@ class RatingIntegrationTest {
     void setUp() {
         passwordEncoder = new BCryptPasswordEncoder();
 
-        // Xóa dữ liệu cũ
-        ratingRepository.deleteAll();
-        accountRepository.deleteAll();
-        productRepository.deleteAll();
-        categoryRepository.deleteAll();
-        roleRepository.deleteAll();
-
+        // @Transactional sẽ tự động rollback sau mỗi test
+        
         // Tạo role
         Role customerRole = new Role();
         customerRole.setRoleName("CUSTOMER");
@@ -110,6 +107,11 @@ class RatingIntegrationTest {
         testRating = ratingRepository.save(testRating);
     }
 
+    /**
+     * Test 1: Lấy tất cả đánh giá
+     * Mục đích: Kiểm tra API GET /api/rating lấy danh sách tất cả ratings
+     * Input: page=0, size=10
+     */
     @Test
     @DisplayName("Integration Test 1: Lấy tất cả ratings - Thành công")
     void testGetAllRatings_Success() throws Exception {
@@ -121,6 +123,11 @@ class RatingIntegrationTest {
                 .andExpect(jsonPath("$.content[0].ratingStar").value(5));
     }
 
+    /**
+     * Test 2: Lấy đánh giá của một tài khoản
+     * Mục đích: Kiểm tra API GET /api/rating/account/{accountId} lấy tất cả ratings của một người dùng
+     * Input: accountId hợp lệ, page=0, size=10
+     */
     @Test
     @DisplayName("Integration Test 2: Lấy ratings theo accountId - Thành công")
     void testGetRatingsByAccountId_Success() throws Exception {
@@ -132,6 +139,11 @@ class RatingIntegrationTest {
                 .andExpect(jsonPath("$.content[0].account.accountId").value(testAccount.getAccountId()));
     }
 
+    /**
+     * Test 3: Lấy đánh giá của một sản phẩm
+     * Mục đích: Kiểm tra API GET /api/rating/product/{productId} lấy tất cả ratings của một sản phẩm
+     * Input: productId hợp lệ, page=0, size=10
+     */
     @Test
     @DisplayName("Integration Test 3: Lấy ratings theo productId - Thành công")
     void testGetRatingsByProductId_Success() throws Exception {
@@ -143,6 +155,11 @@ class RatingIntegrationTest {
                 .andExpect(jsonPath("$.content[0].product.productId").value(testProduct.getProductId()));
     }
 
+    /**
+     * Test 4: Lấy đánh giá của một người dùng cho một sản phẩm cụ thể
+     * Mục đích: Kiểm tra API GET /api/rating/account/{accountId}/product/{productId}
+     * Input: accountId và productId hợp lệ
+     */
     @Test
     @DisplayName("Integration Test 4: Lấy ratings theo accountId và productId - Thành công")
     void testGetRatingsByAccountAndProduct_Success() throws Exception {
@@ -153,6 +170,11 @@ class RatingIntegrationTest {
                 .andExpect(jsonPath("$[0].ratingStar").value(5));
     }
 
+    /**
+     * Test 5: Tạo đánh giá mới
+     * Mục đích: Kiểm tra API POST /api/rating tạo rating mới vào database
+     * Input: CreateRatingRequest (accountId, productId, ratingStar=4, comment)
+     */
     @Test
     @DisplayName("Integration Test 5: Tạo rating mới - Thành công")
     void testCreateRating_Success() throws Exception {
@@ -174,6 +196,11 @@ class RatingIntegrationTest {
         assert count == 2;
     }
 
+    /**
+     * Test 6: Cập nhật đánh giá
+     * Mục đích: Kiểm tra API PUT /api/rating/{ratingId} cập nhật thông tin rating
+     * Input: UpdateRatingRequest (ratingStar=3, comment, status=1)
+     */
     @Test
     @DisplayName("Integration Test 6: Cập nhật rating - Thành công")
     void testUpdateRating_Success() throws Exception {
@@ -194,6 +221,11 @@ class RatingIntegrationTest {
         assert updated.getRatingStar() == 3;
     }
 
+    /**
+     * Test 7: Ẩn/hiện đánh giá
+     * Mục đích: Kiểm tra API PATCH /api/rating/{ratingId}/status đổi trạng thái rating (1→0 hoặc 0→1)
+     * Input: ratingId hợp lệ
+     */
     @Test
     @DisplayName("Integration Test 7: Thay đổi status rating - Thành công")
     void testChangeRatingStatus_Success() throws Exception {
@@ -205,6 +237,11 @@ class RatingIntegrationTest {
         assert updated.getStatus() == 0; // Status đã đổi từ 1 sang 0
     }
 
+    /**
+     * Test 8: Tính điểm trung bình đánh giá
+     * Mục đích: Kiểm tra API GET /api/rating/product/{productId}/average tính rating trung bình của sản phẩm
+     * Input: productId hợp lệ
+     */
     @Test
     @DisplayName("Integration Test 8: Tính average rating - Thành công")
     void testCalculateAverageRating_Success() throws Exception {
@@ -213,6 +250,11 @@ class RatingIntegrationTest {
                 .andExpect(jsonPath("$").value(greaterThan(0.0)));
     }
 
+    /**
+     * Test 9: Tạo đánh giá với tài khoản không tồn tại
+     * Mục đích: Kiểm tra API POST /api/rating trả lỗi 404 khi accountId không hợp lệ
+     * Input: accountId không tồn tại, productId hợp lệ
+     */
     @Test
     @DisplayName("Integration Test 9: Tạo rating - Account không tồn tại")
     void testCreateRating_AccountNotFound() throws Exception {
@@ -228,6 +270,11 @@ class RatingIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
+    /**
+     * Test 10: Tạo đánh giá với sản phẩm không tồn tại
+     * Mục đích: Kiểm tra API POST /api/rating trả lỗi 404 khi productId không hợp lệ
+     * Input: accountId hợp lệ, productId không tồn tại
+     */
     @Test
     @DisplayName("Integration Test 10: Tạo rating - Product không tồn tại")
     void testCreateRating_ProductNotFound() throws Exception {

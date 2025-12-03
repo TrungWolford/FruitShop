@@ -30,6 +30,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Integration Test cho Cart API
+ * Test toàn bộ flow: Controller → Service → Repository → Database
+ * Bao gồm:
+ * - Quản lý cart (tạo, xem, xóa, enable/disable)
+ * - Quản lý cart items (thêm, sửa, xóa)
+ * - Xử lý các trường hợp lỗi (product không tồn tại, cart disabled)
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -71,14 +76,8 @@ class CartIntegrationTest {
     void setUp() {
         passwordEncoder = new BCryptPasswordEncoder();
 
-        // Xóa dữ liệu cũ
-        cartItemRepository.deleteAll();
-        cartRepository.deleteAll();
-        accountRepository.deleteAll();
-        productRepository.deleteAll();
-        categoryRepository.deleteAll();
-        roleRepository.deleteAll();
-
+        // @Transactional sẽ tự động rollback sau mỗi test
+        
         // Tạo account với role mới để tránh shared reference
         testAccount = new Account();
         testAccount.setAccountName("Nguyễn Văn A");
@@ -125,6 +124,14 @@ class CartIntegrationTest {
         testCartItem = cartItemRepository.save(testCartItem);
     }
 
+    /**
+     * Test Case 1: Lấy danh sách tất cả giỏ hàng với phân trang
+     * Mục đích: Kiểm tra API GET /api/cart trả về danh sách carts
+     * Kết quả mong muốn:
+     * - HTTP Status: 200 OK
+     * - Response có ít nhất 1 cart (testCart từ setUp)
+     * - Mỗi cart có đầy đủ thông tin status
+     */
     @Test
     @DisplayName("Integration Test 1: Lấy tất cả carts - Thành công")
     void testGetAllCarts_Success() throws Exception {
@@ -136,6 +143,14 @@ class CartIntegrationTest {
                 .andExpect(jsonPath("$.content[0].status").exists());
     }
 
+    /**
+     * Test Case 2: Lấy thông tin giỏ hàng theo ID
+     * Mục đích: Kiểm tra API GET /api/cart/{id} trả về đúng thông tin cart
+     * Input: ID của testCart đã tạo trong setUp
+     * Kết quả mong muốn:
+     * - HTTP Status: 200 OK
+     * - Response chứa cartId và status khớp với dữ liệu test
+     */
     @Test
     @DisplayName("Integration Test 2: Lấy cart theo ID - Thành công")
     void testGetCartById_Success() throws Exception {
@@ -145,6 +160,14 @@ class CartIntegrationTest {
                 .andExpect(jsonPath("$.status").value(1));
     }
 
+    /**
+     * Test Case 3: Lấy cart với ID không tồn tại
+     * Mục đích: Kiểm tra xử lý lỗi khi query cart với ID không hợp lệ
+     * Input: ID không tồn tại ("invalid-cart-id")
+     * Kết quả mong muốn:
+     * - HTTP Status: 404 Not Found
+     * - Hệ thống xử lý exception đúng cách
+     */
     @Test
     @DisplayName("Integration Test 3: Lấy cart theo ID - Không tồn tại")
     void testGetCartById_NotFound() throws Exception {
@@ -152,6 +175,15 @@ class CartIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
+    /**
+     * Test Case 4: Lấy giỏ hàng theo tài khoản
+     * Mục đích: Kiểm tra API GET /api/cart/account/{accountId}
+     * Input: accountId của testAccount
+     * Kết quả mong muốn:
+     * - HTTP Status: 200 OK
+     * - Response chứa cart với đúng accountId
+     * Use case: Khách hàng xem giỏ hàng của mình
+     */
     @Test
     @DisplayName("Integration Test 4: Lấy cart theo accountId - Thành công")
     void testGetCartByAccountId_Success() throws Exception {
@@ -160,6 +192,16 @@ class CartIntegrationTest {
                 .andExpect(jsonPath("$.account.accountId").value(testAccount.getAccountId()));
     }
 
+    /**
+     * Test Case 5: Tạo giỏ hàng mới cho tài khoản
+     * Mục đích: Kiểm tra API POST /api/cart/account/{accountId}
+     * Input: Account mới được tạo với role CUSTOMER
+     * Kết quả mong muốn:
+     * - HTTP Status: 200 OK
+     * - Cart mới được tạo và liên kết với account
+     * - Database có 2 carts (testCart ban đầu + cart mới)
+     * Business logic: Mỗi account có 1 cart riêng
+     */
     @Test
     @DisplayName("Integration Test 5: Tạo cart mới - Thành công")
     void testCreateCart_Success() throws Exception {
@@ -188,6 +230,15 @@ class CartIntegrationTest {
         assert count == 2;
     }
 
+    /**
+     * Test Case 6: Xóa giỏ hàng
+     * Mục đích: Kiểm tra API DELETE /api/cart/{id}
+     * Setup: Xóa cart items trước để tránh foreign key constraint
+     * Input: ID của testCart
+     * Kết quả mong muốn:
+     * - HTTP Status: 200 OK
+     * - Cart bị xóa khỏi database (hard delete)
+     */
     @Test
     @DisplayName("Integration Test 6: Xóa cart - Thành công")
     void testDeleteCart_Success() throws Exception {
@@ -202,6 +253,18 @@ class CartIntegrationTest {
         assert !exists;
     }
 
+    /**
+     * Test Case 7: Thêm sản phẩm vào giỏ hàng
+     * Mục đích: Kiểm tra API POST /api/cart/account/{accountId}/items
+     * Input: CreateCartItemRequest
+     * - productId: Táo Fuji (product mới tạo)
+     * - quantity: 3
+     * Kết quả mong muốn:
+     * - HTTP Status: 200 OK
+     * - Response chứa: quantity=3, productId, productName, productPrice
+     * - Database có 2 cart items (testCartItem + item mới)
+     * Use case: Khách hàng thêm sản phẩm vào giỏ
+     */
     @Test
     @DisplayName("Integration Test 7: Thêm cart item - Thành công")
     void testAddCartItem_Success() throws Exception {
@@ -233,6 +296,16 @@ class CartIntegrationTest {
         assert count == 2;
     }
 
+    /**
+     * Test Case 8: Cập nhật số lượng sản phẩm trong giỏ
+     * Mục đích: Kiểm tra API PUT /api/cart/items/{cartItemId}
+     * Input: UpdateCartItemRequest với quantity = 5
+     * Kết quả mong muốn:
+     * - HTTP Status: 200 OK
+     * - Response quantity = 5
+     * - Database: cart item được cập nhật số lượng mới
+     * Use case: Khách hàng thay đổi số lượng sản phẩm trong giỏ
+     */
     @Test
     @DisplayName("Integration Test 8: Cập nhật cart item - Thành công")
     void testUpdateCartItem_Success() throws Exception {
@@ -250,6 +323,15 @@ class CartIntegrationTest {
         assert updated.getQuantity() == 5;
     }
 
+    /**
+     * Test Case 9: Xóa sản phẩm khỏi giỏ hàng
+     * Mục đích: Kiểm tra API DELETE /api/cart/items/{cartItemId}
+     * Input: ID của testCartItem
+     * Kết quả mong muốn:
+     * - HTTP Status: 200 OK
+     * - Cart item bị xóa khỏi database
+     * Use case: Khách hàng bỏ sản phẩm ra khỏi giỏ
+     */
     @Test
     @DisplayName("Integration Test 9: Xóa cart item - Thành công")
     void testRemoveCartItem_Success() throws Exception {
@@ -261,6 +343,17 @@ class CartIntegrationTest {
         assert !exists;
     }
 
+    /**
+     * Test Case 10: Lấy danh sách sản phẩm trong giỏ theo tài khoản
+     * Mục đích: Kiểm tra API GET /api/cart/account/{accountId}/items
+     * Setup: @Commit để đảm bảo transaction được commit, data có sẵn
+     * Input: accountId của testAccount
+     * Kết quả mong muốn:
+     * - HTTP Status: 200 OK
+     * - Response là array có ít nhất 1 item
+     * - Item đầu tiên có productId khớp với testProduct
+     * Use case: Hiển thị danh sách sản phẩm trong giỏ hàng
+     */
     @Test
     @DisplayName("Integration Test 10: Lấy cart items theo accountId - Thành công")
     @Commit // Đảm bảo transaction được commit để data có sẵn
@@ -279,6 +372,16 @@ class CartIntegrationTest {
                 .andExpect(jsonPath("$[0].productId").value(testProduct.getProductId()));
     }
 
+    /**
+     * Test Case 11: Xóa tất cả sản phẩm trong giỏ hàng
+     * Mục đích: Kiểm tra API DELETE /api/cart/account/{accountId}/clear
+     * Input: accountId của testAccount
+     * Kết quả mong muốn:
+     * - HTTP Status: 200 OK
+     * - Tất cả cart items bị xóa khỏi database
+     * - Cart vẫn còn nhưng rỗng (không có items)
+     * Use case: Khách hàng muốn làm mới giỏ hàng
+     */
     @Test
     @DisplayName("Integration Test 11: Clear cart - Thành công")
     void testClearCart_Success() throws Exception {
@@ -290,6 +393,16 @@ class CartIntegrationTest {
         assert count == 0;
     }
 
+    /**
+     * Test Case 12: Vô hiệu hóa giỏ hàng
+     * Mục đích: Kiểm tra API PUT /api/cart/{cartId}/disable
+     * Input: cartId của testCart
+     * Kết quả mong muốn:
+     * - HTTP Status: 200 OK
+     * - Response status = 0 (disabled)
+     * - Database: cart.status được set về 0
+     * Business logic: Cart bị disable không thể thêm/sửa items
+     */
     @Test
     @DisplayName("Integration Test 12: Disable cart - Thành công")
     void testDisableCart_Success() throws Exception {
@@ -302,6 +415,17 @@ class CartIntegrationTest {
         assert disabled.getStatus() == 0;
     }
 
+    /**
+     * Test Case 13: Kích hoạt lại giỏ hàng
+     * Mục đích: Kiểm tra API PUT /api/cart/{cartId}/enable
+     * Setup: Disable cart trước (status = 0)
+     * Input: cartId của testCart
+     * Kết quả mong muốn:
+     * - HTTP Status: 200 OK
+     * - Response status = 1 (enabled)
+     * - Database: cart.status được set về 1
+     * Business logic: Cart được enable có thể hoạt động bình thường
+     */
     @Test
     @DisplayName("Integration Test 13: Enable cart - Thành công")
     void testEnableCart_Success() throws Exception {
@@ -318,6 +442,15 @@ class CartIntegrationTest {
         assert enabled.getStatus() == 1;
     }
 
+    /**
+     * Test Case 14: Cập nhật trạng thái giỏ hàng
+     * Mục đích: Kiểm tra API PUT /api/cart/{cartId}/status/{status}
+     * Input: cartId và status mới = 0
+     * Kết quả mong muốn:
+     * - HTTP Status: 200 OK
+     * - Response status = 0
+     * - Database: cart.status được cập nhật
+     */
     @Test
     @DisplayName("Integration Test 14: Update cart status - Thành công")
     void testUpdateCartStatus_Success() throws Exception {
@@ -330,6 +463,15 @@ class CartIntegrationTest {
         assert updated.getStatus() == 0;
     }
 
+    /**
+     * Test Case 15: Thêm sản phẩm không tồn tại vào giỏ
+     * Mục đích: Kiểm tra xử lý lỗi khi thêm product ID không hợp lệ
+     * Input: CreateCartItemRequest với productId = "invalid-product-id"
+     * Kết quả mong muốn:
+     * - HTTP Status: 400 Bad Request
+     * - Không tạo cart item mới trong database
+     * Business logic: Validate product tồn tại trước khi thêm vào cart
+     */
     @Test
     @DisplayName("Integration Test 15: Thêm cart item - Product không tồn tại")
     void testAddCartItem_ProductNotFound() throws Exception {
@@ -343,6 +485,15 @@ class CartIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
+    /**
+     * Test Case 16: Cập nhật cart item không tồn tại
+     * Mục đích: Kiểm tra xử lý lỗi khi update với ID không hợp lệ
+     * Input: UpdateCartItemRequest với cartItemId = "invalid-cart-item-id"
+     * Kết quả mong muốn:
+     * - HTTP Status: 400 Bad Request
+     * - Không có thay đổi trong database
+     * Business logic: Validate cart item tồn tại trước khi update
+     */
     @Test
     @DisplayName("Integration Test 16: Update cart item - CartItem không tồn tại")
     void testUpdateCartItem_NotFound() throws Exception {
