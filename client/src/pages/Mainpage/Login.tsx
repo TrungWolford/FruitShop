@@ -44,6 +44,25 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    // Validation 1: Kiểm tra trường bắt buộc
+    if (!formData.username || !formData.password) {
+      toast.error('Vui lòng nhập đầy đủ thông tin')
+      return
+    }
+
+    // Validation 2: Kiểm tra định dạng số điện thoại (10-11 số)
+    const phoneRegex = /^[0-9]{10,11}$/
+    if (!phoneRegex.test(formData.username)) {
+      toast.error('Số điện thoại không đúng định dạng (10-11 số)')
+      return
+    }
+
+    // Validation 3: Kiểm tra độ dài mật khẩu (tối thiểu 6 ký tự)
+    if (formData.password.length < 6) {
+      toast.error('Mật khẩu phải có ít nhất 6 ký tự')
+      return
+    }
+    
     dispatch(loginStart())
     
     try {
@@ -89,11 +108,27 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
           }
         }, 100)
       } else {
-        dispatch(loginFailure(response.message || 'Đăng nhập thất bại'))
+        dispatch(loginFailure(response.message || 'Tài khoản hoặc mật khẩu không đúng'))
+        toast.error(response.message || 'Tài khoản hoặc mật khẩu không đúng')
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
-      dispatch(loginFailure('Có lỗi xảy ra khi đăng nhập'))
+    } catch (error: any) {
+      console.error('❌ Login Error:', error)
+      
+      // Hiển thị thông báo thân thiện dựa trên status code
+      let errorMessage = 'Có lỗi xảy ra khi đăng nhập'
+      
+      if (error.response?.status === 401) {
+        errorMessage = 'Tài khoản hoặc mật khẩu không đúng'
+      } else if (error.response?.status === 403) {
+        errorMessage = 'Tài khoản không có quyền truy cập'
+      } else if (error.response?.status >= 500) {
+        errorMessage = 'Lỗi hệ thống. Vui lòng thử lại sau'
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
+      dispatch(loginFailure(errorMessage))
+      toast.error(errorMessage)
     }
   }
 
@@ -124,7 +159,8 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
             {/* Phone Number */}
             <div className="space-y-2">
               <Label htmlFor="username" className="text-sm font-medium">
-                Số điện thoại *
+                Số điện thoại <span className="text-red-500">*</span>
+                <span className="text-xs text-gray-500 ml-2">(10-11 số)</span>
               </Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -132,10 +168,11 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
                   id="username"
                   name="username"
                   type="tel"
-                  placeholder="Nhập số điện thoại"
+                  placeholder="Nhập số điện thoại (10-11 số)"
                   value={formData.username}
                   onChange={handleInputChange}
                   className="pl-10 rounded-md"
+                  maxLength={11}
                   required
                 />
               </div>
@@ -144,7 +181,8 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
             {/* Password */}
             <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-medium">
-                Mật khẩu *
+                Mật khẩu <span className="text-red-500">*</span>
+                <span className="text-xs text-gray-500 ml-2">(Tối thiểu 6 ký tự)</span>
               </Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />

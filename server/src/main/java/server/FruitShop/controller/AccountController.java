@@ -1,5 +1,6 @@
 package server.FruitShop.controller;
 // z
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -11,6 +12,7 @@ import server.FruitShop.dto.request.Account.CreateAccountRequest;
 import server.FruitShop.dto.request.Account.LoginRequest;
 import server.FruitShop.dto.request.Account.UpdateAccountRequest;
 import server.FruitShop.dto.response.Account.AccountResponse;
+import server.FruitShop.exception.DuplicateResourceException;
 import server.FruitShop.service.AccountService;
 
 import java.util.List;
@@ -39,9 +41,16 @@ public class AccountController {
     }
 
     @PostMapping
-    public ResponseEntity<AccountResponse> createAccount(@RequestBody CreateAccountRequest request) {
-        AccountResponse createdAccount = accountService.createAccount(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdAccount);
+    public ResponseEntity<?> createAccount(@Valid @RequestBody CreateAccountRequest request) {
+        try {
+            AccountResponse createdAccount = accountService.createAccount(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdAccount);
+        } catch (DuplicateResourceException e) {
+            // Số điện thoại đã tồn tại → HTTP 409 Conflict
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PutMapping("/{accountId}")
@@ -83,12 +92,31 @@ public class AccountController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AccountResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         try {
+            // Validation 1: Kiểm tra trường bắt buộc
+            if (request.getAccountPhone() == null || request.getAccountPhone().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Số điện thoại không được để trống");
+            }
+            if (request.getPassword() == null || request.getPassword().isEmpty()) {
+                return ResponseEntity.badRequest().body("Mật khẩu không được để trống");
+            }
+
+            // Validation 2: Kiểm tra định dạng số điện thoại (10-11 số)
+            String phoneRegex = "^[0-9]{10,11}$";
+            if (!request.getAccountPhone().matches(phoneRegex)) {
+                return ResponseEntity.badRequest().body("Số điện thoại không đúng định dạng (10-11 số)");
+            }
+
+            // Validation 3: Kiểm tra độ dài mật khẩu (tối thiểu 6 ký tự)
+            if (request.getPassword().length() < 6) {
+                return ResponseEntity.badRequest().body("Mật khẩu phải có ít nhất 6 ký tự");
+            }
+
             AccountResponse account = accountService.authenticateAccount(request.getAccountPhone(), request.getPassword());
             return ResponseEntity.ok(account);
         } catch (RuntimeException e) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(401).body("Tài khoản hoặc mật khẩu không đúng");
         }
     }
 }
