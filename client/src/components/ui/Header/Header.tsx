@@ -395,11 +395,11 @@ const TopNavigation: React.FC = () => {
           ) : (
             <button
               onClick={() => setIsLoginDialogOpen(true)}
-              className="flex items-center gap-2 hover:text-amber-400 transition-colors cursor-pointer"
+              className="group flex items-center gap-2 hover:text-amber-400 transition-colors cursor-pointer"
             >
               <User className="w-7 h-7" />
               <div className="text-base">
-                <div className="text-white font-medium text-sm">Tài khoản</div>
+                <div className="text-white font-medium text-sm group-hover:text-amber-400 transition-colors">Tài khoản</div>
               </div>
             </button>
           )}
