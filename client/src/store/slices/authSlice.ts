@@ -8,6 +8,7 @@ interface AuthState {
   user: Account | null
   loading: boolean
   error: string | null
+  isInitialized: boolean // Đánh dấu đã load xong từ localStorage
 }
 
 const initialState: AuthState = {
@@ -15,6 +16,7 @@ const initialState: AuthState = {
   user: null,
   loading: false,
   error: null,
+  isInitialized: false,
 }
 
 // Async thunk for login
@@ -69,6 +71,10 @@ const authSlice = createSlice({
       state.user = action.payload
       state.loading = false
       state.error = null
+      state.isInitialized = true
+    },
+    setInitialized: (state) => {
+      state.isInitialized = true
     },
   },
   extraReducers: (builder) => {
@@ -99,7 +105,8 @@ export const {
   loginSuccess, 
   loginFailure, 
   logout, 
-  loadUserFromStorage 
+  loadUserFromStorage,
+  setInitialized
 } = authSlice.actions
 
 export default authSlice.reducer

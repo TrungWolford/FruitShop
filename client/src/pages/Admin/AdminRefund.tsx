@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAppSelector } from '../../hooks/redux';
 import { toast } from 'sonner';
 import LeftTaskbar from '../../components/Admin/LeftTaskbar';
 import { Button } from '../../components/ui/Button/Button';
@@ -25,6 +27,8 @@ import refundService from '../../services/refundService';
 import type { RefundResponse } from '../../services/refundService';
 
 const AdminRefund: React.FC = () => {
+    const navigate = useNavigate();
+    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
     const [refunds, setRefunds] = useState<RefundResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -38,6 +42,32 @@ const AdminRefund: React.FC = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
     const itemsPerPage = 10;
+
+    // Auth check
+    useEffect(() => {
+        document.title = 'FruitShop - Quản lý hoàn tiền';
+        
+        // Chờ auth được khởi tạo xong từ localStorage
+        if (!isInitialized) {
+            return;
+        }
+        
+        // Check if user is authenticated and has ADMIN role
+        if (!isAuthenticated || !user) {
+            navigate('/admin');
+            return;
+        }
+        
+        const userRoles = user.roles || [];
+        const isAdmin = userRoles.some(role => role.roleName === 'ADMIN');
+        
+        if (!isAdmin) {
+            navigate('/admin');
+            return;
+        }
+
+        loadRefunds();
+    }, [isInitialized, isAuthenticated, user, navigate]);
 
     // Load refunds from backend
     const loadRefunds = async () => {
@@ -101,8 +131,11 @@ const AdminRefund: React.FC = () => {
         }
     };
 
+    // Reload data when filters change (only if authenticated)
     useEffect(() => {
-        loadRefunds();
+        if (isInitialized && isAuthenticated && user) {
+            loadRefunds();
+        }
     }, [currentPage, statusFilter, searchTerm]);
 
     // Format price

@@ -25,7 +25,7 @@ import type { Product } from '../../types/product';
 
 const AdminProduct: React.FC = () => {
     const navigate = useNavigate();
-    const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -96,12 +96,14 @@ const AdminProduct: React.FC = () => {
     useEffect(() => {
         document.title = 'BookCity - Quản lý sản phẩm';
 
-        // Load products on component mount
-        loadProducts(currentPage - 1); // Convert to 0-based index
+        // Chờ auth được khởi tạo xong từ localStorage
+        if (!isInitialized) {
+            return;
+        }
 
         // Check if user is authenticated and has ADMIN role
         if (!isAuthenticated || !user) {
-            navigate('/');
+            navigate('/admin');
             return;
         }
 
@@ -109,9 +111,13 @@ const AdminProduct: React.FC = () => {
         const isAdmin = userRoles.some((role) => role.roleName === 'ADMIN');
 
         if (!isAdmin) {
-            navigate('/');
+            navigate('/admin');
+            return;
         }
-    }, [isAuthenticated, user, navigate]);
+
+        // Load products on component mount
+        loadProducts(currentPage - 1); // Convert to 0-based index
+    }, [isInitialized, isAuthenticated, user, navigate]);
 
     useEffect(() => {
         // Debounce search to avoid too many API calls

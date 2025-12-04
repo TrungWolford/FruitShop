@@ -25,7 +25,7 @@ interface CartWithAccount extends Cart {
 
 const AdminCart: React.FC = () => {
     const navigate = useNavigate();
-    const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
     const [carts, setCarts] = useState<CartWithAccount[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -43,9 +43,14 @@ const AdminCart: React.FC = () => {
     useEffect(() => {
         document.title = 'BookCity - Quản lý giỏ hàng';
         
+        // Chờ auth được khởi tạo xong từ localStorage
+        if (!isInitialized) {
+            return;
+        }
+        
         // Check if user is authenticated and has ADMIN role
         if (!isAuthenticated || !user) {
-            navigate('/');
+            navigate('/admin');
             return;
         }
         
@@ -53,12 +58,12 @@ const AdminCart: React.FC = () => {
         const isAdmin = userRoles.some(role => role.roleName === 'ADMIN');
         
         if (!isAdmin) {
-            navigate('/');
+            navigate('/admin');
             return;
         }
 
         loadCartsData();
-    }, [isAuthenticated, user, navigate]);
+    }, [isInitialized, isAuthenticated, user, navigate]);
 
     const loadCartsData = async () => {
         try {

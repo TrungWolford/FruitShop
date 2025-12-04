@@ -36,7 +36,7 @@ import { toast } from 'sonner';
 
 const AdminAccounts: React.FC = () => {
     const navigate = useNavigate();
-    const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
 
     // State for accounts data
     const [accounts, setAccounts] = useState<Account[]>([]);
@@ -64,9 +64,14 @@ const AdminAccounts: React.FC = () => {
     useEffect(() => {
         document.title = 'BookCity - Quản lý tài khoản';
 
+        // Chờ auth được khởi tạo xong từ localStorage
+        if (!isInitialized) {
+            return;
+        }
+
         // Check if user is authenticated and has ADMIN role
         if (!isAuthenticated || !user) {
-            navigate('/');
+            navigate('/admin');
             return;
         }
 
@@ -74,7 +79,7 @@ const AdminAccounts: React.FC = () => {
         const isAdmin = userRoles.some((role) => role.roleName === 'ADMIN');
 
         if (!isAdmin) {
-            navigate('/');
+            navigate('/admin');
             return;
         }
 

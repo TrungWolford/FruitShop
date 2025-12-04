@@ -22,7 +22,7 @@ import {
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate()
-  const { user, isAuthenticated } = useAppSelector((state) => state.auth)
+  const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.auth)
   
   // State for data from API
   const [products, setProducts] = useState<Product[]>([])
@@ -33,6 +33,11 @@ const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     document.title = 'BookCity - Dashboard'
+    
+    // Chờ auth được khởi tạo xong từ localStorage
+    if (!isInitialized) {
+      return
+    }
     
     // Check if user is authenticated and has ADMIN role
     if (!isAuthenticated || !user) {
@@ -50,7 +55,7 @@ const AdminDashboard: React.FC = () => {
 
     // Load data from APIs
     loadDashboardData()
-  }, [isAuthenticated, user, navigate])
+  }, [isInitialized, isAuthenticated, user, navigate])
 
   const loadDashboardData = async () => {
     try {

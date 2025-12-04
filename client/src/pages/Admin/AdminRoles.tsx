@@ -17,7 +17,7 @@ import { toast } from 'sonner';
 
 const AdminRoles: React.FC = () => {
     const navigate = useNavigate();
-    const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
 
     // State for roles data
     const [roles, setRoles] = useState<Role[]>([]);
@@ -33,9 +33,14 @@ const AdminRoles: React.FC = () => {
     useEffect(() => {
         document.title = 'BookCity - Quản lý vai trò';
 
+        // Chờ auth được khởi tạo xong từ localStorage
+        if (!isInitialized) {
+            return;
+        }
+
         // Check if user is authenticated and has ADMIN role
         if (!isAuthenticated || !user) {
-            navigate('/');
+            navigate('/admin');
             return;
         }
 
@@ -43,12 +48,12 @@ const AdminRoles: React.FC = () => {
         const isAdmin = userRoles.some((role) => role.roleName === 'ADMIN');
 
         if (!isAdmin) {
-            navigate('/');
+            navigate('/admin');
             return;
         }
 
         loadRoles();
-    }, [isAuthenticated, user, navigate]);
+    }, [isInitialized, isAuthenticated, user, navigate]);
 
     const loadRoles = async () => {
         setLoading(true);

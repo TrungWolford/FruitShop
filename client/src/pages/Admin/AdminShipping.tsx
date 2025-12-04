@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAppSelector } from '../../hooks/redux';
 import { toast } from 'sonner';
 import LeftTaskbar from '../../components/Admin/LeftTaskbar';
 import { Button } from '../../components/ui/Button/Button';
@@ -25,6 +27,8 @@ import { shippingService } from '../../services/shippingService';
 import type { ShippingResponse } from '../../services/shippingService';
 
 const AdminShipping: React.FC = () => {
+    const navigate = useNavigate();
+    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
     const [shippings, setShippings] = useState<ShippingResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -38,6 +42,32 @@ const AdminShipping: React.FC = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
     const itemsPerPage = 10;
+
+    // Auth check
+    useEffect(() => {
+        document.title = 'FruitShop - Quản lý vận chuyển';
+        
+        // Chờ auth được khởi tạo xong từ localStorage
+        if (!isInitialized) {
+            return;
+        }
+        
+        // Check if user is authenticated and has ADMIN role
+        if (!isAuthenticated || !user) {
+            navigate('/admin');
+            return;
+        }
+        
+        const userRoles = user.roles || [];
+        const isAdmin = userRoles.some(role => role.roleName === 'ADMIN');
+        
+        if (!isAdmin) {
+            navigate('/admin');
+            return;
+        }
+
+        loadShippings(currentPage - 1);
+    }, [isInitialized, isAuthenticated, user, navigate]);
 
     // Debounce search term
     useEffect(() => {
@@ -90,8 +120,11 @@ const AdminShipping: React.FC = () => {
         }
     };
 
+    // Reload data when filters change (only if authenticated)
     useEffect(() => {
-        loadShippings(currentPage - 1);
+        if (isInitialized && isAuthenticated && user) {
+            loadShippings(currentPage - 1);
+        }
     }, [currentPage, statusFilter, debouncedSearchTerm]);
 
     // Format price

@@ -22,7 +22,7 @@ import { toast } from 'sonner';
 
 const AdminCategory: React.FC = () => {
     const navigate = useNavigate();
-    const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
 
     // State for categories data
     const [categories, setCategories] = useState<Category[]>([]);
@@ -45,9 +45,14 @@ const AdminCategory: React.FC = () => {
     useEffect(() => {
         document.title = 'BookCity - Quản lý thể loại';
 
+        // Chờ auth được khởi tạo xong từ localStorage
+        if (!isInitialized) {
+            return;
+        }
+
         // Check if user is authenticated and has ADMIN role
         if (!isAuthenticated || !user) {
-            navigate('/');
+            navigate('/admin');
             return;
         }
 
@@ -55,12 +60,12 @@ const AdminCategory: React.FC = () => {
         const isAdmin = userRoles.some((role) => role.roleName === 'ADMIN');
 
         if (!isAdmin) {
-            navigate('/');
+            navigate('/admin');
             return;
         }
 
         loadCategories();
-    }, [currentPage, statusFilter, isAuthenticated, user, navigate]);
+    }, [isInitialized, currentPage, statusFilter, isAuthenticated, user, navigate]);
 
     useEffect(() => {
         if (searchTerm.trim()) {

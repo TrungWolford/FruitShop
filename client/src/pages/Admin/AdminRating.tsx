@@ -27,7 +27,7 @@ import { Search, Star, ChevronLeft, ChevronRight, ChevronDown, Eye } from 'lucid
 
 const AdminRating: React.FC = () => {
     const navigate = useNavigate();
-    const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
     const [ratings, setRatings] = useState<Rating[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -101,9 +101,14 @@ const AdminRating: React.FC = () => {
     useEffect(() => {
         document.title = 'FruitShop - Quản lý đánh giá';
 
+        // Chờ auth được khởi tạo xong từ localStorage
+        if (!isInitialized) {
+            return;
+        }
+
         // Check authentication
         if (!isAuthenticated || !user) {
-            navigate('/');
+            navigate('/admin');
             return;
         }
 
@@ -111,12 +116,12 @@ const AdminRating: React.FC = () => {
         const isAdmin = userRoles.some((role) => role.roleName === 'ADMIN');
 
         if (!isAdmin) {
-            navigate('/');
+            navigate('/admin');
             return;
         }
 
         loadRatings(currentPage - 1);
-    }, [isAuthenticated, user, navigate]);
+    }, [isInitialized, isAuthenticated, user, navigate]);
 
     useEffect(() => {
         // Debounce search to avoid too many API calls

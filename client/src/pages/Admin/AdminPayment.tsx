@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAppSelector } from '../../hooks/redux';
 import { toast } from 'sonner';
 import LeftTaskbar from '../../components/Admin/LeftTaskbar';
 import { Button } from '../../components/ui/Button/Button';
@@ -25,6 +27,8 @@ import paymentService from '../../services/paymentService';
 import type { PaymentResponse } from '../../services/paymentService';
 
 const AdminPayment: React.FC = () => {
+    const navigate = useNavigate();
+    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
     const [payments, setPayments] = useState<PaymentResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -37,6 +41,32 @@ const AdminPayment: React.FC = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
     const itemsPerPage = 10;
+
+    // Auth check
+    useEffect(() => {
+        document.title = 'FruitShop - Quản lý thanh toán';
+        
+        // Chờ auth được khởi tạo xong từ localStorage
+        if (!isInitialized) {
+            return;
+        }
+        
+        // Check if user is authenticated and has ADMIN role
+        if (!isAuthenticated || !user) {
+            navigate('/admin');
+            return;
+        }
+        
+        const userRoles = user.roles || [];
+        const isAdmin = userRoles.some(role => role.roleName === 'ADMIN');
+        
+        if (!isAdmin) {
+            navigate('/admin');
+            return;
+        }
+
+        loadPayments();
+    }, [isInitialized, isAuthenticated, user, navigate]);
 
     // Load payments from backend
     const loadPayments = async () => {
@@ -94,15 +124,20 @@ const AdminPayment: React.FC = () => {
         }
     };
 
+    // Reload data when filters change (only if authenticated)
     useEffect(() => {
-        loadPayments();
+        if (isInitialized && isAuthenticated && user) {
+            loadPayments();
+        }
     }, [currentPage, statusFilter]);
 
     // Handle search
     useEffect(() => {
-        // Reset to page 1 when search term changes
-        setCurrentPage(1);
-        loadPayments();
+        if (isInitialized && isAuthenticated && user) {
+            // Reset to page 1 when search term changes
+            setCurrentPage(1);
+            loadPayments();
+        }
     }, [searchTerm]);
 
     // Get payment status text
