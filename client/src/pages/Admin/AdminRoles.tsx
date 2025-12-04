@@ -31,7 +31,7 @@ const AdminRoles: React.FC = () => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     useEffect(() => {
-        document.title = 'BookCity - Quản lý vai trò';
+        document.title = 'Vựa trái cây - Quản lý vai trò';
 
         // Chờ auth được khởi tạo xong từ localStorage
         if (!isInitialized) {

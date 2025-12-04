@@ -43,7 +43,7 @@ const AdminCategory: React.FC = () => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     useEffect(() => {
-        document.title = 'BookCity - Quản lý thể loại';
+        document.title = 'Vựa trái cây - Quản lý thể loại';
 
         // Chờ auth được khởi tạo xong từ localStorage
         if (!isInitialized) {

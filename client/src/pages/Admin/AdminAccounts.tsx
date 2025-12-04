@@ -62,7 +62,7 @@ const AdminAccounts: React.FC = () => {
     const [roles, setRoles] = useState<Role[]>([]);
 
     useEffect(() => {
-        document.title = 'BookCity - Quản lý tài khoản';
+        document.title = 'Vựa trái cây - Quản lý tài khoản';
 
         // Chờ auth được khởi tạo xong từ localStorage
         if (!isInitialized) {

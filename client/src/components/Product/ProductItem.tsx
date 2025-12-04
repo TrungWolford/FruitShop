@@ -74,7 +74,7 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
 
   // Helper function to get image URL
   const getImageUrl = (imageUrl?: string) => {
-    if (!imageUrl) return '/placeholder-image.jpg';
+    if (!imageUrl) return '/placeholder-image.svg';
 
     if (imageUrl.startsWith('http')) {
       return imageUrl;
@@ -185,15 +185,18 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
                     index === currentImageIndex ? 'active' : index < currentImageIndex ? 'prev' : 'next'
                   }`}
                   onError={(e) => {
-                    e.currentTarget.style.display = 'none';
+                    // Thay thế bằng placeholder khi ảnh lỗi
+                    e.currentTarget.src = '/placeholder-image.svg';
                   }}
                 />
               );
             })}
             {/* Hiển thị số thứ tự hình ảnh */}
-            <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
-              {currentImageIndex + 1}/{product.images.length}
-            </div>
+            {product.images.length > 1 && (
+              <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded z-10">
+                {currentImageIndex + 1}/{product.images.length}
+              </div>
+            )}
           </div>
         ) : product.imageUrl ? (
           <img
@@ -201,13 +204,20 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
             alt={product.productName}
             className="w-full h-full object-cover"
             onError={(e) => {
-              e.currentTarget.style.display = 'none';
-              e.currentTarget.nextElementSibling?.classList.remove('hidden');
+              // Thay thế bằng placeholder khi ảnh lỗi
+              e.currentTarget.src = '/placeholder-image.svg';
             }}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="text-gray-400 text-sm">No Image</span>
+          <div className="w-full h-full flex items-center justify-center bg-gray-200">
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-2 bg-gray-300 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <span className="text-gray-400 text-sm">Không có ảnh</span>
+            </div>
           </div>
         )}
 

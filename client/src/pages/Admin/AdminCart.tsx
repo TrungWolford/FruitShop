@@ -41,7 +41,7 @@ const AdminCart: React.FC = () => {
     const itemsPerPage = 10;
 
     useEffect(() => {
-        document.title = 'BookCity - Quản lý giỏ hàng';
+        document.title = 'Vựa trái cây - Quản lý giỏ hàng';
         
         // Chờ auth được khởi tạo xong từ localStorage
         if (!isInitialized) {

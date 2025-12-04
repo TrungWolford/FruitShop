@@ -94,7 +94,7 @@ const AdminProduct: React.FC = () => {
     };
 
     useEffect(() => {
-        document.title = 'BookCity - Quản lý sản phẩm';
+        document.title = 'Vựa trái cây - Quản lý sản phẩm';
 
         // Chờ auth được khởi tạo xong từ localStorage
         if (!isInitialized) {

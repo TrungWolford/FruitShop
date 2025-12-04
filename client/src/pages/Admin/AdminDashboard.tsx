@@ -32,7 +32,7 @@ const AdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    document.title = 'BookCity - Dashboard'
+    document.title = 'Vựa trái cây - Dashboard'
     
     // Chờ auth được khởi tạo xong từ localStorage
     if (!isInitialized) {
@@ -177,7 +177,7 @@ const AdminDashboard: React.FC = () => {
               <BarChart className="w-5 h-5 text-amber-500" />
               Dashboard
             </h1>
-            <p className="text-gray-600 mt-0.5 text-base">Tổng quan hệ thống quản lý BookCity</p>
+            <p className="text-gray-600 mt-0.5 text-base">Tổng quan hệ thống quản lý Vựa trái cây</p>
           </div>
 
           {/* Stats Cards */}

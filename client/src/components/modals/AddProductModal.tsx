@@ -27,6 +27,8 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
     const [isLoading, setIsLoading] = useState(false);
     const [categories, setCategories] = useState<Category[]>([]);
     const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>(new Array(5).fill(''));
+    // Sử dụng mảng 5 slot cố định để giữ đúng vị trí ảnh
+    const [imageSlots, setImageSlots] = useState<(File | null)[]>(new Array(5).fill(null));
 
     const [formData, setFormData] = useState<ProductFormData>({
         productName: '',
@@ -92,11 +94,12 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
             // Create preview URL
             const previewUrl = imageService.createPreviewUrl(file);
 
-            // Update the specific index
-            setFormData((prev) => ({
-                ...prev,
-                images: prev.images.map((_, i) => (i === index ? file : prev.images[i])),
-            }));
+            // Update the specific slot
+            setImageSlots((prev) => {
+                const newSlots = [...prev];
+                newSlots[index] = file;
+                return newSlots;
+            });
 
             setImagePreviewUrls((prev) => {
                 const newUrls = [...prev];
@@ -117,17 +120,18 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
             imageService.revokePreviewUrl(imagePreviewUrls[index]);
         }
 
-        // Clear the specific index
+        // Clear the specific slot
+        setImageSlots((prev) => {
+            const newSlots = [...prev];
+            newSlots[index] = null;
+            return newSlots;
+        });
+
         setImagePreviewUrls((prev) => {
             const newUrls = [...prev];
             newUrls[index] = '';
             return newUrls;
         });
-
-        setFormData((prev) => ({
-            ...prev,
-            images: prev.images.filter((_, i) => i !== index),
-        }));
     };
 
     const handleCategoryToggle = (categoryId: string) => {
@@ -184,33 +188,38 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
         try {
             // ========== STEP 1: Upload images to Cloudinary ==========
             console.log('=== STARTING FILE UPLOADS ===');
-            let uploadedImageUrls: string[] = [];
+            const uploadedImageUrls: string[] = [];
 
-            // Upload all images to Cloudinary
-            if (formData.images.length > 0) {
-                console.log('Uploading', formData.images.length, 'images to Cloudinary...');
+            // Lọc ra các slot có file và giữ đúng thứ tự
+            const validImages = imageSlots
+                .map((file, index) => ({ file, index }))
+                .filter((item): item is { file: File; index: number } => item.file !== null);
+
+            // Upload all images to Cloudinary theo thứ tự slot
+            if (validImages.length > 0) {
+                console.log('Uploading', validImages.length, 'images to Cloudinary...');
                 
-                for (let i = 0; i < formData.images.length; i++) {
-                    const image = formData.images[i];
-                    console.log(`Uploading image ${i + 1}/${formData.images.length}:`, image.name, 'Size:', image.size, 'Type:', image.type);
+                for (let i = 0; i < validImages.length; i++) {
+                    const { file: image, index: slotIndex } = validImages[i];
+                    console.log(`Uploading image from slot ${slotIndex + 1} (${i + 1}/${validImages.length}):`, image.name, 'Size:', image.size, 'Type:', image.type);
                     
                     try {
                         const result = await cloudinaryService.uploadImage(image, {
                             folder: 'products/images'
                         });
                         
-                        console.log(`Image ${i + 1} upload result:`, result);
+                        console.log(`Image from slot ${slotIndex + 1} upload result:`, result);
                         if (result.success && result.data) {
                             uploadedImageUrls.push(result.data.url);
-                            console.log(`✅ Image ${i + 1} uploaded successfully:`, result.data.url);
+                            console.log(`✅ Image from slot ${slotIndex + 1} uploaded successfully:`, result.data.url);
                             
-                            toast.success(`Đã tải lên hình ảnh ${i + 1}/${formData.images.length}`, {
+                            toast.success(`Đã tải lên hình ảnh ${i + 1}/${validImages.length}`, {
                                 duration: 2000,
                                 position: 'top-right',
                             });
                         } else {
-                            console.error(`❌ Image ${i + 1} upload failed:`, result.message);
-                            toast.error(`Không thể tải lên hình ảnh ${i + 1}: ${result.message}`, {
+                            console.error(`❌ Image from slot ${slotIndex + 1} upload failed:`, result.message);
+                            toast.error(`Không thể tải lên hình ảnh ${slotIndex + 1}: ${result.message}`, {
                                 duration: 4000,
                                 position: 'top-right',
                                 style: {
@@ -220,11 +229,11 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
                                     padding: '12px 16px',
                                 },
                             });
-                            throw new Error(`Failed to upload image ${i + 1}: ${result.message}`);
+                            throw new Error(`Failed to upload image from slot ${slotIndex + 1}: ${result.message}`);
                         }
                     } catch (error) {
-                        console.error(`❌ Error uploading image ${i + 1}:`, error);
-                        toast.error(`Lỗi khi tải lên hình ảnh ${i + 1}`, {
+                        console.error(`❌ Error uploading image from slot ${slotIndex + 1}:`, error);
+                        toast.error(`Lỗi khi tải lên hình ảnh ${slotIndex + 1}`, {
                             duration: 4000,
                             position: 'top-right',
                             style: {
@@ -295,7 +304,8 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
                 images: [],
             });
 
-            // Clear image previews and names
+            // Clear image slots and previews
+            setImageSlots(new Array(5).fill(null));
             imagePreviewUrls.forEach((url) => {
                 if (url) imageService.revokePreviewUrl(url);
             });
@@ -317,7 +327,10 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
     const handleClose = () => {
         // Clean up image preview URLs
         imagePreviewUrls.forEach((url) => imageService.revokePreviewUrl(url));
-        setImagePreviewUrls([]);
+        setImagePreviewUrls(new Array(5).fill(''));
+
+        // Reset image slots
+        setImageSlots(new Array(5).fill(null));
 
         // Reset form
         setFormData({
