@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAppSelector } from '../../hooks/redux';
 import { toast } from 'sonner';
 import LeftTaskbar from '../../components/Admin/LeftTaskbar';
 import { Button } from '../../components/ui/Button/Button';
@@ -26,6 +28,8 @@ import type { OrderResponse } from '../../services/orderService';
 import shippingService from '../../services/shippingService';
 
 const AdminOrder: React.FC = () => {
+    const navigate = useNavigate();
+    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
     const [orders, setOrders] = useState<OrderResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -43,6 +47,32 @@ const AdminOrder: React.FC = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
     const itemsPerPage = 10;
+
+    // Auth check
+    useEffect(() => {
+        document.title = 'FruitShop - Quản lý đơn hàng';
+        
+        // Chờ auth được khởi tạo xong từ localStorage
+        if (!isInitialized) {
+            return;
+        }
+        
+        // Check if user is authenticated and has ADMIN role
+        if (!isAuthenticated || !user) {
+            navigate('/admin');
+            return;
+        }
+        
+        const userRoles = user.roles || [];
+        const isAdmin = userRoles.some(role => role.roleName === 'ADMIN');
+        
+        if (!isAdmin) {
+            navigate('/admin');
+            return;
+        }
+
+        loadOrders();
+    }, [isInitialized, isAuthenticated, user, navigate]);
 
     // Load orders from backend (without pagination - load all and paginate on frontend)
     const loadOrders = async () => {
@@ -96,8 +126,11 @@ const AdminOrder: React.FC = () => {
         }
     };
 
+    // Reload data when filters change (only if authenticated)
     useEffect(() => {
-        loadOrders();
+        if (isInitialized && isAuthenticated && user) {
+            loadOrders();
+        }
     }, [currentPage, statusFilter, searchTerm]);
 
     // Format price

@@ -22,7 +22,7 @@ import {
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate()
-  const { user, isAuthenticated } = useAppSelector((state) => state.auth)
+  const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.auth)
   
   // State for data from API
   const [products, setProducts] = useState<Product[]>([])
@@ -32,31 +32,30 @@ const AdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    document.title = 'BookCity - Dashboard'
+    document.title = 'Vựa trái cây - Dashboard'
     
-    console.log('AdminDashboard useEffect - isAuthenticated:', isAuthenticated, 'user:', user)
+    // Chờ auth được khởi tạo xong từ localStorage
+    if (!isInitialized) {
+      return
+    }
     
     // Check if user is authenticated and has ADMIN role
     if (!isAuthenticated || !user) {
-      console.log('Not authenticated, redirecting to /admin')
       navigate('/admin')
       return
     }
     
     const userRoles = user.roles || []
-    console.log('User roles in Dashboard:', userRoles)
     const isAdmin = userRoles.some(role => role.roleName === 'ADMIN')
-    console.log('Is admin in Dashboard:', isAdmin)
     
     if (!isAdmin) {
-      console.log('Not admin, redirecting to /admin')
       navigate('/admin')
       return
     }
 
     // Load data from APIs
     loadDashboardData()
-  }, [isAuthenticated, user, navigate])
+  }, [isInitialized, isAuthenticated, user, navigate])
 
   const loadDashboardData = async () => {
     try {
@@ -178,7 +177,7 @@ const AdminDashboard: React.FC = () => {
               <BarChart className="w-5 h-5 text-amber-500" />
               Dashboard
             </h1>
-            <p className="text-gray-600 mt-0.5 text-base">Tổng quan hệ thống quản lý BookCity</p>
+            <p className="text-gray-600 mt-0.5 text-base">Tổng quan hệ thống quản lý Vựa trái cây</p>
           </div>
 
           {/* Stats Cards */}

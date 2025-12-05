@@ -26,9 +26,11 @@ interface EditProductModalProps {
 const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, onSuccess, product }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [categories, setCategories] = useState<Category[]>([]);
-    const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
+    const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>(new Array(5).fill(''));
     const [originalImageUrls, setOriginalImageUrls] = useState<string[]>([]); // Track original Cloudinary URLs
     const [removedExistingImages, setRemovedExistingImages] = useState<Set<number>>(new Set()); // Track which existing images were removed
+    // Sử dụng mảng 5 slot cố định để giữ đúng vị trí ảnh mới
+    const [imageSlots, setImageSlots] = useState<(File | null)[]>(new Array(5).fill(null));
 
     // Helper function to count current images accurately
     const getCurrentImageCount = () => {
@@ -185,11 +187,12 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
                 setRemovedExistingImages((prev) => new Set([...prev, slotIndex]));
             }
 
-            // Add file to formData images array
-            setFormData((prev) => ({
-                ...prev,
-                images: [...prev.images, file],
-            }));
+            // Add file to the specific slot
+            setImageSlots((prev) => {
+                const newSlots = [...prev];
+                newSlots[slotIndex] = file;
+                return newSlots;
+            });
 
             // Set preview URL at specific slot
             setImagePreviewUrls((prev) => {
@@ -228,12 +231,12 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
             return newUrls;
         });
 
-        // Remove file from formData.images
-        // Note: This is simplified - in production you'd need to track which file corresponds to which slot
-        setFormData((prev) => ({
-            ...prev,
-            images: prev.images.filter((_, i) => i !== index),
-        }));
+        // Clear file at this slot
+        setImageSlots((prev) => {
+            const newSlots = [...prev];
+            newSlots[index] = null;
+            return newSlots;
+        });
 
         toast.info('Đã xóa hình ảnh mới');
     };
@@ -279,15 +282,20 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
         try {
             // ========== STEP 1: Upload NEW images to Cloudinary ==========
             console.log('=== STARTING FILE UPLOADS FOR EDIT ===');
-            let uploadedImageUrls: string[] = [];
+            const uploadedImageUrls: string[] = [];
 
-            // Upload new images to Cloudinary
-            if (formData.images.length > 0) {
-                console.log('Uploading', formData.images.length, 'new images to Cloudinary...');
+            // Lọc ra các slot có file mới và giữ đúng thứ tự
+            const validNewImages = imageSlots
+                .map((file, index) => ({ file, index }))
+                .filter((item): item is { file: File; index: number } => item.file !== null);
+
+            // Upload new images to Cloudinary theo thứ tự slot
+            if (validNewImages.length > 0) {
+                console.log('Uploading', validNewImages.length, 'new images to Cloudinary...');
                 
-                for (let i = 0; i < formData.images.length; i++) {
-                    const image = formData.images[i];
-                    console.log(`Uploading new image ${i + 1}/${formData.images.length}:`, image.name);
+                for (let i = 0; i < validNewImages.length; i++) {
+                    const { file: image, index: slotIndex } = validNewImages[i];
+                    console.log(`Uploading new image from slot ${slotIndex + 1} (${i + 1}/${validNewImages.length}):`, image.name);
                     
                     try {
                         const result = await cloudinaryService.uploadImage(image, {
@@ -296,23 +304,23 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
                         
                         if (result.success && result.data) {
                             uploadedImageUrls.push(result.data.url);
-                            console.log(`✅ New image ${i + 1} uploaded successfully:`, result.data.url);
+                            console.log(`✅ New image from slot ${slotIndex + 1} uploaded successfully:`, result.data.url);
                             
-                            toast.success(`Đã tải lên hình ảnh mới ${i + 1}/${formData.images.length}`, {
+                            toast.success(`Đã tải lên hình ảnh mới ${i + 1}/${validNewImages.length}`, {
                                 duration: 2000,
                                 position: 'top-right',
                             });
                         } else {
-                            console.error(`❌ New image ${i + 1} upload failed:`, result.message);
-                            toast.error(`Không thể tải lên hình ảnh ${i + 1}: ${result.message}`, {
+                            console.error(`❌ New image from slot ${slotIndex + 1} upload failed:`, result.message);
+                            toast.error(`Không thể tải lên hình ảnh ${slotIndex + 1}: ${result.message}`, {
                                 duration: 4000,
                                 position: 'top-right',
                             });
-                            throw new Error(`Failed to upload image ${i + 1}: ${result.message}`);
+                            throw new Error(`Failed to upload image from slot ${slotIndex + 1}: ${result.message}`);
                         }
                     } catch (error) {
-                        console.error(`❌ Error uploading new image ${i + 1}:`, error);
-                        toast.error(`Lỗi khi tải lên hình ảnh ${i + 1}`, {
+                        console.error(`❌ Error uploading new image from slot ${slotIndex + 1}:`, error);
+                        toast.error(`Lỗi khi tải lên hình ảnh ${slotIndex + 1}`, {
                             duration: 4000,
                             position: 'top-right',
                         });
@@ -435,6 +443,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
         setImagePreviewUrls([]);
         setOriginalImageUrls([]);
         setRemovedExistingImages(new Set());
+        setImageSlots(new Array(5).fill(null));
 
         // Cleanup localStorage
         imageService.cleanupStorage();

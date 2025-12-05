@@ -25,7 +25,7 @@ import type { Product } from '../../types/product';
 
 const AdminProduct: React.FC = () => {
     const navigate = useNavigate();
-    const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -55,22 +55,8 @@ const AdminProduct: React.FC = () => {
                 response = await productService.getAllProducts(page, itemsPerPage);
             }
 
-            console.log('🔍 Backend Response:', response);
-            console.log('📦 Response type:', typeof response);
-            console.log('📋 Response keys:', Object.keys(response));
-
             // Giả sử response có cấu trúc { content: Product[], totalPages: number, totalElements: number }
             if (response.content) {
-                console.log('✅ Using paginated response');
-                console.log(
-                    '📸 Products with images:',
-                    response.content.map((p: any) => ({
-                        id: p.productId,
-                        name: p.productName,
-                        images: p.images,
-                    })),
-                );
-
                 let filteredProducts = response.content;
 
                 // Apply status filter locally if needed
@@ -83,16 +69,6 @@ const AdminProduct: React.FC = () => {
                 setTotalPages(response.totalPages || 1);
                 setTotalItems(response.totalElements || 0);
             } else {
-                console.log('⚠️ Using direct response');
-                console.log(
-                    '📸 Products with images:',
-                    response.map((p: any) => ({
-                        id: p.productId,
-                        name: p.productName,
-                        images: p.images,
-                    })),
-                );
-
                 let filteredProducts = response;
 
                 // Apply status filter locally if needed
@@ -118,14 +94,16 @@ const AdminProduct: React.FC = () => {
     };
 
     useEffect(() => {
-        document.title = 'BookCity - Quản lý sản phẩm';
+        document.title = 'Vựa trái cây - Quản lý sản phẩm';
 
-        // Load products on component mount
-        loadProducts(currentPage - 1); // Convert to 0-based index
+        // Chờ auth được khởi tạo xong từ localStorage
+        if (!isInitialized) {
+            return;
+        }
 
         // Check if user is authenticated and has ADMIN role
         if (!isAuthenticated || !user) {
-            navigate('/');
+            navigate('/admin');
             return;
         }
 
@@ -133,9 +111,13 @@ const AdminProduct: React.FC = () => {
         const isAdmin = userRoles.some((role) => role.roleName === 'ADMIN');
 
         if (!isAdmin) {
-            navigate('/');
+            navigate('/admin');
+            return;
         }
-    }, [isAuthenticated, user, navigate]);
+
+        // Load products on component mount
+        loadProducts(currentPage - 1); // Convert to 0-based index
+    }, [isInitialized, isAuthenticated, user, navigate]);
 
     useEffect(() => {
         // Debounce search to avoid too many API calls
@@ -248,25 +230,18 @@ const AdminProduct: React.FC = () => {
 
     // Function để lấy URL hình ảnh từ public/products
     const getImageUrl = (imageUrl: string) => {
-        console.log('🖼️ getImageUrl input:', imageUrl);
-
         if (!imageUrl) {
-            console.log('❌ No imageUrl provided, using placeholder');
-            return '/placeholder-image.jpg';
+            return '';
         }
 
         // Nếu imageUrl đã có http/https thì giữ nguyên
         if (imageUrl.startsWith('http')) {
-            console.log('✅ External URL, keeping as is:', imageUrl);
             return imageUrl;
         }
 
         // Nếu không có / ở đầu thì thêm vào
         const cleanUrl = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
-        const finalUrl = `/products${cleanUrl}`;
-
-        console.log('🖼️ Generated image URL:', finalUrl);
-        return finalUrl;
+        return `/products${cleanUrl}`;
     };
 
     // Pagination calculations - products are already paginated from backend
@@ -500,60 +475,38 @@ const AdminProduct: React.FC = () => {
                                               <TableCell className="px-4 py-3 select-none">
                                                   <div className="flex items-center">
                                                       {(() => {
-                                                          console.log(
-                                                              '🖼️ Rendering image for product:',
-                                                              product.productName,
-                                                          );
-
-                                                          console.log(
-                                                              '🖼️ Product images field:',
-                                                              (product as any).images,
-                                                          );
-
                                                           // Sử dụng field images từ backend
                                                           const imagesArray = product.images || [];
-                                                          console.log('🖼️ Images array:', imagesArray);
 
                                                           if (imagesArray && imagesArray.length > 0) {
                                                               const firstImage = imagesArray[0];
-                                                              console.log('🖼️ First image object:', firstImage);
-
-                                                              // Lấy imageUrl từ object
                                                               const imageUrl = firstImage.imageUrl;
-                                                              console.log('🖼️ Extracted image URL:', imageUrl);
 
-                                                              return (
-                                                                  <img
-                                                                      src={getImageUrl(imageUrl)}
-                                                                      alt={product.productName}
-                                                                      className="w-16 h-16 object-cover border border-gray-200"
-                                                                      onError={(e) => {
-                                                                          console.log(
-                                                                              '❌ Image failed to load:',
-                                                                              e.currentTarget.src,
-                                                                          );
-                                                                          e.currentTarget.src =
-                                                                              '/placeholder-image.jpg';
-                                                                      }}
-                                                                      onLoad={() => {
-                                                                          console.log(
-                                                                              '✅ Image loaded successfully:',
-                                                                              imageUrl,
-                                                                          );
-                                                                      }}
-                                                                  />
-                                                              );
-                                                          } else {
-                                                              console.log(
-                                                                  '❌ No images found for product:',
-                                                                  product.productName,
-                                                              );
-                                                              return (
-                                                                  <div className="w-16 h-16 bg-gray-100 flex items-center justify-center border border-gray-200">
-                                                                      <Package className="w-6 h-6 text-gray-400" />
-                                                                  </div>
-                                                              );
+                                                              if (imageUrl) {
+                                                                  return (
+                                                                      <img
+                                                                          src={getImageUrl(imageUrl)}
+                                                                          alt={product.productName}
+                                                                          className="w-16 h-16 object-cover border border-gray-200"
+                                                                          onError={(e) => {
+                                                                              // Ẩn ảnh lỗi và hiển thị placeholder
+                                                                              e.currentTarget.style.display = 'none';
+                                                                              const placeholder = e.currentTarget.nextElementSibling as HTMLElement;
+                                                                              if (placeholder) {
+                                                                                  placeholder.style.display = 'flex';
+                                                                              }
+                                                                          }}
+                                                                      />
+                                                                  );
+                                                              }
                                                           }
+                                                          
+                                                          // Không có ảnh hoặc ảnh lỗi
+                                                          return (
+                                                              <div className="w-16 h-16 bg-gray-100 flex items-center justify-center border border-gray-200">
+                                                                  <Package className="w-6 h-6 text-gray-400" />
+                                                              </div>
+                                                          );
                                                       })()}
                                                   </div>
                                               </TableCell>

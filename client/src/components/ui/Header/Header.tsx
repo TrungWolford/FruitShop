@@ -247,10 +247,27 @@ const TopNavigation: React.FC = () => {
           quantity: newQuantity,
         });
         if (response.success) {
+          // Cập nhật trực tiếp hoverCartItems để UI phản hồi ngay
+          setHoverCartItems(prev => 
+            prev.map(item => 
+              item.cartItemId === cartItemId 
+                ? { ...item, quantity: newQuantity } 
+                : item
+            )
+          );
           window.dispatchEvent(new CustomEvent('cartUpdated'));
         }
       } else {
         localStorageCartService.updateQuantity(cartItemId, newQuantity);
+        // Cập nhật trực tiếp hoverCartItems để UI phản hồi ngay
+        setHoverCartItems(prev => 
+          prev.map(item => 
+            item.cartItemId === cartItemId 
+              ? { ...item, quantity: newQuantity } 
+              : item
+          )
+        );
+        window.dispatchEvent(new CustomEvent('cartUpdated'));
       }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
@@ -264,12 +281,17 @@ const TopNavigation: React.FC = () => {
       if (isAuthenticated && user) {
         const response = await cartService.removeFromCart(cartItemId);
         if (response.success) {
+          // Xóa item khỏi hoverCartItems ngay lập tức
+          setHoverCartItems(prev => prev.filter(item => item.cartItemId !== cartItemId));
           toast.success('Đã xóa sản phẩm');
           window.dispatchEvent(new CustomEvent('cartUpdated'));
         }
       } else {
         localStorageCartService.removeItem(cartItemId);
+        // Xóa item khỏi hoverCartItems ngay lập tức
+        setHoverCartItems(prev => prev.filter(item => item.cartItemId !== cartItemId));
         toast.success('Đã xóa sản phẩm');
+        window.dispatchEvent(new CustomEvent('cartUpdated'));
       }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
@@ -336,11 +358,11 @@ const TopNavigation: React.FC = () => {
           {/* Login/Register or User Info */}
           {isAuthenticated && user ? (
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-2 hover:text-amber-400 transition-colors cursor-pointer outline-none">
+              <DropdownMenuTrigger className="group flex items-center gap-2 hover:text-amber-400 transition-colors cursor-pointer outline-none">
                 <User className="w-7 h-7" />
                 <div className="text-base text-left">
-                  <div className="text-white font-medium">{user.accountName}</div>
-                  <div className="text-gray-300 text-sm">{user.accountPhone}</div>
+                  <div className="text-white font-medium group-hover:text-amber-400">{user.accountName}</div>
+                  <div className="text-gray-300 text-sm group-hover:text-amber-400">{user.accountPhone}</div>
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-48 mr-4">
@@ -395,11 +417,11 @@ const TopNavigation: React.FC = () => {
           ) : (
             <button
               onClick={() => setIsLoginDialogOpen(true)}
-              className="flex items-center gap-2 hover:text-amber-400 transition-colors cursor-pointer"
+              className="group flex items-center gap-2 hover:text-amber-400 transition-colors cursor-pointer"
             >
               <User className="w-7 h-7" />
               <div className="text-base">
-                <div className="text-white font-medium text-sm">Tài khoản</div>
+                <div className="text-white font-medium text-sm group-hover:text-amber-400 transition-colors">Tài khoản</div>
               </div>
             </button>
           )}

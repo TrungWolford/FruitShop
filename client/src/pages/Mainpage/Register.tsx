@@ -32,9 +32,9 @@ const Register: React.FC = () => {
 
   // Set page title
   useEffect(() => {
-    document.title = 'Đăng ký tài khoản - BookCity.VN'
+    document.title = 'Đăng ký tài khoản - Vựa trái cây.VN'
     return () => {
-      document.title = 'BookCity.VN - Hệ thống nhà sách trực tuyến'
+      document.title = 'Vựa trái cây.VN - Hệ thống nhà sách trực tuyến'
     }
   }, [])
 
