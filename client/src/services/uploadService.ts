@@ -75,29 +75,21 @@ class UploadService {
             );
 
             // Debug logging
-            console.log('📤 Upload API Response:', response.data);
-            
             // Backend returns: { success: true, data: { url, publicId, ... } }
             // We need to extract the data field
             const uploadData = response.data.data;
             
             if (!uploadData || !uploadData.url) {
-                console.error('❌ Invalid upload response structure:', response.data);
                 return {
                     success: false,
                     message: 'Backend trả về dữ liệu không hợp lệ'
                 };
             }
-
-            console.log('✅ Extracted upload data:', uploadData);
-
             return {
                 success: true,
                 data: uploadData as UploadImageResponse
             };
         } catch (error: any) {
-            console.error('Error uploading image:', error);
-            
             let errorMessage = 'Không thể tải lên hình ảnh';
             if (error.response?.data?.message) {
                 errorMessage = error.response.data.message;
@@ -155,7 +147,6 @@ class UploadService {
                 failedCount: failedUploads.length
             };
         } catch (error) {
-            console.error('Error uploading multiple images:', error);
             return {
                 success: false,
                 message: 'Có lỗi xảy ra khi tải lên hình ảnh'
@@ -183,7 +174,6 @@ class UploadService {
                 data: response.data
             };
         } catch (error: any) {
-            console.error('Error getting file info:', error);
             return {
                 success: false,
                 message: error.response?.data?.message || 'Không thể lấy thông tin file'

@@ -22,13 +22,6 @@ const PaymentPage: React.FC = () => {
 
     const state = location.state as LocationState;
     const { orderId, payUrl, qrCodeUrl, deeplink, deeplinkMiniApp, amount } = state || {};
-
-    console.log('🎯 PaymentPage - Full State:', state);
-    console.log('🎯 PaymentPage - orderId:', orderId);
-    console.log('🎯 PaymentPage - qrCodeUrl:', qrCodeUrl);
-    console.log('🎯 PaymentPage - payUrl:', payUrl);
-    console.log('🎯 PaymentPage - deeplink:', deeplink);
-
     const [paymentStatus, setPaymentStatus] = useState<string>('PENDING');
     const [isChecking, setIsChecking] = useState(false);
     const [countdown, setCountdown] = useState(300); // 5 minutes countdown
@@ -126,11 +119,9 @@ const PaymentPage: React.FC = () => {
             
             generateQRWithLogo(qrData)
                 .then((url: string) => {
-                    console.log('✅ QR Code with logo generated successfully');
                     setGeneratedQrDataUrl(url);
                 })
                 .catch((err: Error) => {
-                    console.error('❌ Error generating QR code:', err);
                     // Fallback: generate simple QR without logo
                     QRCode.toDataURL(qrData, {
                         width: 300,
@@ -151,9 +142,6 @@ const PaymentPage: React.FC = () => {
         try {
             setIsChecking(true);
             const statusResponse: PaymentStatusResponse = await momoService.checkPaymentStatus(orderId);
-
-            console.log('🔍 Payment status:', statusResponse);
-
             setPaymentStatus(statusResponse.paymentStatus);
 
             if (statusResponse.paymentStatus === 'COMPLETED') {
@@ -171,7 +159,6 @@ const PaymentPage: React.FC = () => {
                 }, 2000);
             }
         } catch (error) {
-            console.error('Error checking payment status:', error);
         } finally {
             setIsChecking(false);
         }
@@ -213,7 +200,6 @@ const PaymentPage: React.FC = () => {
     const handleOpenMoMoApp = () => {
         if (payUrl) {
             // Mở trang thanh toán MoMo để nhập thẻ ATM
-            console.log('🔗 Opening MoMo payment page:', payUrl);
             window.location.href = payUrl; // Chuyển trang hiện tại (không mở tab mới)
         } else if (deeplink) {
             // Fallback: Mở app MoMo (nếu trên mobile)
@@ -283,7 +269,6 @@ const PaymentPage: React.FC = () => {
                                         alt="MoMo QR Code" 
                                         className="w-72 h-72 object-contain"
                                         onLoad={() => {
-                                            console.log('✅ QR Code displayed successfully');
                                         }}
                                     />
                                     <p className="text-xs text-gray-500 mt-4 text-center max-w-xs">

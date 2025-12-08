@@ -63,7 +63,6 @@ export const paymentService = {
                 totalPages: 0
             };
         } catch (error: any) {
-            console.error('Error getting all payments:', error);
             return {
                 success: false,
                 message: error.response?.data?.message || 'Không thể tải danh sách thanh toán'
@@ -80,7 +79,6 @@ export const paymentService = {
                 data: response.data
             };
         } catch (error: any) {
-            console.error('Error getting payment:', error);
             return {
                 success: false,
                 message: error.response?.data?.message || 'Không thể tải thông tin thanh toán'
@@ -98,7 +96,6 @@ export const paymentService = {
                 message: 'Tạo thanh toán thành công'
             };
         } catch (error: any) {
-            console.error('Error creating payment:', error);
             return {
                 success: false,
                 message: error.response?.data?.message || 'Không thể tạo thanh toán'
@@ -116,7 +113,6 @@ export const paymentService = {
                 message: 'Cập nhật thanh toán thành công'
             };
         } catch (error: any) {
-            console.error('Error updating payment:', error);
             return {
                 success: false,
                 message: error.response?.data?.message || 'Không thể cập nhật thanh toán'
@@ -158,7 +154,6 @@ export const paymentService = {
                 totalPages: 0
             };
         } catch (error: any) {
-            console.error('Error getting payments by status:', error);
             return {
                 success: false,
                 message: error.response?.data?.message || 'Không thể tải danh sách thanh toán'
@@ -178,7 +173,6 @@ export const paymentService = {
                 message: 'Cập nhật trạng thái thanh toán thành công'
             };
         } catch (error: any) {
-            console.error('Error updating payment status:', error);
             return {
                 success: false,
                 message: error.response?.data?.message || 'Không thể cập nhật trạng thái thanh toán'
@@ -195,7 +189,6 @@ export const paymentService = {
                 data: response.data
             };
         } catch (error: any) {
-            console.error('Error getting payment by transaction ID:', error);
             return {
                 success: false,
                 message: error.response?.data?.message || 'Không thể tìm thấy thanh toán'

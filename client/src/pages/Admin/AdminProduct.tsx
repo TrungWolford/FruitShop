@@ -83,7 +83,6 @@ const AdminProduct: React.FC = () => {
                 setTotalItems(filteredProducts.length || 0);
             }
         } catch (error) {
-            console.error('Error loading products:', error);
             toast.error('Không thể tải danh sách sản phẩm từ server');
             setProducts([]);
             setTotalPages(1);
@@ -158,7 +157,6 @@ const AdminProduct: React.FC = () => {
     const handleAddProductSuccess = () => {
         // Refresh the products list from backend
         loadProducts(currentPage - 1);
-        console.log('Product added successfully');
     };
 
     const handleEditProductSuccess = () => {
@@ -168,7 +166,6 @@ const AdminProduct: React.FC = () => {
         setTimeout(() => {
             // Refresh the products list from backend
             loadProducts(currentPage - 1);
-            console.log('Product updated successfully');
         }, 500); // 0.5 seconds delay
     };
 

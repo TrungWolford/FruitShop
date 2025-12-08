@@ -62,27 +62,15 @@ const CheckoutPage: React.FC = () => {
 
     // Fetch cart items and shipping addresses
     useEffect(() => {
-        console.log('🛒 CheckoutPage useEffect triggered');
-        console.log('🛒 isAuthenticated:', isAuthenticated);
-        console.log('🛒 user:', user);
-        console.log('🛒 localStorage user:', localStorage.getItem('user'));
-        console.log('🛒 localStorage isAuthenticated:', localStorage.getItem('isAuthenticated'));
         
         // Check both Redux and localStorage for authentication
         const isAuthInLocalStorage = localStorage.getItem('isAuthenticated') === 'true';
         const userInLocalStorage = localStorage.getItem('user');
         
         if ((isAuthenticated && user) || (isAuthInLocalStorage && userInLocalStorage)) {
-            console.log('✅ User is authenticated, fetching cart items');
             fetchCartItems();
             fetchShippingAddresses();
         } else {
-            console.log('❌ User NOT authenticated, redirecting to home');
-            console.log('❌ isAuthenticated:', isAuthenticated);
-            console.log('❌ user:', user);
-            console.log('❌ isAuthInLocalStorage:', isAuthInLocalStorage);
-            console.log('❌ userInLocalStorage:', userInLocalStorage);
-            
             // Give a small delay in case Redux is still updating
             const timer = setTimeout(() => {
                 if (!isAuthenticated && !isAuthInLocalStorage) {
@@ -129,8 +117,6 @@ const CheckoutPage: React.FC = () => {
                 setCartItems(items);
                 setCartStatus(status);
                 
-                console.log('🛒 Checkout page - Cart status:', status); // Debug log
-                
                 // Nếu cart bị vô hiệu hóa thì báo lỗi
                 if (status !== null && status !== 1) {
                     toast.error('Giỏ hàng đã bị vô hiệu hóa do vi phạm chính sách, vui lòng liên hệ VuaTraiCay để biết thêm chi tiết');
@@ -141,7 +127,6 @@ const CheckoutPage: React.FC = () => {
                 toast.error('Không thể tải giỏ hàng');
             }
         } catch (error) {
-            console.error('Error fetching cart items:', error);
             setCartItems([]);
             setCartStatus(null);
             toast.error('Đã xảy ra lỗi khi tải giỏ hàng');
@@ -191,7 +176,6 @@ const CheckoutPage: React.FC = () => {
                 setSavedShippingAddresses([]);
             }
         } catch (error) {
-            console.error('Error fetching shipping addresses:', error);
             setSavedShippingAddresses([]);
         } finally {
             setIsLoadingShipping(false);
@@ -352,16 +336,11 @@ const CheckoutPage: React.FC = () => {
                     city: shippingData.city,
                     shippingFee: calculateShippingFee(), // Add shipping fee based on selected method
                 };
-
-                console.log('Creating shipping address with data:', createShippingRequest);
-
                 shippingResponse = await shippingService.createShipping(createShippingRequest);
                 if (!shippingResponse.success) {
                     toast.error(shippingResponse.message || 'Không thể tạo địa chỉ giao hàng');
                     return;
                 }
-
-                console.log('Shipping address created successfully:', shippingResponse.data);
             }
 
             // Step 2: Create order
@@ -398,46 +377,20 @@ const CheckoutPage: React.FC = () => {
 
             if (invalidItems.length > 0) {
                 toast.error('Có sản phẩm không hợp lệ trong giỏ hàng');
-                console.error('Invalid items:', invalidItems);
                 return;
             }
-
-            console.log('Creating order with data:', createOrderRequest);
-            console.log('Cart items for order:', cartItems);
-            console.log('User account ID:', currentUser.accountId);
-            console.log('Payment method:', shippingData.paymentMethod);
-
             // Detailed validation logging
-            console.log('=== ORDER REQUEST VALIDATION ===');
-            console.log('AccountId type:', typeof createOrderRequest.accountId);
-            console.log('AccountId value:', createOrderRequest.accountId);
-            console.log('PaymentMethod type:', typeof createOrderRequest.paymentMethod);
-            console.log('PaymentMethod value:', createOrderRequest.paymentMethod);
-            console.log('Items count:', createOrderRequest.items.length);
-
             createOrderRequest.items.forEach((item, index) => {
-                console.log(`Item ${index}:`, {
-                    productId: item.productId,
-                    productIdType: typeof item.productId,
-                    quantity: item.quantity,
-                    quantityType: typeof item.quantity,
-                });
             });
-            console.log('================================');
-
             // Validate account exists before creating order
             try {
-                console.log('Validating account existence...');
                 const accountCheck = await accountService.getAccountById(currentUser.accountId);
-                console.log('Account validation successful:', accountCheck);
             } catch (accountError) {
-                console.error('Account validation failed:', accountError);
                 toast.error('Tài khoản không tồn tại hoặc đã bị khóa');
                 return;
             }
 
             // Validate all products exist and have sufficient stock
-            console.log('Validating products...');
             for (const item of createOrderRequest.items) {
                 try {
                     const productResponse = await productService.getProductById(item.productId);
@@ -448,13 +401,6 @@ const CheckoutPage: React.FC = () => {
                     }
 
                     const product = productResponse.data;
-                    console.log(`Product ${item.productId} validation:`, {
-                        productName: product.productName,
-                        stock: product.stock,
-                        requestedQuantity: item.quantity,
-                        status: product.status,
-                    });
-
                     if (product.status !== 1) {
                         toast.error(`Sản phẩm "${product.productName}" đã ngừng kinh doanh`);
                         return;
@@ -467,45 +413,24 @@ const CheckoutPage: React.FC = () => {
                         return;
                     }
                 } catch (productError) {
-                    console.error(`Product validation failed for ${item.productId}:`, productError);
                     toast.error(`Sản phẩm với ID ${item.productId} không tồn tại`);
                     return;
                 }
             }
-            console.log('All products validated successfully');
-
             const orderResponse = await orderService.createOrder(createOrderRequest);
-
-            console.log('Order creation response:', orderResponse);
-
             if (orderResponse.success && orderResponse.data) {
                 const orderId = orderResponse.data.orderId;
                 
                 // Check payment method
                 if (shippingData.paymentMethod === 1) {
                     // Chuyển khoản - Create MoMo payment
-                    console.log('Creating MoMo payment for order:', orderId);
-                    
                     try {
                         const momoResponse = await momoService.createPayment(orderId);
-                        
-                        console.log('📥 Full MoMo Response:', momoResponse);
-                        console.log('📥 MoMo Data:', momoResponse.data);
-                        console.log('📥 QR Code URL:', momoResponse.data?.qrCodeUrl);
-                        
                         if (momoResponse.success && momoResponse.data) {
-                            console.log('✅ MoMo payment created successfully:', momoResponse.data);
-                            
                             // Clear cart sau khi tạo MoMo payment thành công
-                            console.log('🧹 Clearing cart for MoMo payment, accountId:', currentUser.accountId);
                             const clearCartResponse = await cartService.clearCart(currentUser.accountId);
-                            console.log('🧹 Clear cart response:', clearCartResponse);
-
                             if (clearCartResponse.success) {
-                                console.log('Cart cleared successfully for MoMo payment');
-                                
                                 // Dispatch events để refresh cart UI
-                                console.log('🔔 Dispatching cart update events');
                                 window.dispatchEvent(new CustomEvent('cartUpdated'));
                                 window.dispatchEvent(
                                     new CustomEvent('cartItemsUpdated', {
@@ -514,7 +439,6 @@ const CheckoutPage: React.FC = () => {
                                 );
                                 window.dispatchEvent(new CustomEvent('closeCartModal'));
                             } else {
-                                console.error('Failed to clear cart for MoMo:', clearCartResponse.message);
                             }
                             
                             // Navigate to payment page with payment data
@@ -530,15 +454,12 @@ const CheckoutPage: React.FC = () => {
                         } else {
                             // MoMo payment creation failed - order should be auto-cancelled by backend
                             toast.error(momoResponse.message || 'Không thể tạo thanh toán MoMo');
-                            console.error('MoMo payment creation failed:', momoResponse.message);
-                            
                             // Reload to refresh cart
                             setTimeout(() => {
                                 window.location.reload();
                             }, 2000);
                         }
                     } catch (momoError) {
-                        console.error('Error creating MoMo payment:', momoError);
                         toast.error('Đã xảy ra lỗi khi tạo thanh toán MoMo. Đơn hàng đã bị hủy.');
                         
                         // Reload to refresh cart
@@ -548,21 +469,12 @@ const CheckoutPage: React.FC = () => {
                     }
                 } else {
                     // COD - Clear cart and navigate to orders
-                    console.log('Order created successfully with COD, now clearing cart...');
-                    console.log('🧹 Calling clearCart for accountId:', currentUser.accountId);
-
                     const clearCartResponse = await cartService.clearCart(currentUser.accountId);
-                    console.log('🧹 Clear cart response:', clearCartResponse);
-
                     if (clearCartResponse.success) {
-                        console.log('Cart cleared successfully');
                         toast.success('Đặt hàng thành công! Giỏ hàng đã được xóa.');
 
                         // Dispatch event để Cart component và TopNavigation refresh
-                        console.log('🔔 Dispatching cartUpdated event');
                         window.dispatchEvent(new CustomEvent('cartUpdated'));
-
-                        console.log('🔔 Dispatching cartItemsUpdated event with empty items');
                         window.dispatchEvent(
                             new CustomEvent('cartItemsUpdated', {
                                 detail: { items: [], count: 0 },
@@ -570,16 +482,13 @@ const CheckoutPage: React.FC = () => {
                         );
 
                         // Dispatch event để đóng Cart modal nếu đang mở
-                        console.log('🔔 Dispatching closeCartModal event');
                         window.dispatchEvent(new CustomEvent('closeCartModal'));
 
                         // Dispatch event để refresh order history
-                        console.log('🔔 Dispatching orderCreated event');
                         window.dispatchEvent(new CustomEvent('orderCreated'));
 
                         // Force refresh tất cả cart-related components với delay nhỏ
                         setTimeout(() => {
-                            console.log('🔄 Force refreshing all cart components...');
                             window.dispatchEvent(new CustomEvent('cartUpdated'));
                             window.dispatchEvent(
                                 new CustomEvent('cartItemsUpdated', {
@@ -588,7 +497,6 @@ const CheckoutPage: React.FC = () => {
                             );
                         }, 100);
                     } else {
-                        console.error('Failed to clear cart:', clearCartResponse.message);
                         toast.success('Đặt hàng thành công!');
                         toast.warning('Không thể xóa giỏ hàng, vui lòng xóa thủ công.');
                     }
@@ -599,7 +507,6 @@ const CheckoutPage: React.FC = () => {
                 toast.error(orderResponse.message || 'Không thể tạo đơn hàng');
             }
         } catch (error) {
-            console.error('Error placing order:', error);
             toast.error('Đã xảy ra lỗi khi đặt hàng');
         } finally {
             setIsProcessing(false);

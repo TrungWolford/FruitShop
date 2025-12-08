@@ -28,14 +28,10 @@ const OrderSuccessPage: React.FC = () => {
             try {
                 setIsLoading(true);
                 const response = await orderService.getOrderById(orderId);
-                
-                console.log('📦 Order details:', response);
-                
                 if (response && response.data) {
                     setOrder(response.data);
                 }
             } catch (error) {
-                console.error('Error fetching order:', error);
             } finally {
                 setIsLoading(false);
             }

@@ -67,7 +67,6 @@ const ProductDetail: React.FC = () => {
     useEffect(() => {
         const fetchProduct = async () => {
             if (!productName) {
-                console.warn('⚠️ No productName in URL params');
                 return;
             }
 
@@ -76,23 +75,15 @@ const ProductDetail: React.FC = () => {
                 
                 // productName từ URL params chính là productId (không cần parse gì cả)
                 const productId = productName;
-                
-                console.log('🔍 URL param productName:', productName);
-                console.log('🔑 ProductId:', productId);
-                console.log('📡 Will call API: /api/product/' + productId);
-                
                 const response = await productService.getProductById(productId);
 
                 if (response.success && response.data) {
-                    console.log('✅ Product data from API:', response.data);
                     setProduct(response.data);
                 } else {
-                    console.error('❌ Failed to fetch product:', response);
                     toast.error(response.message || 'Không tìm thấy sản phẩm');
                     navigate('/');
                 }
             } catch (error) {
-                console.error('💥 Error fetching product:', error);
                 toast.error('Đã xảy ra lỗi khi tải sản phẩm');
                 navigate('/');
             } finally {
@@ -112,13 +103,8 @@ const ProductDetail: React.FC = () => {
             try {
                 // Fetch ratings list - Backend trả về Spring Boot Page format trực tiếp
                 const response: any = await ratingService.getRatingsByProduct(product.productId, currentPage, 5);
-                console.log('📊 Ratings API Response:', response);
-                
                 // Backend trả về trực tiếp Spring Boot Page format (không có wrapper success/data)
                 if (response && response.content) {
-                    console.log('✅ Ratings content:', response.content);
-                    console.log('📏 Total ratings:', response.totalElements);
-                    
                     setRatings(response.content);
                     setTotalPages(response.totalPages);
                     setTotalRatings(response.totalElements);
@@ -132,15 +118,12 @@ const ProductDetail: React.FC = () => {
 
                 // Fetch average rating
                 const avgResponse: any = await ratingService.getAverageRatingByProduct(product.productId);
-                console.log('⭐ Average rating response:', avgResponse);
-                
                 if (typeof avgResponse === 'number') {
                     setAverageRating(avgResponse);
                 } else if (avgResponse.success && typeof avgResponse.data === 'number') {
                     setAverageRating(avgResponse.data);
                 }
             } catch (error) {
-                console.error('❌ Error fetching ratings:', error);
             } finally {
                 setRatingsLoading(false);
             }
@@ -151,29 +134,15 @@ const ProductDetail: React.FC = () => {
 
     // Debug: Log ratings state whenever it changes
     useEffect(() => {
-        console.log('🔍 DEBUG Ratings State:');
-        console.log('- ratings:', ratings);
-        console.log('- ratings.length:', ratings.length);
-        console.log('- userRating:', userRating);
-        console.log('- ratingsLoading:', ratingsLoading);
-        
         // Check if any rating belongs to current user
         if (user && ratings.length > 0) {
-            console.log('👤 Current user accountId:', user.accountId);
             ratings.forEach((rating, index) => {
-                console.log(`Rating ${index}:`, {
-                    ratingId: rating.ratingId,
-                    accountId: rating.account?.accountId,
-                    accountName: rating.account?.accountName,
-                    isCurrentUser: rating.account?.accountId === user.accountId ? '✅ YES' : '❌ NO'
-                });
             });
             
             // 🔧 FIX: If userRating is null but we found user's rating in the list, set it
             if (!userRating) {
                 const foundUserRating = ratings.find(rating => rating.account?.accountId === user.accountId);
                 if (foundUserRating) {
-                    console.log('🔧 Found user rating in list, setting userRating:', foundUserRating);
                     setUserRating(foundUserRating);
                 }
             }
@@ -181,44 +150,25 @@ const ProductDetail: React.FC = () => {
         
         const filteredRatings = ratings.filter(rating => rating.ratingId !== userRating?.ratingId);
         console.log('- Filtered ratings (excluding user):', filteredRatings);
-        console.log('- Filtered length:', filteredRatings.length);
     }, [ratings, userRating, ratingsLoading]);
 
     // Fetch user's existing rating for this product
     useEffect(() => {
         const fetchUserRating = async () => {
-            console.log('🔍 Fetching user rating...');
-            console.log('- isAuthenticated:', isAuthenticated);
-            console.log('- user:', user);
-            console.log('- product?.productId:', product?.productId);
-            
             if (!isAuthenticated || !user || !product?.productId) {
-                console.log('❌ Cannot fetch user rating - missing data');
                 return;
             }
 
             try {
-                console.log('📡 Calling getRatingByAccountAndProduct:', {
-                    accountId: user.accountId,
-                    productId: product.productId
-                });
-                
                 const ratings = await ratingService.getRatingByAccountAndProduct(user.accountId, product.productId);
-                
-                console.log('📦 Response from getRatingByAccountAndProduct:', ratings);
-                
                 if (ratings && ratings.length > 0) {
                     // Get the most recent rating (last one in array)
                     const mostRecentRating = ratings[ratings.length - 1];
-                    console.log('✅ User has rated this product. Most recent rating:', mostRecentRating);
                     setUserRating(mostRecentRating);
                 } else {
-                    console.log('⚠️ User has not rated this product yet');
                     setUserRating(null);
                 }
             } catch (error: any) {
-                console.log('❌ Error fetching user rating:', error);
-                console.log('Error response:', error.response?.data);
                 // If error, user hasn't rated yet
                 setUserRating(null);
             }
@@ -229,13 +179,7 @@ const ProductDetail: React.FC = () => {
 
     // Debug: Log when userRating changes
     useEffect(() => {
-        console.log('🔄 userRating changed:', userRating);
         if (userRating) {
-            console.log('✅ User HAS rated this product');
-            console.log('- Rating ID:', userRating.ratingId);
-            console.log('- Account:', userRating.account);
-            console.log('- Stars:', userRating.ratingStar);
-            console.log('- Comment:', userRating.comment);
         } else {
             console.log('⚠️ User has NOT rated this product (userRating is null)');
         }
@@ -263,21 +207,13 @@ const ProductDetail: React.FC = () => {
             };
 
             const response = await ratingService.updateRating(userRating.ratingId, updateData);
-            
-            console.log('📤 Update rating response:', response);
-            
             // Backend trả về trực tiếp RatingResponse, kiểm tra nếu có ratingId là thành công
             const isSuccess = response && (response as any).ratingId;
             
             if (isSuccess) {
-                console.log('✅ Rating updated successfully, showing toast...');
-                
                 toast.success('Đánh giá của bạn đã được cập nhật thành công!', {
                     duration: 2000,
                 });
-                
-                console.log('✅ Toast called');
-                
                 // Reload page sau khi cập nhật thành công
                 setTimeout(() => {
                     window.location.reload();
@@ -287,7 +223,6 @@ const ProductDetail: React.FC = () => {
                 setIsUpdatingRating(false);
             }
         } catch (error: any) {
-            console.error('Error updating rating:', error);
             const errorMessage = error.response?.data?.message || 'Đã xảy ra lỗi khi cập nhật đánh giá';
             toast.error(errorMessage);
             setIsUpdatingRating(false);
@@ -323,15 +258,10 @@ const ProductDetail: React.FC = () => {
 
         try {
             const response = await ratingService.changeRatingStatus(userRating.ratingId);
-            
-            console.log('📤 Delete rating response:', response);
-            
             // Backend returns RatingResponse with updated status
             const isSuccess = response && (response as any).ratingId;
             
             if (isSuccess) {
-                console.log('✅ Rating deleted successfully');
-                
                 toast.success('Đánh giá của bạn đã được xóa thành công!', {
                     duration: 2000,
                 });
@@ -345,7 +275,6 @@ const ProductDetail: React.FC = () => {
                 toast.error('Không thể xóa đánh giá. Vui lòng thử lại!');
             }
         } catch (error: any) {
-            console.error('Error deleting rating:', error);
             const errorMessage = error.response?.data?.message || 'Đã xảy ra lỗi khi xóa đánh giá';
             toast.error(errorMessage);
         }
@@ -532,13 +461,12 @@ const ProductDetail: React.FC = () => {
             });
 
             if (response.success) {
-                toast.success('Đã thêm sản phẩm vào giỏ hàng');
+                toast.success('Đã thêm sản phẩm vào giỏ hàng', { duration: 1000 });
                 window.dispatchEvent(new CustomEvent('cartUpdated'));
             } else {
                 toast.error(response.message || 'Không thể thêm sản phẩm vào giỏ hàng');
             }
         } catch (error: any) {
-            console.error('Error adding to cart:', error);
             toast.error(error.response?.data?.message || error.message || 'Đã xảy ra lỗi khi thêm vào giỏ hàng');
         } finally {
             setIsAddingToCart(false);
@@ -583,7 +511,7 @@ const ProductDetail: React.FC = () => {
             });
 
             if (response.success) {
-                toast.success('Đã thêm sản phẩm vào giỏ hàng');
+                toast.success('Đã thêm sản phẩm vào giỏ hàng', { duration: 1000 });
                 window.dispatchEvent(new CustomEvent('cartUpdated'));
 
                 // Navigate to checkout
@@ -592,7 +520,6 @@ const ProductDetail: React.FC = () => {
                 toast.error(response.message || 'Không thể thêm sản phẩm vào giỏ hàng');
             }
         } catch (error: any) {
-            console.error('Error in buy now:', error);
             toast.error(error.response?.data?.message || error.message || 'Đã xảy ra lỗi khi mua hàng');
         }
     };
@@ -985,12 +912,6 @@ const ProductDetail: React.FC = () => {
 
                             {/* User's Existing Review */}
                             {(() => {
-                                console.log('🎨 Render check:', { 
-                                    hasUserRating: !!userRating, 
-                                    isEditingRating,
-                                    shouldShowEditButton: userRating && !isEditingRating,
-                                    userRating 
-                                });
                                 return null;
                             })()}
                             {userRating && !isEditingRating && (

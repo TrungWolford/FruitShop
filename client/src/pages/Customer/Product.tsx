@@ -138,7 +138,6 @@ const ProductPage: React.FC = () => {
         setCategories(mappedCategories);
       }
     } catch (error) {
-      console.error('Error loading categories:', error);
       toast.error('Không thể tải danh mục sản phẩm');
     }
   };
@@ -156,10 +155,7 @@ const ProductPage: React.FC = () => {
       
       if (searchQuery) {
         // Search mode - gọi search API với minPrice, maxPrice nếu có
-        console.log('🔍 Loading products with search query:', searchQuery);
-        
         if (selectedPriceRange && priceRange) {
-          console.log('🔍 Search with price filter:', { searchQuery, priceRange });
           // Gọi search API với minPrice và maxPrice
           response = await productService.searchProducts(
             searchQuery, 
@@ -216,7 +212,6 @@ const ProductPage: React.FC = () => {
       setTotalPages(response.totalPages || 0);
       setTotalElements(response.totalElements || 0);
     } catch (error) {
-      console.error('Error loading products:', error);
       toast.error('Không thể tải danh sách sản phẩm');
       
       // Fallback to mock data
@@ -250,8 +245,6 @@ const ProductPage: React.FC = () => {
     // Find category by name to get the ID
     const selectedCategory = categories.find(cat => cat.categoryName === categoryName);
     if (selectedCategory) {
-      console.log('Selected Category ID:', selectedCategory.categoryId);
-      console.log('Selected Category Name:', selectedCategory.categoryName);
     }
     setCurrentPage(0); // Reset to first page when changing category
     window.scrollTo({ top: 0, behavior: 'smooth' });

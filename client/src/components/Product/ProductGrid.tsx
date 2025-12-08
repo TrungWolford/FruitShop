@@ -58,7 +58,6 @@ const ProductGrid: React.FC<ProductGridProps> = ({
           }
         }
       } catch (error) {
-        console.error('Error loading products for ProductGrid:', error);
         setProducts([]);
         setTotalProducts(0);
       } finally {

@@ -85,12 +85,10 @@ const AdminDashboard: React.FC = () => {
           setOrders([])
         }
       } catch (error) {
-        console.log('Could not load orders:', error)
         setOrders([])
       }
       
     } catch (error) {
-      console.error('Error loading dashboard data:', error)
     } finally {
       setLoading(false)
     }

@@ -10,12 +10,10 @@ import Footer from '../../components/ui/Footer/Footer';
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const handleAddToCart = (productId: string) => {
-    console.log('Add to cart:', productId);
     // TODO: Implement add to cart logic
   };
 
   const handleAddToWishlist = (productId: string) => {
-    console.log('Add to wishlist:', productId);
     // TODO: Implement wishlist logic
   };
 

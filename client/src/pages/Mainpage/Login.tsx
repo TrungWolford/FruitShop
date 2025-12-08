@@ -44,10 +44,8 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
 
   // Custom onClose handler để reset form sau khi đóng
   const handleClose = () => {
-    console.log('🚪 handleClose called - isSubmitting:', isSubmitting, 'loading:', loading, 'error:', error)
     // Chỉ đóng nếu không đang submit, không đang loading và KHÔNG có lỗi
     if (!isSubmitting && !loading && !error) {
-      console.log('✅ Closing dialog and resetting form')
       onClose()
       // Reset form sau khi đóng (dùng timeout để tránh flash)
       setTimeout(() => {
@@ -58,8 +56,6 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
         })
         dispatch(clearAuthError())
       }, 300)
-    } else {
-      console.log('❌ Dialog close prevented - still processing or has error')
     }
   }
 
@@ -77,11 +73,8 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('📝 Form submitted')
-    
     // Validation 1: Kiểm tra trường bắt buộc
     if (!formData.username || !formData.password) {
-      console.log('❌ Validation failed: Empty fields')
       toast.error('Vui lòng nhập đầy đủ thông tin')
       return
     }
@@ -89,19 +82,15 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
     // Validation 2: Kiểm tra định dạng số điện thoại (10-11 số)
     const phoneRegex = /^[0-9]{10,11}$/
     if (!phoneRegex.test(formData.username)) {
-      console.log('❌ Validation failed: Invalid phone format')
       toast.error('Số điện thoại hoặc mật khẩu không đúng')
       return
     }
 
     // Validation 3: Kiểm tra độ dài mật khẩu (tối thiểu 6 ký tự)
     if (formData.password.length < 6) {
-      console.log('❌ Validation failed: Password too short')
       toast.error('Số điện thoại hoặc mật khẩu không đúng')
       return
     }
-    
-    console.log('🔄 Starting login process...')
     setIsSubmitting(true)
     dispatch(loginStart())
     
@@ -123,8 +112,6 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
         if (intendedRoute) {
           sessionStorage.removeItem('intendedRoute')
           toast.success('Đăng nhập thành công!')
-          console.log('🔐 Login success, navigating to:', intendedRoute)
-          console.log('🔐 User data:', response.user)
           console.log('🔐 localStorage user:', localStorage.getItem('user'))
           console.log('🔐 localStorage isAuthenticated:', localStorage.getItem('isAuthenticated'))
           
@@ -141,7 +128,6 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
           
           // Navigate sau một khoảng delay nhỏ
           setTimeout(() => {
-            console.log('🔐 Navigating to:', intendedRoute)
             navigate(intendedRoute)
           }, 100)
           return
@@ -174,8 +160,6 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
         toast.error(response.message || 'Số điện thoại hoặc mật khẩu không đúng')
       }
     } catch (error: any) {
-      console.error(' Login Error:', error)
-      
       // Sử dụng error message đã được parse từ authService
       const errorMessage = error.message || 'Số điện thoại hoặc mật khẩu không đúng'
       

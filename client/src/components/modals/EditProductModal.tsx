@@ -57,7 +57,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
 
     // Handle clicking on existing image to replace it
     const handleExistingImageClick = (index: number) => {
-        console.log(`🖱️ Clicked on existing image at slot ${index + 1}`);
         // The file input will be triggered by the label
     };
 
@@ -92,8 +91,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
             const response = await categoryService.getAllCategories();
             setCategories(response.content || []);
         } catch (error) {
-            console.error('Error loading categories:', error);
-
             // Fallback: Use mock categories when API is not available
             const mockCategories = [
                 { categoryId: '1', categoryName: 'Tiểu thuyết', status: 1 },
@@ -111,14 +108,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
 
     const populateFormData = () => {
         if (!product) return;
-
-        console.log('🔄 Populating form data for product:', product.productId);
-        console.log('📦 Product data:', {
-            productName: product.productName,
-            categories: product.categories?.length || 0,
-            images: product.images?.length || 0,
-        });
-
         if (product.images) {
             product.images.forEach((img, index) => {
                 console.log(`  Image ${index + 1}: ${img.imageUrl} (order: ${img.imageOrder})`);
@@ -183,7 +172,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
 
             if (hasExistingImage) {
                 // Mark existing image as removed (will be replaced with new one)
-                console.log(`🔄 Marking existing image at slot ${slotIndex + 1} for replacement`);
                 setRemovedExistingImages((prev) => new Set([...prev, slotIndex]));
             }
 
@@ -213,7 +201,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
                 fileInput.value = '';
             }
         } catch (error) {
-            console.error('Error preparing image:', error);
             toast.error('Không thể xử lý hình ảnh');
         }
     };
@@ -281,7 +268,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
 
         try {
             // ========== STEP 1: Upload NEW images to Cloudinary ==========
-            console.log('=== STARTING FILE UPLOADS FOR EDIT ===');
             const uploadedImageUrls: string[] = [];
 
             // Lọc ra các slot có file mới và giữ đúng thứ tự
@@ -291,8 +277,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
 
             // Upload new images to Cloudinary theo thứ tự slot
             if (validNewImages.length > 0) {
-                console.log('Uploading', validNewImages.length, 'new images to Cloudinary...');
-                
                 for (let i = 0; i < validNewImages.length; i++) {
                     const { file: image, index: slotIndex } = validNewImages[i];
                     console.log(`Uploading new image from slot ${slotIndex + 1} (${i + 1}/${validNewImages.length}):`, image.name);
@@ -304,14 +288,11 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
                         
                         if (result.success && result.data) {
                             uploadedImageUrls.push(result.data.url);
-                            console.log(`✅ New image from slot ${slotIndex + 1} uploaded successfully:`, result.data.url);
-                            
                             toast.success(`Đã tải lên hình ảnh mới ${i + 1}/${validNewImages.length}`, {
                                 duration: 2000,
                                 position: 'top-right',
                             });
                         } else {
-                            console.error(`❌ New image from slot ${slotIndex + 1} upload failed:`, result.message);
                             toast.error(`Không thể tải lên hình ảnh ${slotIndex + 1}: ${result.message}`, {
                                 duration: 4000,
                                 position: 'top-right',
@@ -319,7 +300,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
                             throw new Error(`Failed to upload image from slot ${slotIndex + 1}: ${result.message}`);
                         }
                     } catch (error) {
-                        console.error(`❌ Error uploading new image from slot ${slotIndex + 1}:`, error);
                         toast.error(`Lỗi khi tải lên hình ảnh ${slotIndex + 1}`, {
                             duration: 4000,
                             position: 'top-right',
@@ -327,8 +307,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
                         throw error;
                     }
                 }
-                
-                console.log('✅ All new images uploaded successfully:', uploadedImageUrls);
             }
 
             // ========== STEP 2: Combine existing and new image URLs ==========
@@ -355,8 +333,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
             });
 
             // ========== STEP 3: Update product with combined URLs ==========
-            console.log('=== UPDATING PRODUCT IN DATABASE ===');
-            
             const productData: CreateProductRequest = {
                 productName: formData.productName.trim(),
                 categoryIds: formData.selectedCategories,
@@ -367,17 +343,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
                 // Only send images if they have changed
                 imageNames: imagesChanged ? allImageUrls : undefined,
             };
-
-            console.log('📦 Updating product with data:', {
-                productName: productData.productName,
-                price: productData.price,
-                stock: productData.stock,
-                categories: productData.categoryIds,
-                imagesChanged,
-                imageCount: allImageUrls.length,
-                imageUrls: allImageUrls,
-            });
-
             await productService.updateProduct(product.productId, productData);
 
             toast.success(
@@ -421,7 +386,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
                 onSuccess();
             }, 500);
         } catch (error: any) {
-            console.error('Error updating product:', error);
             const errorMessage = error.response?.data?.message || error.message || ERROR_MESSAGES.PRODUCT_UPDATE_FAILED;
             toast.error(errorMessage);
         } finally {

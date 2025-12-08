@@ -53,7 +53,6 @@ const ProfileCustomer: React.FC = () => {
 
     // Debug: Log formData changes
     useEffect(() => {
-        console.log('FormData changed:', formData);
     }, [formData]);
 
     const loadAccountData = async () => {
@@ -99,7 +98,6 @@ const ProfileCustomer: React.FC = () => {
                     });
                 }
             } catch (shippingError) {
-                console.error('Error loading shipping data:', shippingError);
                 // Set default values if shipping data fails to load
                 setFormData({
                     accountName: accountResponse.accountName || '',
@@ -110,7 +108,6 @@ const ProfileCustomer: React.FC = () => {
             }
         } catch (error) {
             toast.error('Không thể tải thông tin tài khoản');
-            console.error('Error loading account data:', error);
         } finally {
             setLoading(false);
         }
@@ -172,7 +169,6 @@ const ProfileCustomer: React.FC = () => {
             loadAccountData(); // Reload data
         } catch (error) {
             toast.error('Không thể cập nhật thông tin');
-            console.error('Error updating profile:', error);
         } finally {
             setLoading(false);
         }
@@ -185,7 +181,6 @@ const ProfileCustomer: React.FC = () => {
         }
 
         // TODO: Implement API call to change password
-        console.log('Changing password:', passwordData);
         setIsChangingPassword(false);
         setPasswordData({
             currentPassword: '',

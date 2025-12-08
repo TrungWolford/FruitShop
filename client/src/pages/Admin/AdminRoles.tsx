@@ -61,7 +61,6 @@ const AdminRoles: React.FC = () => {
             const rolesData = await roleService.getAllRoles();
             setRoles(rolesData);
         } catch (error) {
-            console.error('Error loading roles:', error);
             toast.error('Không thể tải danh sách vai trò');
         } finally {
             setLoading(false);
@@ -195,7 +194,6 @@ const AdminRoles: React.FC = () => {
                                                         size="sm"
                                                         onClick={() => {
                                                             // View role details - có thể thêm modal view sau
-                                                            console.log('View role:', role);
                                                         }}
                                                         className="h-7 w-7 p-0"
                                                         title="Xem chi tiết"

@@ -27,7 +27,6 @@ const DeleteRoleModal: React.FC<DeleteRoleModalProps> = ({ isOpen, onClose, onSu
             onClose();
             onSuccess();
         } catch (error) {
-            console.error('Error deleting role:', error);
             toast.error('Không thể xóa vai trò. Vui lòng thử lại!');
         } finally {
             setLoading(false);

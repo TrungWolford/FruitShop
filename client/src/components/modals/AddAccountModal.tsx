@@ -49,7 +49,6 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, onSu
             handleClose();
             onSuccess();
         } catch (error) {
-            console.error('Error creating account:', error);
             toast.error('Không thể tạo tài khoản. Vui lòng thử lại!');
         } finally {
             setLoading(false);

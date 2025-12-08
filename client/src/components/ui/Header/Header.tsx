@@ -39,7 +39,6 @@ const TopNavigation: React.FC = () => {
 
   // Debug: Log khi user state thay đổi
   useEffect(() => {
-    console.log('🔍 Header - Auth state changed:', { isAuthenticated, user: user?.accountName, userPhone: user?.accountPhone });
     setDisplayUser(user);
   }, [isAuthenticated, user]);
 
@@ -63,38 +62,25 @@ const TopNavigation: React.FC = () => {
 
   // Handle search
   const handleSearch = async () => {
-    console.log('🎯 handleSearch called');
-    console.log('🎯 searchQuery value:', searchQuery);
     console.log('🎯 searchQuery trimmed:', searchQuery.trim());
     
     if (!searchQuery.trim()) {
-      console.log('⚠️ Search query is empty');
       toast.error('Vui lòng nhập từ khóa tìm kiếm');
       return;
     }
 
     try {
-      console.log('🔍 Searching for:', searchQuery);
-      console.log('🔍 Calling productService.searchProducts...');
-      
       const response = await productService.searchProducts(searchQuery, 0, 12);
-      
-      console.log('📦 Full response:', response);
-      
       // Response trực tiếp có content, totalElements (không có success, data wrapper)
       if (response && response.content) {
-        console.log('✅ Search results:', response.content);
-        console.log('✅ Total elements:', response.totalElements);
         toast.success(`Tìm thấy ${response.totalElements || 0} sản phẩm`);
         
         // Navigate to search results page
         navigate(`/product/search?q=${encodeURIComponent(searchQuery)}`);
       } else {
-        console.log('❌ No results or invalid response structure');
         toast.error('Không tìm thấy sản phẩm nào');
       }
-    } catch (error) {
-      console.error('❌ Search error:', error);
+    } catch {
       toast.error('Đã xảy ra lỗi khi tìm kiếm');
     }
   };
@@ -156,7 +142,6 @@ const TopNavigation: React.FC = () => {
     };
 
     const handleAuthUpdate = () => {
-      console.log('🔔 Auth updated event received');
       // Force component to recognize auth state change
       if (isAuthenticated && user) {
         fetchCartItemsCount();
@@ -188,9 +173,8 @@ const TopNavigation: React.FC = () => {
         if (Array.isArray(response.data)) {
           count = response.data.reduce((total, item) => total + item.quantity, 0);
         } else if (typeof response.data === 'object' && 'items' in response.data) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const cartData = response.data as any;
-          count = cartData.items?.reduce((total: number, item: any) => total + item.quantity, 0) || 0;
+          const cartData = response.data as { items?: CartItem[]; status?: number };
+          count = cartData.items?.reduce((total: number, item: CartItem) => total + item.quantity, 0) || 0;
           status = cartData.status ?? null;
         }
         
@@ -217,8 +201,7 @@ const TopNavigation: React.FC = () => {
           if (Array.isArray(response.data)) {
             items = response.data;
           } else if (typeof response.data === 'object' && 'items' in response.data) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            items = (response.data as any).items || [];
+            items = (response.data as { items: CartItem[] }).items || [];
           }
           setHoverCartItems(items.slice(0, 3));
           setHasLoadedHoverCart(true);
@@ -300,9 +283,7 @@ const TopNavigation: React.FC = () => {
         );
         window.dispatchEvent(new CustomEvent('cartUpdated'));
       }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
-      //   console.error('Error updating quantity:', error);
+    } catch {
       toast.error('Không thể cập nhật số lượng');
     }
   };

@@ -24,11 +24,6 @@ axiosInstance.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
     
-    // Debug API calls nếu được bật
-    if (import.meta.env.VITE_DEBUG_API_CALLS === 'true') {
-      console.log('🔄 API Request:', config.method?.toUpperCase(), config.url, config.data || config.params);
-    }
-    
     return config;
   },
   (error: AxiosError) => Promise.reject(error)
@@ -37,17 +32,9 @@ axiosInstance.interceptors.request.use(
 // Response interceptor
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => {
-    // Debug API responses nếu được bật
-    if (import.meta.env.VITE_DEBUG_API_CALLS === 'true') {
-      console.log('✅ API Response:', response.status, response.config?.url, response.data);
-    }
     return response;
   },
   async (error: AxiosError) => {
-    // Debug API errors nếu được bật
-    if (import.meta.env.VITE_DEBUG_API_CALLS === 'true') {
-      console.error('❌ API Error:', error.response?.status, error.config?.url, error.response?.data);
-    }
     
     const originalRequest = error.config as CustomAxiosRequestConfig;
 

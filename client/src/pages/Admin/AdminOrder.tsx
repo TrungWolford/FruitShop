@@ -97,9 +97,6 @@ const AdminOrder: React.FC = () => {
                 // No search or filter
                 response = await orderService.getAllOrders(0, largeSize);
             }
-
-            console.log('🔍 Backend Response:', response);
-
             if (response.success && response.data) {
                 const allOrders = response.data;
                 setTotalItems(allOrders.length);
@@ -116,7 +113,6 @@ const AdminOrder: React.FC = () => {
                 setTotalPages(1);
             }
         } catch (error) {
-            console.error('Error loading orders:', error);
             toast.error('Có lỗi xảy ra khi tải đơn hàng');
             setOrders([]);
             setTotalItems(0);
@@ -218,7 +214,6 @@ const AdminOrder: React.FC = () => {
                 toast.error(response.message || 'Không thể xác nhận đơn hàng');
             }
         } catch (error) {
-            console.error('Error confirming order:', error);
             toast.error('Có lỗi xảy ra khi xác nhận đơn hàng');
         }
     };
@@ -275,7 +270,6 @@ const AdminOrder: React.FC = () => {
                 toast.error(response.message || 'Không thể bắt đầu giao hàng');
             }
         } catch (error) {
-            console.error('Error starting delivery:', error);
             toast.error('Có lỗi xảy ra khi bắt đầu giao hàng');
         } finally {
             setIsCreatingShipping(false);
@@ -297,7 +291,6 @@ const AdminOrder: React.FC = () => {
                 toast.error(response.message || 'Không thể hoàn thành đơn hàng');
             }
         } catch (error) {
-            console.error('Error completing order:', error);
             toast.error('Có lỗi xảy ra khi hoàn thành đơn hàng');
         }
     };
@@ -320,7 +313,6 @@ const AdminOrder: React.FC = () => {
                 toast.error(response.message || 'Không thể hủy đơn hàng');
             }
         } catch (error) {
-            console.error('Error canceling order:', error);
             toast.error('Có lỗi xảy ra khi hủy đơn hàng');
         }
     };
