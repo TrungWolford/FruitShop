@@ -123,6 +123,8 @@ const ProductPage: React.FC = () => {
   useEffect(() => {
     // Luôn filter để chỉ hiển thị sản phẩm có status = 1
     const activeProducts = products.filter(p => p.status === 1);
+    console.log('🔍 Product Page - Total:', products.length, '| Active (status=1):', activeProducts.length);
+    console.log('🔍 Products with status:', products.map(p => ({ name: p.productName, status: p.status })));
     setFilteredProducts(activeProducts);
   }, [products]);
 
