@@ -384,7 +384,7 @@ const CheckoutPage: React.FC = () => {
             });
             // Validate account exists before creating order
             try {
-                const _accountCheck = await accountService.getAccountById(currentUser.accountId);
+                await accountService.getAccountById(currentUser.accountId);
             } catch (accountError) {
                 toast.error('Tài khoản không tồn tại hoặc đã bị khóa');
                 return;

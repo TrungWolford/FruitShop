@@ -676,8 +676,6 @@ const HistoryReceipt: React.FC = () => {
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const resultCode = urlParams.get('resultCode');
-        const _orderId = urlParams.get('orderId');
-        const _message = urlParams.get('message');
 
         if (resultCode !== null) {
             if (resultCode === '0') {
