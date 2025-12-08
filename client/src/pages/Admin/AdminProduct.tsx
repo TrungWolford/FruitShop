@@ -25,7 +25,7 @@ import type { Product } from '../../types/product';
 
 const AdminProduct: React.FC = () => {
     const navigate = useNavigate();
-    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
+    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.adminAuth);
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');

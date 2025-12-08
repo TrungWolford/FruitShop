@@ -27,7 +27,7 @@ import { Search, Star, ChevronLeft, ChevronRight, ChevronDown, Eye } from 'lucid
 
 const AdminRating: React.FC = () => {
     const navigate = useNavigate();
-    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
+    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.adminAuth);
     const [ratings, setRatings] = useState<Rating[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');

@@ -36,7 +36,7 @@ import { toast } from 'sonner';
 
 const AdminAccounts: React.FC = () => {
     const navigate = useNavigate();
-    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
+    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.adminAuth);
 
     // State for accounts data
     const [accounts, setAccounts] = useState<Account[]>([]);

@@ -17,7 +17,7 @@ import { toast } from 'sonner';
 
 const AdminRoles: React.FC = () => {
     const navigate = useNavigate();
-    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
+    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.adminAuth);
 
     // State for roles data
     const [roles, setRoles] = useState<Role[]>([]);

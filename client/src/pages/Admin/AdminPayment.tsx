@@ -28,7 +28,7 @@ import type { PaymentResponse } from '../../services/paymentService';
 
 const AdminPayment: React.FC = () => {
     const navigate = useNavigate();
-    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
+    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.adminAuth);
     const [payments, setPayments] = useState<PaymentResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
