@@ -21,7 +21,6 @@ export const productService = {
   // Lấy sản phẩm theo ID
   getProductById: async (productId: string) => {
     try {
-      console.log('📡 API URL:', `${API.GET_PRODUCT_BY_ID(productId)}`);
       
       const response = await axiosInstance.get(`${API.GET_PRODUCT_BY_ID(productId)}`);
       return {
@@ -112,7 +111,8 @@ export const productService = {
     page: number = 0, 
     size: number = 10,
     minPrice?: number,
-    maxPrice?: number
+    maxPrice?: number,
+    status?: number
   ) => {
     try {
       const params: any = {
@@ -123,6 +123,7 @@ export const productService = {
       
       if (minPrice !== undefined) params.minPrice = minPrice;
       if (maxPrice !== undefined) params.maxPrice = maxPrice;
+      if (status !== undefined) params.status = status;
       const response = await axiosInstance.get(`${API.SEARCH_PRODUCTS}`, { params });
       return response.data;
     } catch (error) {

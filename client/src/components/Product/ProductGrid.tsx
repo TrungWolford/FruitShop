@@ -37,8 +37,13 @@ const ProductGrid: React.FC<ProductGridProps> = ({
     const load = async () => {
       try {
         setLoading(true);
-        // Request first page with size large enough (or you can implement pagination later)
-        const response: any = await productService.getAllProducts(0, limit || 20);
+        // Gọi API với status = 1 để lấy sản phẩm đang hoạt động
+        const response: any = await productService.filterProducts({
+          status: 1,
+          categoryId: categoryId,
+          page: 0,
+          size: limit || 20
+        });
 
         // If backend returns paginated { content, totalElements }
         if (response && response.content) {
@@ -71,7 +76,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
     };
   }, [categoryId, limit]);
 
-  // Filter and slice locally
+  // Filter locally - luôn filter status = 1 để đảm bảo chỉ hiển thị sản phẩm đang hoạt động
   let filteredProducts = products.filter((p) => p.status === 1);
   if (categoryId) {
     filteredProducts = filteredProducts.filter((product) =>

@@ -62,7 +62,6 @@ const TopNavigation: React.FC = () => {
 
   // Handle search
   const handleSearch = async () => {
-    console.log('🎯 searchQuery trimmed:', searchQuery.trim());
     
     if (!searchQuery.trim()) {
       toast.error('Vui lòng nhập từ khóa tìm kiếm');
@@ -70,7 +69,7 @@ const TopNavigation: React.FC = () => {
     }
 
     try {
-      const response = await productService.searchProducts(searchQuery, 0, 12);
+      const response = await productService.searchProducts(searchQuery, 0, 12, undefined, undefined, 1);
       // Response trực tiếp có content, totalElements (không có success, data wrapper)
       if (response && response.content) {
         toast.success(`Tìm thấy ${response.totalElements || 0} sản phẩm`);
