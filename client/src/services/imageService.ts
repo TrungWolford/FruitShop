@@ -10,10 +10,8 @@ export const imageService = {
         // Nếu có quá 15 images, chỉ giữ lại 10 gần nhất
         const recentImages = savedImages.slice(-10);
         localStorage.setItem('product_images', JSON.stringify(recentImages));
-        console.log('Auto-cleanup: Kept 10 most recent images');
       }
     } catch (error) {
-      console.warn('Error in auto-cleanup:', error);
     }
   },
 
@@ -42,20 +40,17 @@ export const imageService = {
         localStorage.setItem('product_images', JSON.stringify(existingImages));
       } catch (storageError) {
         // Nếu localStorage đầy, chỉ log warning và tiếp tục
-        console.warn('LocalStorage quota exceeded, but continuing with image upload:', storageError);
         // Có thể clear old data nếu cần
         try {
           localStorage.removeItem('product_images');
           localStorage.setItem('product_images', JSON.stringify([imageData]));
         } catch (clearError) {
-          console.warn('Failed to clear localStorage:', clearError);
         }
       }
       
       // Trả về tên file gốc
       return fileName;
     } catch (error) {
-      console.error('Error saving image:', error);
       throw error;
     }
   },
@@ -66,7 +61,6 @@ export const imageService = {
       const savedImages = JSON.parse(localStorage.getItem('product_images') || '[]');
       return savedImages.map((img: any) => img.name);
     } catch (error) {
-      console.error('Error getting image names:', error);
       return [];
     }
   },
@@ -113,10 +107,8 @@ export const imageService = {
       if (savedImages.length > 10) {
         const recentImages = savedImages.slice(-10);
         localStorage.setItem('product_images', JSON.stringify(recentImages));
-        console.log('Cleaned up localStorage, kept 10 most recent images');
       }
     } catch (error) {
-      console.warn('Error cleaning up localStorage:', error);
     }
   },
 
@@ -124,9 +116,7 @@ export const imageService = {
   clearAllImages: (): void => {
     try {
       localStorage.removeItem('product_images');
-      console.log('Cleared all image data from localStorage');
     } catch (error) {
-      console.warn('Error clearing localStorage:', error);
     }
   }
 };

@@ -47,9 +47,6 @@ const AdminRating: React.FC = () => {
         try {
             setLoading(true);
             const response = await ratingService.getAllRatings(page, itemsPerPage);
-
-            console.log('🔍 Backend Response:', response);
-            console.log('📦 Response type:', typeof response);
             console.log('📋 Response keys:', Object.keys(response));
 
             // Backend trả về trực tiếp Page<RatingDetailResponse>
@@ -82,13 +79,11 @@ const AdminRating: React.FC = () => {
                 setTotalPages(response.totalPages || 1);
                 setTotalItems(response.totalElements || 0);
             } else {
-                console.log('⚠️ No content in response');
                 setRatings([]);
                 setTotalPages(1);
                 setTotalItems(0);
             }
         } catch (error) {
-            console.error('❌ Error loading ratings:', error);
             toast.error('Không thể tải danh sách đánh giá từ server');
             setRatings([]);
             setTotalPages(1);
@@ -142,7 +137,6 @@ const AdminRating: React.FC = () => {
             );
             loadRatings(currentPage - 1);
         } catch (error) {
-            console.error('Error changing status:', error);
             toast.error('Không thể thay đổi trạng thái');
         }
     };

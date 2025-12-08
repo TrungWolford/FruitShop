@@ -47,18 +47,12 @@ export const momoService = {
      */
     createPayment: async (orderId: string): Promise<MomoPaymentResponse> => {
         try {
-            console.log('🔵 Creating MoMo payment for orderId:', orderId);
-            
             const response = await axiosInstance.post<MomoPaymentResponse>(
                 '/momo/create-payment',
                 { orderId }
             );
-            
-            console.log('📥 MoMo payment response:', response.data);
             return response.data;
         } catch (error: any) {
-            console.error('❌ Error creating MoMo payment:', error);
-            
             // Return error response
             return {
                 success: false,
@@ -75,16 +69,11 @@ export const momoService = {
      */
     checkPaymentStatus: async (orderId: string): Promise<PaymentStatusResponse> => {
         try {
-            console.log('🔍 Checking payment status for orderId:', orderId);
-            
             const response = await axiosInstance.get<PaymentStatusResponse>(
                 `/momo/check-status/${orderId}`
             );
-            
-            console.log('📊 Payment status:', response.data);
             return response.data;
         } catch (error: any) {
-            console.error('❌ Error checking payment status:', error);
             throw error;
         }
     },
@@ -96,16 +85,11 @@ export const momoService = {
      */
     handleReturn: async (params: URLSearchParams): Promise<any> => {
         try {
-            console.log('🔙 Handling MoMo return callback');
-            
             const response = await axiosInstance.get('/momo/return', {
                 params: Object.fromEntries(params.entries())
             });
-            
-            console.log('📥 Return response:', response.data);
             return response.data;
         } catch (error: any) {
-            console.error('❌ Error handling MoMo return:', error);
             throw error;
         }
     }

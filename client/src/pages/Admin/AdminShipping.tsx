@@ -95,9 +95,6 @@ const AdminShipping: React.FC = () => {
                 page,
                 itemsPerPage
             );
-
-            console.log('🔍 Backend Response:', response);
-
             if (response.success && response.data) {
                 setShippings(response.data);
                 // Use pagination metadata from backend
@@ -110,7 +107,6 @@ const AdminShipping: React.FC = () => {
                 setTotalPages(1);
             }
         } catch (error) {
-            console.error('Error loading shippings:', error);
             toast.error('Có lỗi xảy ra khi tải vận chuyển');
             setShippings([]);
             setTotalItems(0);

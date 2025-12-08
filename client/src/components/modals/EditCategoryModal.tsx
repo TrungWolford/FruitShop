@@ -52,7 +52,6 @@ const EditCategoryModal: React.FC<EditCategoryModalProps> = ({ isOpen, onClose, 
             handleClose();
             onSuccess();
         } catch (error) {
-            console.error('Error updating category:', error);
             toast.error('Không thể cập nhật thể loại. Vui lòng thử lại!');
         } finally {
             setLoading(false);

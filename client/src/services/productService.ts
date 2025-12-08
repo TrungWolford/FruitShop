@@ -14,7 +14,6 @@ export const productService = {
       });
       return response.data;
     } catch (error) {
-      console.error('Error fetching products:', error);
       throw error;
     }
   },
@@ -22,28 +21,14 @@ export const productService = {
   // Lấy sản phẩm theo ID
   getProductById: async (productId: string) => {
     try {
-      console.log('🔍 Fetching product with ID:', productId);
-      console.log('📡 API URL:', `${API.GET_PRODUCT_BY_ID(productId)}`);
       
       const response = await axiosInstance.get(`${API.GET_PRODUCT_BY_ID(productId)}`);
-      
-      console.log('✅ Product fetched successfully:', response.data);
-      
       return {
         success: true,
         data: response.data,
         message: 'Product fetched successfully'
       };
     } catch (error: any) {
-      console.error('❌ Error fetching product:', error);
-      console.error('📋 Error details:', {
-        message: error.message,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        url: error.config?.url,
-      });
-      
       return {
         success: false,
         data: null,
@@ -69,13 +54,6 @@ export const productService = {
           imageOrder: index + 1
         })) || [], // Convert imageNames to proper format
       };
-
-      console.log('🚀 Sending product data to API:', {
-        ...requestData,
-        imageCount: productData.imageNames?.length || 0,
-        imageNames: productData.imageNames || [] // For logging clarity
-      });
-
       const response = await axiosInstance.post(`${API.CREATE_PRODUCT}`, requestData, {
         headers: {
           'Content-Type': 'application/json',
@@ -83,7 +61,6 @@ export const productService = {
       });
       return response.data;
     } catch (error) {
-      console.error('Error creating product:', error);
       throw error;
     }
   },
@@ -107,14 +84,6 @@ export const productService = {
           }))
         }),
       };
-
-      console.log('🚀 Updating product with data:', {
-        productId,
-        ...requestData,
-        imageCount: productData.imageNames?.length || 0,
-        imageNames: productData.imageNames || []
-      });
-
       const response = await axiosInstance.put(`${API.UPDATE_PRODUCT(productId)}`, requestData, {
         headers: {
           'Content-Type': 'application/json',
@@ -122,7 +91,6 @@ export const productService = {
       });
       return response.data;
     } catch (error) {
-      console.error('Error updating product:', error);
       throw error;
     }
   },
@@ -133,7 +101,6 @@ export const productService = {
       const response = await axiosInstance.delete(`${API.DELETE_PRODUCT(productId)}`);
       return response.data;
     } catch (error) {
-      console.error('Error deleting product:', error);
       throw error;
     }
   },
@@ -144,7 +111,8 @@ export const productService = {
     page: number = 0, 
     size: number = 10,
     minPrice?: number,
-    maxPrice?: number
+    maxPrice?: number,
+    status?: number
   ) => {
     try {
       const params: any = {
@@ -155,16 +123,10 @@ export const productService = {
       
       if (minPrice !== undefined) params.minPrice = minPrice;
       if (maxPrice !== undefined) params.maxPrice = maxPrice;
-      
-      console.log('📡 productService.searchProducts called with:', params);
-      console.log('📡 API endpoint:', API.SEARCH_PRODUCTS);
-      
+      if (status !== undefined) params.status = status;
       const response = await axiosInstance.get(`${API.SEARCH_PRODUCTS}`, { params });
-      
-      console.log('✅ Search API response:', response.data);
       return response.data;
     } catch (error) {
-      console.error('❌ Error searching products:', error);
       throw error;
     }
   },
@@ -184,7 +146,6 @@ export const productService = {
       });
       return response.data;
     } catch (error) {
-      console.error('Error filtering products:', error);
       throw error;
     }
   }

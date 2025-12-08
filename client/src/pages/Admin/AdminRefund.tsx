@@ -101,16 +101,8 @@ const AdminRefund: React.FC = () => {
                     allRefunds = response.data.content;
                 }
             }
-
-            console.log('🔍 Loaded refunds:', allRefunds);
-            
             // Debug: Log first refund to see structure
             if (allRefunds.length > 0) {
-                console.log('🔍 First refund structure:', allRefunds[0]);
-                console.log('🔍 First refund orderId:', allRefunds[0].orderId);
-                console.log('🔍 First refund accountName:', allRefunds[0].accountName);
-                console.log('🔍 First refund refundAmount:', allRefunds[0].refundAmount);
-                console.log('🔍 First refund order object:', allRefunds[0].order);
             }
             
             setTotalItems(allRefunds.length);
@@ -121,7 +113,6 @@ const AdminRefund: React.FC = () => {
             const endIndex = startIndex + itemsPerPage;
             setRefunds(allRefunds.slice(startIndex, endIndex));
         } catch (error) {
-            console.error('Error loading refunds:', error);
             toast.error('Có lỗi xảy ra khi tải danh sách hoàn tiền');
             setRefunds([]);
             setTotalItems(0);
@@ -207,7 +198,6 @@ const AdminRefund: React.FC = () => {
                 toast.error(response.message || 'Không thể duyệt yêu cầu hoàn tiền');
             }
         } catch (error) {
-            console.error('Error approving refund:', error);
             toast.error('Có lỗi xảy ra khi duyệt yêu cầu hoàn tiền');
         } finally {
             setIsProcessing(false);
@@ -233,7 +223,6 @@ const AdminRefund: React.FC = () => {
                 toast.error(response.message || 'Không thể từ chối yêu cầu hoàn tiền');
             }
         } catch (error) {
-            console.error('Error rejecting refund:', error);
             toast.error('Có lỗi xảy ra khi từ chối yêu cầu hoàn tiền');
         } finally {
             setIsProcessing(false);
@@ -259,7 +248,6 @@ const AdminRefund: React.FC = () => {
                 toast.error(response.message || 'Không thể hoàn thành yêu cầu hoàn tiền');
             }
         } catch (error) {
-            console.error('Error completing refund:', error);
             toast.error('Có lỗi xảy ra khi hoàn thành yêu cầu hoàn tiền');
         } finally {
             setIsProcessing(false);
@@ -283,7 +271,6 @@ const AdminRefund: React.FC = () => {
                 toast.error(response.message || 'Không thể hủy yêu cầu hoàn tiền');
             }
         } catch (error) {
-            console.error('Error canceling refund:', error);
             toast.error('Có lỗi xảy ra khi hủy yêu cầu hoàn tiền');
         } finally {
             setIsProcessing(false);

@@ -52,7 +52,6 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onClose, on
             handleClose();
             onSuccess();
         } catch (error) {
-            console.error('Error creating category:', error);
             toast.error('Không thể tạo thể loại. Vui lòng thử lại!');
         } finally {
             setLoading(false);

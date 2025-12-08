@@ -61,7 +61,6 @@ export const shippingService = {
         data: response.data
       };
     } catch (error: any) {
-      console.error('Error getting shipping addresses:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể tải địa chỉ giao hàng'
@@ -78,7 +77,6 @@ export const shippingService = {
         data: response.data
       };
     } catch (error: any) {
-      console.error('Error creating shipping address:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể tạo địa chỉ giao hàng'
@@ -95,7 +93,6 @@ export const shippingService = {
         data: response.data
       };
     } catch (error: any) {
-      console.error('Error updating shipping address:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể cập nhật địa chỉ giao hàng'
@@ -111,7 +108,6 @@ export const shippingService = {
         success: true
       };
     } catch (error: any) {
-      console.error('Error deleting shipping address:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể xóa địa chỉ giao hàng'
@@ -141,7 +137,6 @@ export const shippingService = {
         data: shippings
       };
     } catch (error: any) {
-      console.error('Error getting all shippings:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể tải danh sách vận chuyển'
@@ -158,7 +153,6 @@ export const shippingService = {
         data: response.data
       };
     } catch (error: any) {
-      console.error('Error getting shipping:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể tải thông tin vận chuyển'
@@ -178,7 +172,6 @@ export const shippingService = {
         message: 'Cập nhật trạng thái thành công'
       };
     } catch (error: any) {
-      console.error('Error updating shipping status:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể cập nhật trạng thái'
@@ -206,7 +199,6 @@ export const shippingService = {
         data: shippings
       };
     } catch (error: any) {
-      console.error('Error searching shippings:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể tìm kiếm vận chuyển'
@@ -234,7 +226,6 @@ export const shippingService = {
         data: shippings
       };
     } catch (error: any) {
-      console.error('Error filtering shippings:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể lọc vận chuyển'
@@ -279,7 +270,6 @@ export const shippingService = {
         totalPages
       };
     } catch (error: any) {
-      console.error('Error searching and filtering shippings:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể tìm kiếm và lọc vận chuyển'

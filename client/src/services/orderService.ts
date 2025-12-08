@@ -86,12 +86,10 @@ export function mapBackendOrderToFrontend(o: any): OrderResponse {
       // Try standard date parsing
       const date = new Date(dateValue);
       if (isNaN(date.getTime())) {
-        console.warn('Invalid date value:', dateValue, 'using current date');
         return new Date().toISOString();
       }
       return date.toISOString();
     } catch (error) {
-      console.error('Error parsing date:', dateValue, error);
       return new Date().toISOString();
     }
   };
@@ -138,30 +136,16 @@ export const orderService = {
   // Create new order
   createOrder: async (request: CreateOrderRequest): Promise<{ success: boolean; data?: OrderResponse; message?: string }> => {
     try {
-      console.log('📦 Creating order with request:', request);
       console.log('Request items detail:', JSON.stringify(request.items, null, 2));
       
       const response = await axiosInstance.post(API.CREATE_ORDER, request);
-      
-      console.log('✅ Order created successfully - Raw response:', response.data);
-      console.log('📅 createdAt value:', response.data?.createdAt);
-      console.log('📅 createdAt type:', typeof response.data?.createdAt);
-      
       const mapped = response.data ? mapBackendOrderToFrontend(response.data) : undefined;
-      
-      console.log('✅ Mapped order:', mapped);
-      
       return {
         success: true,
         data: mapped,
         message: 'Đơn hàng đã được tạo thành công'
       };
     } catch (error: any) {
-      console.error('❌ Error creating order:', error);
-      console.error('Error response:', error.response?.data);
-      console.error('Error status:', error.response?.status);
-      console.error('Request data:', request);
-      
       return {
         success: false,
         message: error.response?.data?.message || error.response?.data || 'Không thể tạo đơn hàng'
@@ -195,11 +179,8 @@ export const orderService = {
         data: orders
       };
     } catch (error: any) {
-      console.error('Error getting all orders:', error);
-      
       // Return empty array instead of failing when backend has issues
       if (error.response?.status === 500) {
-        console.warn('⚠️ Backend error 500, returning empty array');
         return {
           success: true,
           data: [],
@@ -227,7 +208,6 @@ export const orderService = {
         data: mapped
       };
     } catch (error: any) {
-      console.error('Error getting orders:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể tải đơn hàng'
@@ -245,7 +225,6 @@ export const orderService = {
         data: mapped
       };
     } catch (error: any) {
-      console.error('Error getting order:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể tải đơn hàng'
@@ -263,7 +242,6 @@ export const orderService = {
         message: 'Đơn hàng đã được hủy thành công'
       };
     } catch (error: any) {
-      console.error('Error canceling order:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể hủy đơn hàng'
@@ -294,7 +272,6 @@ export const orderService = {
         message: 'Yêu cầu trả hàng đã được gửi thành công'
       };
     } catch (error: any) {
-      console.error('Error returning order:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể gửi yêu cầu trả hàng'
@@ -312,7 +289,6 @@ export const orderService = {
         message: 'Đã xác nhận đơn hàng thành công'
       };
     } catch (error: any) {
-      console.error('Error confirming order:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể xác nhận đơn hàng'
@@ -330,7 +306,6 @@ export const orderService = {
         message: 'Đã bắt đầu giao hàng'
       };
     } catch (error: any) {
-      console.error('Error starting delivery:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể bắt đầu giao hàng'
@@ -348,7 +323,6 @@ export const orderService = {
         message: 'Đã hoàn thành đơn hàng'
       };
     } catch (error: any) {
-      console.error('Error completing order:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể hoàn thành đơn hàng'
@@ -368,7 +342,6 @@ export const orderService = {
         message: 'Cập nhật trạng thái đơn hàng thành công'
       };
     } catch (error: any) {
-      console.error('Error updating order status:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể cập nhật trạng thái đơn hàng'
@@ -396,7 +369,6 @@ export const orderService = {
         data: orders
       };
     } catch (error: any) {
-      console.error('Error getting orders by status:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể tải đơn hàng'
@@ -429,7 +401,6 @@ export const orderService = {
         data: orders
       };
     } catch (error: any) {
-      console.error('Error getting orders by date range:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể tải đơn hàng'
@@ -461,7 +432,6 @@ export const orderService = {
         data: orders
       };
     } catch (error: any) {
-      console.error('Error searching orders:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể tìm kiếm đơn hàng'
@@ -493,7 +463,6 @@ export const orderService = {
         data: orders
       };
     } catch (error: any) {
-      console.error('Error filtering orders:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể lọc đơn hàng'
@@ -528,7 +497,6 @@ export const orderService = {
         data: orders
       };
     } catch (error: any) {
-      console.error('Error searching and filtering orders:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Không thể tìm kiếm và lọc đơn hàng'

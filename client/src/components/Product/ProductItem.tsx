@@ -102,17 +102,13 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
     try {
       if (isAuthenticated && user) {
         // User đã đăng nhập → thêm qua API
-        // console.log('🛒 Starting cart process for product:', product.productId, 'user:', user.accountId);
-
         const addToCartResponse = await cartService.addToCart({
           productId: product.productId,
           quantity: 1,
           accountId: user.accountId,
         });
-        // console.log('✅ Add to cart response:', addToCartResponse);
-
         if (addToCartResponse.success) {
-          toast.success('Đã thêm sản phẩm vào giỏ hàng');
+          toast.success('Đã thêm sản phẩm vào giỏ hàng', { duration: 1000 });
 
           // Gọi callback nếu có để refresh cart
           if (onAddToCart) {
@@ -122,13 +118,10 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
           // Dispatch event để Cart component có thể refresh
           window.dispatchEvent(new CustomEvent('cartUpdated'));
         } else {
-          // console.error('❌ Failed to add to cart:', addToCartResponse);
           toast.error(addToCartResponse.message || 'Không thể thêm sản phẩm vào giỏ hàng');
         }
       } else {
         // Guest user → thêm vào localStorage
-        // console.log('🛒 Adding to localStorage cart for guest user');
-
         // Lấy imageUrl cho localStorage
         let imageUrl = product.imageUrl;
         if (!imageUrl && product.images && product.images.length > 0) {
@@ -144,7 +137,7 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
           quantity: 1,
         });
 
-        toast.success('Đã thêm sản phẩm vào giỏ hàng');
+        toast.success('Đã thêm sản phẩm vào giỏ hàng', { duration: 1000 });
 
         // Gọi callback nếu có
         if (onAddToCart) {
@@ -155,8 +148,6 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      // console.error('💥 Error adding to cart:', error);
-      // console.error('Error details:', error.response?.data);
       toast.error(error.response?.data?.message || error.message || 'Đã xảy ra lỗi khi thêm vào giỏ hàng');
     } finally {
       setIsAddingToCart(false);

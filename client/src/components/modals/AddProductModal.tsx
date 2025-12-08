@@ -52,8 +52,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
             const response = await categoryService.getAllCategories();
             setCategories(response.content);
         } catch (error) {
-            console.error('Error loading categories:', error);
-
             // Fallback: Use mock categories when API is not available
             const mockCategories = [
                 { categoryId: '1', categoryName: 'Tiểu thuyết', status: 1 },
@@ -109,7 +107,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
 
             toast.success(`Đã thêm hình ảnh ${index + 1}. Sẽ upload lên Cloudinary khi tạo sản phẩm.`);
         } catch (error) {
-            console.error('Error saving image:', error);
             toast.error('Không thể lưu hình ảnh');
         }
     };
@@ -187,7 +184,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
 
         try {
             // ========== STEP 1: Upload images to Cloudinary ==========
-            console.log('=== STARTING FILE UPLOADS ===');
             const uploadedImageUrls: string[] = [];
 
             // Lọc ra các slot có file và giữ đúng thứ tự
@@ -197,8 +193,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
 
             // Upload all images to Cloudinary theo thứ tự slot
             if (validImages.length > 0) {
-                console.log('Uploading', validImages.length, 'images to Cloudinary...');
-                
                 for (let i = 0; i < validImages.length; i++) {
                     const { file: image, index: slotIndex } = validImages[i];
                     console.log(`Uploading image from slot ${slotIndex + 1} (${i + 1}/${validImages.length}):`, image.name, 'Size:', image.size, 'Type:', image.type);
@@ -207,18 +201,13 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
                         const result = await cloudinaryService.uploadImage(image, {
                             folder: 'products/images'
                         });
-                        
-                        console.log(`Image from slot ${slotIndex + 1} upload result:`, result);
                         if (result.success && result.data) {
                             uploadedImageUrls.push(result.data.url);
-                            console.log(`✅ Image from slot ${slotIndex + 1} uploaded successfully:`, result.data.url);
-                            
                             toast.success(`Đã tải lên hình ảnh ${i + 1}/${validImages.length}`, {
                                 duration: 2000,
                                 position: 'top-right',
                             });
                         } else {
-                            console.error(`❌ Image from slot ${slotIndex + 1} upload failed:`, result.message);
                             toast.error(`Không thể tải lên hình ảnh ${slotIndex + 1}: ${result.message}`, {
                                 duration: 4000,
                                 position: 'top-right',
@@ -232,7 +221,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
                             throw new Error(`Failed to upload image from slot ${slotIndex + 1}: ${result.message}`);
                         }
                     } catch (error) {
-                        console.error(`❌ Error uploading image from slot ${slotIndex + 1}:`, error);
                         toast.error(`Lỗi khi tải lên hình ảnh ${slotIndex + 1}`, {
                             duration: 4000,
                             position: 'top-right',
@@ -246,15 +234,10 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
                         throw error;
                     }
                 }
-                
-                console.log('✅ All images uploaded successfully:', uploadedImageUrls);
             } else {
-                console.log('No images to upload');
             }
 
             // ========== STEP 2: Create product with Cloudinary URLs ==========
-            console.log('=== CREATING PRODUCT IN DATABASE ===');
-            
             const productData: CreateProductRequest = {
                 productName: formData.productName.trim(),
                 categoryIds: formData.selectedCategories,
@@ -265,16 +248,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
                 // Use Cloudinary URLs instead of local file names
                 imageNames: uploadedImageUrls.length > 0 ? uploadedImageUrls : undefined,
             };
-
-            console.log('📦 Creating product with data:', {
-                productName: productData.productName,
-                price: productData.price,
-                stock: productData.stock,
-                categories: productData.categoryIds,
-                imageCount: uploadedImageUrls.length,
-                imageUrls: uploadedImageUrls,
-            });
-
             await productService.createProduct(productData);
 
             toast.success(
@@ -314,8 +287,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
             onSuccess();
             onClose();
         } catch (error: any) {
-            console.error('Error creating product:', error);
-
             const errorMessage = error.response?.data?.message || error.message || ERROR_MESSAGES.PRODUCT_CREATE_FAILED;
 
             toast.error(errorMessage);

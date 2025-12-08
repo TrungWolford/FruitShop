@@ -109,7 +109,6 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
       }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
     } catch (error) {
-      // console.error('Error updating cart item:', error);
       toast.error('Đã xảy ra lỗi khi cập nhật');
     } finally {
       setIsUpdating(null);
@@ -137,7 +136,6 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose }) => {
       }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
     } catch (error) {
-      // console.error('Error removing cart item:', error);
       toast.error('Đã xảy ra lỗi khi xóa sản phẩm');
     } finally {
       setIsUpdating(null);

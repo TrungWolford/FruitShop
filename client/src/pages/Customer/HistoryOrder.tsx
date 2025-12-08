@@ -75,14 +75,10 @@ const HistoryReceipt: React.FC = () => {
         try {
             const response = await orderService.getOrdersByAccount(user.accountId);
             if (response.success && response.data) {
-                console.log('📦 Fetched orders:', response.data);
-
                 // Debug: Log product images for each order
                 response.data.forEach((order, orderIndex) => {
                     console.log(`📦 Order ${orderIndex + 1} (${order.orderId}):`);
                     order.orderDetails.forEach((detail, detailIndex) => {
-                        console.log(`  📦 Detail ${detailIndex + 1}: ${detail.productName}`);
-                        console.log(`  🖼️ Images:`, detail.productImages);
                         if (detail.productImages && detail.productImages.length > 0) {
                             detail.productImages.forEach((imageUrl, imageIndex) => {
                                 console.log(
@@ -101,11 +97,9 @@ const HistoryReceipt: React.FC = () => {
                 // Check which order items have return orders (refunds)
                 await checkOrderItemRefunds(response.data);
             } else {
-                console.error('Failed to fetch orders:', response.message);
                 setOrders([]);
             }
         } catch (error) {
-            console.error('Error fetching orders:', error);
             setOrders([]);
         } finally {
             setIsLoading(false);
@@ -128,37 +122,25 @@ const HistoryReceipt: React.FC = () => {
                 });
             });
         });
-
-        console.log('📋 Total orderItems:', orderItems.size);
-
         // Get unique product IDs to fetch their ratings
         const productIds = new Set<string>(
             Array.from(orderItems.values()).map(item => item.productId)
         );
-
-        console.log('📦 Unique products to check:', productIds.size);
-
         // Check each product and see which orderItems are rated
         for (const productId of productIds) {
             try {
                 const ratings = await ratingService.getRatingByAccountAndProduct(user.accountId, productId);
-                
-                console.log(`✅ Ratings for product ${productId}:`, ratings);
-
                 // Mark orderItems that have ratings
                 if (ratings && Array.isArray(ratings)) {
                     ratings.forEach(rating => {
                         if (rating.orderItemId) {
-                            console.log(`⭐ Marking orderItem ${rating.orderItemId} as rated`);
                             ratedMap.set(rating.orderItemId, true);
                         } else {
-                            console.warn('⚠️ Rating without orderItemId:', rating);
                         }
                     });
                 }
             } catch (error) {
                 // If error, continue to next product
-                console.error(`❌ Error fetching ratings for product ${productId}:`, error);
             }
         }
 
@@ -168,8 +150,6 @@ const HistoryReceipt: React.FC = () => {
                 ratedMap.set(item.orderDetailId, false);
             }
         });
-
-        console.log('📊 Final rated map size:', ratedMap.size);
         console.log('📊 Rated orderItems:', Array.from(ratedMap.entries()).filter(([_, rated]) => rated));
 
         setRatedOrderItems(ratedMap);
@@ -189,24 +169,16 @@ const HistoryReceipt: React.FC = () => {
                 });
             });
         });
-
-        console.log('📋 Checking refunds for order items:', orderItems.size);
-
         // Check each order item for refunds
         for (const [orderDetailId] of orderItems) {
             try {
                 const response = await refundService.getRefundsByOrderItemId(orderDetailId);
-                
-                console.log(`✅ Refunds for order item ${orderDetailId}:`, response);
-
                 if (response.success && response.data && Array.isArray(response.data) && response.data.length > 0) {
                     // Store the first refund (should only be one per item)
                     const refund = response.data[0];
-                    console.log(`💰 Found refund for order item ${orderDetailId}:`, refund);
                     refundsMap.set(orderDetailId, refund);
                 }
             } catch (error) {
-                console.error(`❌ Error fetching refunds for order item ${orderDetailId}:`, error);
             }
         }
 
@@ -505,7 +477,6 @@ const HistoryReceipt: React.FC = () => {
             // Reload orders to refresh rating status
             await fetchOrders();
         } catch (error) {
-            console.error('Error submitting rating:', error);
             toast.error('Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại!', {
                 duration: 3000,
             });
@@ -534,7 +505,6 @@ const HistoryReceipt: React.FC = () => {
                 });
             }
         } catch (error) {
-            console.error('Error canceling order:', error);
             toast.error('Có lỗi xảy ra khi hủy đơn hàng. Vui lòng thử lại!', {
                 duration: 3000,
             });
@@ -584,14 +554,6 @@ const HistoryReceipt: React.FC = () => {
         try {
             // Extract image URLs from uploaded images
             const imageUrls = returnImages.map(img => img.url);
-            
-            console.log('📤 Submitting return request with:');
-            console.log('  - Order Item ID:', selectedItemForReturn.orderItemId);
-            console.log('  - Order ID:', selectedItemForReturn.orderId);
-            console.log('  - Reason:', returnReason);
-            console.log('  - Refund Amount:', selectedItemForReturn.refundAmount);
-            console.log('  - Image URLs:', imageUrls);
-
             const response = await orderService.returnOrder(
                 selectedItemForReturn.orderItemId,
                 selectedItemForReturn.orderId,
@@ -613,7 +575,6 @@ const HistoryReceipt: React.FC = () => {
                 });
             }
         } catch (error) {
-            console.error('Error submitting return request:', error);
             toast.error('Có lỗi xảy ra khi gửi yêu cầu trả hàng. Vui lòng thử lại!', {
                 duration: 3000,
             });
@@ -655,34 +616,15 @@ const HistoryReceipt: React.FC = () => {
                 const newImages = successfulUploads.map(r => r.data!);
                 
                 // Log uploaded images for debugging
-                console.log('📸 ========== REFUND IMAGE UPLOAD DEBUG ==========');
-                console.log('📸 Total uploaded:', newImages.length);
-                console.log('📸 Full response data:', newImages);
-                
                 newImages.forEach((img, idx) => {
-                    console.log(`📸 Image ${idx + 1}:`);
-                    console.log(`   - URL: "${img.url}"`);
-                    console.log(`   - Public ID: "${img.publicId}"`);
-                    console.log(`   - Format: "${img.format}"`);
-                    console.log(`   - Width: ${img.width}`);
-                    console.log(`   - Height: ${img.height}`);
-                    console.log(`   - Bytes: ${img.bytes}`);
-                    
                     // Test if URL is valid
                     if (!img.url || img.url === '') {
-                        console.error(`❌ Image ${idx + 1} has EMPTY URL!`);
                     } else if (!img.url.startsWith('http')) {
-                        console.error(`❌ Image ${idx + 1} URL is not a valid HTTP URL:`, img.url);
                     } else {
-                        console.log(`✅ Image ${idx + 1} URL is valid`);
                     }
                 });
-                
-                console.log('📸 =============================================');
-                
                 setReturnImages(prev => {
                     const updated = [...prev, ...newImages];
-                    console.log('📸 Updated returnImages state:', updated);
                     return updated;
                 });
 
@@ -703,7 +645,6 @@ const HistoryReceipt: React.FC = () => {
                 });
             }
         } catch (error) {
-            console.error('Error uploading images:', error);
             toast.error('Có lỗi xảy ra khi tải lên hình ảnh', {
                 id: toastId,
                 duration: 3000,
@@ -739,8 +680,6 @@ const HistoryReceipt: React.FC = () => {
         const message = urlParams.get('message');
 
         if (resultCode !== null) {
-            console.log('🔔 MoMo callback detected:', { resultCode, orderId, message });
-
             if (resultCode === '0') {
                 // Payment success
                 toast.success('✅ Thanh toán thành công! Đơn hàng đã được xác nhận.', {
@@ -1847,12 +1786,6 @@ const HistoryReceipt: React.FC = () => {
                                 <div className="mt-4 grid grid-cols-3 gap-2">
                                     {returnImages.map((image, index) => {
                                         // Debug logging for each image render
-                                        console.log(`🖼️ Rendering preview image ${index + 1}:`, {
-                                            url: image.url,
-                                            hasUrl: !!image.url,
-                                            urlLength: image.url?.length || 0
-                                        });
-                                        
                                         return (
                                             <div key={index} className="relative">
                                                 <img
@@ -1860,15 +1793,10 @@ const HistoryReceipt: React.FC = () => {
                                                     alt={`Return ${index + 1}`}
                                                     className="w-full h-20 object-cover rounded-lg border"
                                                     onError={(e) => {
-                                                        console.error('❌ FAILED to load refund preview image!');
-                                                        console.error('   - Index:', index);
-                                                        console.error('   - URL:', image.url);
-                                                        console.error('   - Full image data:', image);
                                                         e.currentTarget.src = '/placeholder-image.svg';
                                                         e.currentTarget.style.border = '2px solid red';
                                                     }}
                                                     onLoad={() => {
-                                                        console.log(`✅ SUCCESS loading refund preview image ${index + 1}:`, image.url);
                                                     }}
                                                 />
                                                 <button

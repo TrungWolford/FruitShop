@@ -25,7 +25,6 @@ const CategoryMainPage: React.FC = () => {
     try {
       setLoading(true);
       const response = await categoryService.getAllCategories(0, 100);
-      console.log('Categories response:', response);
       if (response && response.content) {
         // filter active categories (status = 1)
         const activeCategories = response.content.filter(c => c.status === 1);
@@ -34,7 +33,6 @@ const CategoryMainPage: React.FC = () => {
         setCategories([]);
       }
     } catch (error) {
-      console.error('Error loading categories:', error);
       toast.error('Không thể tải danh mục sản phẩm');
       // fallback to empty list
       setCategories([]);

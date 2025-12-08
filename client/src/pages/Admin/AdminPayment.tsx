@@ -84,9 +84,6 @@ const AdminPayment: React.FC = () => {
                 // Get all payments
                 response = await paymentService.getAllPayments(0, largeSize, 'paymentDate', 'desc');
             }
-
-            console.log('🔍 Backend Response:', response);
-
             if (response.success && response.data) {
                 let allPayments = response.data;
 
@@ -114,7 +111,6 @@ const AdminPayment: React.FC = () => {
                 setTotalPages(1);
             }
         } catch (error) {
-            console.error('Error loading payments:', error);
             toast.error('Có lỗi xảy ra khi tải thanh toán');
             setPayments([]);
             setTotalItems(0);
@@ -245,7 +241,6 @@ const AdminPayment: React.FC = () => {
                 toast.error(response.message || 'Không thể cập nhật trạng thái');
             }
         } catch (error) {
-            console.error('Error updating payment status:', error);
             toast.error('Có lỗi xảy ra khi cập nhật trạng thái');
         }
     };

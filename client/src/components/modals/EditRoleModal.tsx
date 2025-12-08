@@ -51,7 +51,6 @@ const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, onSucces
             onClose();
             setRoleName('');
         } catch (error) {
-            console.error('Error updating role:', error);
             toast.error('Không thể cập nhật vai trò. Vui lòng thử lại!');
         } finally {
             setLoading(false);

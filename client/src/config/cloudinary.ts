@@ -1,10 +1,4 @@
 // Debug: Log Cloudinary environment variables
-console.log('☁️ Cloudinary Environment Variables:');
-console.log('VITE_CLOUDINARY_CLOUD_NAME:', import.meta.env.VITE_CLOUDINARY_CLOUD_NAME);
-console.log('VITE_CLOUDINARY_API_KEY:', import.meta.env.VITE_CLOUDINARY_API_KEY);
-console.log('VITE_CLOUDINARY_UPLOAD_PRESET:', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
-console.log('---');
-
 // Cloudinary configuration - Frontend safe (no API_SECRET)
 export const CLOUDINARY_CONFIG = {
   cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'your-cloud-name',
@@ -13,9 +7,6 @@ export const CLOUDINARY_CONFIG = {
 }
 
 // Debug: Log final Cloudinary config
-console.log('☁️ Final Cloudinary Config:', CLOUDINARY_CONFIG);
-console.log('---');
-
 // Upload endpoints
 export const UPLOAD_ENDPOINTS = {
   image: '/api/upload/image',

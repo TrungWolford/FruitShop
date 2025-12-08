@@ -92,7 +92,6 @@ const AdminCategory: React.FC = () => {
             setTotalElements(response.totalElements);
             setTotalPages(response.totalPages);
         } catch (error) {
-            console.error('Error loading categories:', error);
             toast.error('Không thể tải danh sách thể loại. Vui lòng kiểm tra backend server!');
 
             // Fallback: Sử dụng dữ liệu mock khi backend không khả dụng
@@ -138,7 +137,6 @@ const AdminCategory: React.FC = () => {
             setTotalElements(response.totalElements);
             setTotalPages(response.totalPages);
         } catch (error) {
-            console.error('Error searching categories:', error);
             toast.error('Không thể tìm kiếm thể loại');
         } finally {
             setLoading(false);
@@ -316,7 +314,6 @@ const AdminCategory: React.FC = () => {
                                                         size="sm"
                                                         onClick={() => {
                                                             // View category details - có thể thêm modal view sau
-                                                            console.log('View category:', category);
                                                         }}
                                                         className="h-7 w-7 p-0"
                                                         title="Xem chi tiết"

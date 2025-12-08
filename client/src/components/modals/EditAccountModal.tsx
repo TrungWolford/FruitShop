@@ -72,7 +72,6 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({ isOpen, onClose, on
             onSuccess();
             onClose();
         } catch (error) {
-            console.error('Error updating account:', error);
             toast.error('Không thể cập nhật tài khoản. Vui lòng thử lại!');
         } finally {
             setLoading(false);

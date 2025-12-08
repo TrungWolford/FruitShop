@@ -121,7 +121,9 @@ const ProductPage: React.FC = () => {
   }, [categoryName, categories, currentPage, searchQuery, selectedPriceRange]); // Add selectedPriceRange dependency
 
   useEffect(() => {
-    setFilteredProducts(products);
+    // Luôn filter để chỉ hiển thị sản phẩm có status = 1
+    const activeProducts = products.filter(p => p.status === 1);
+    setFilteredProducts(activeProducts);
   }, [products]);
 
   const loadCategories = async () => {
@@ -138,7 +140,6 @@ const ProductPage: React.FC = () => {
         setCategories(mappedCategories);
       }
     } catch (error) {
-      console.error('Error loading categories:', error);
       toast.error('Không thể tải danh mục sản phẩm');
     }
   };
@@ -156,21 +157,19 @@ const ProductPage: React.FC = () => {
       
       if (searchQuery) {
         // Search mode - gọi search API với minPrice, maxPrice nếu có
-        console.log('🔍 Loading products with search query:', searchQuery);
-        
         if (selectedPriceRange && priceRange) {
-          console.log('🔍 Search with price filter:', { searchQuery, priceRange });
           // Gọi search API với minPrice và maxPrice
           response = await productService.searchProducts(
             searchQuery, 
             currentPage, 
             pageSize,
             priceRange.minPrice,
-            priceRange.maxPrice
+            priceRange.maxPrice,
+            1
           );
         } else {
-          // Không có price filter: gọi search API bình thường
-          response = await productService.searchProducts(searchQuery, currentPage, pageSize);
+          // Không có price filter: gọi search API với status = 1
+          response = await productService.searchProducts(searchQuery, currentPage, pageSize, undefined, undefined, 1);
         }
       } else if (categoryName) {
         // Find categoryId from categories list
@@ -198,25 +197,20 @@ const ProductPage: React.FC = () => {
           };
         }
       } else {
-        // Load all products if no category selected (với price filter nếu có)
-        if (selectedPriceRange && priceRange) {
-          response = await productService.filterProducts({
-            status: 1,
-            minPrice: priceRange.minPrice,
-            maxPrice: priceRange.maxPrice,
-            page: currentPage,
-            size: pageSize
-          });
-        } else {
-          response = await productService.getAllProducts(currentPage, pageSize);
-        }
+        // Load all products if no category selected (luôn filter status = 1 để chỉ hiển thị sản phẩm đang hoạt động)
+        response = await productService.filterProducts({
+          status: 1,
+          minPrice: priceRange?.minPrice,
+          maxPrice: priceRange?.maxPrice,
+          page: currentPage,
+          size: pageSize
+        });
       }
       
       setProducts(response.content || []);
       setTotalPages(response.totalPages || 0);
       setTotalElements(response.totalElements || 0);
     } catch (error) {
-      console.error('Error loading products:', error);
       toast.error('Không thể tải danh sách sản phẩm');
       
       // Fallback to mock data
@@ -250,8 +244,6 @@ const ProductPage: React.FC = () => {
     // Find category by name to get the ID
     const selectedCategory = categories.find(cat => cat.categoryName === categoryName);
     if (selectedCategory) {
-      console.log('Selected Category ID:', selectedCategory.categoryId);
-      console.log('Selected Category Name:', selectedCategory.categoryName);
     }
     setCurrentPage(0); // Reset to first page when changing category
     window.scrollTo({ top: 0, behavior: 'smooth' });

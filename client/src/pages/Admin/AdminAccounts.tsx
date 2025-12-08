@@ -100,7 +100,6 @@ const AdminAccounts: React.FC = () => {
             const rolesData = await roleService.getAllRoles();
             setRoles(rolesData);
         } catch (error) {
-            console.error('Error loading roles:', error);
             toast.error('Không thể tải danh sách vai trò');
         }
     };
@@ -123,7 +122,6 @@ const AdminAccounts: React.FC = () => {
             setTotalElements(response.totalElements);
             setTotalPages(response.totalPages);
         } catch (error) {
-            console.error('Error loading accounts:', error);
             toast.error('Không thể tải danh sách tài khoản');
         } finally {
             setLoading(false);
@@ -140,7 +138,6 @@ const AdminAccounts: React.FC = () => {
             setTotalElements(response.totalElements);
             setTotalPages(response.totalPages);
         } catch (error) {
-            console.error('Error searching accounts:', error);
             toast.error('Không thể tìm kiếm tài khoản');
         } finally {
             setLoading(false);
@@ -158,7 +155,6 @@ const AdminAccounts: React.FC = () => {
             setSelectedAccount(null);
             loadAccounts();
         } catch (error) {
-            console.error('Error deleting account:', error);
             toast.error('Không thể xóa tài khoản');
         } finally {
             setLoading(false);

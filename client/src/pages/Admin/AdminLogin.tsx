@@ -65,21 +65,11 @@ const AdminLogin: React.FC = () => {
       setError('Số điện thoại hoặc mật khẩu không đúng')
       return
     }
-
-    console.log('🔐 Admin Login - Attempting login with:', { email })
-
     try {
       const result = await dispatch(adminLoginAsync({ email, password })).unwrap()
-      
-      console.log('✅ Admin Login - Response:', result)
-      
       if (result.success && result.user) {
         const userRoles = result.user.roles || []
         const isAdmin = userRoles.some(role => role.roleName === 'ADMIN')
-        
-        console.log('👤 User roles:', userRoles)
-        console.log('🔑 Is admin:', isAdmin)
-        
         if (isAdmin) {
           navigate('/admin/dashboard', { replace: true })
         } else {
@@ -89,14 +79,6 @@ const AdminLogin: React.FC = () => {
         setError(result.message || 'Số điện thoại hoặc mật khẩu không đúng')
       }
     } catch (err: any) {
-      console.error('❌ Admin Login - Error:', err)
-      console.error('❌ Error details:', {
-        message: err.message,
-        response: err.response,
-        status: err.response?.status,
-        data: err.response?.data
-      })
-      
       // Hiển thị thông báo thân thiện dựa trên status code theo test case
       let errorMessage = 'Số điện thoại hoặc mật khẩu không đúng'
       

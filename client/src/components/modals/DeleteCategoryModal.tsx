@@ -26,7 +26,6 @@ const DeleteCategoryModal: React.FC<DeleteCategoryModalProps> = ({ isOpen, onClo
             onClose();
             onSuccess();
         } catch (error) {
-            console.error('Error deleting category:', error);
             toast.error('Không thể xóa thể loại. Vui lòng thử lại!');
         } finally {
             setLoading(false);

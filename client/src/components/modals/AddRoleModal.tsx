@@ -38,7 +38,6 @@ const AddRoleModal: React.FC<AddRoleModalProps> = ({ isOpen, onClose, onSuccess 
             handleClose();
             onSuccess();
         } catch (error) {
-            console.error('Error creating role:', error);
             toast.error('Không thể tạo vai trò. Vui lòng thử lại!');
         } finally {
             setLoading(false);

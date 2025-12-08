@@ -89,7 +89,6 @@ class CloudinaryService {
 
       return response.data
     } catch (error: any) {
-      console.error('Upload image error:', error)
       return {
         success: false,
         message: error.response?.data?.error || 'Lỗi khi upload hình ảnh',
@@ -133,7 +132,6 @@ class CloudinaryService {
 
       return response.data
     } catch (error: any) {
-      console.error('Upload file error:', error)
       return {
         success: false,
         message: error.response?.data?.error || 'Lỗi khi upload file',
@@ -153,7 +151,6 @@ class CloudinaryService {
       const response = await axiosInstance.delete<UploadResponse>(`${API.DELETE_FILE}/${encodedPublicId}`)
       return response.data
     } catch (error: any) {
-      console.error('Delete file error:', error)
       return {
         success: false,
         message: error.response?.data?.error || 'Lỗi khi xóa file',
@@ -173,7 +170,6 @@ class CloudinaryService {
       const response = await axiosInstance.get<UploadResponse>(`${API.GET_FILE_INFO}?publicId=${encodedPublicId}`)
       return response.data
     } catch (error: any) {
-      console.error('Get file info error:', error)
       return {
         success: false,
         message: error.response?.data?.error || 'Lỗi khi lấy thông tin file',
@@ -195,7 +191,6 @@ class CloudinaryService {
       const response = await axiosInstance.post<UploadResponse>(`${API.OPTIMIZE_URL}?${params}`)
       return response.data
     } catch (error: any) {
-      console.error('Generate optimized URL error:', error)
       return {
         success: false,
         message: error.response?.data?.error || 'Lỗi khi tạo URL tối ưu',

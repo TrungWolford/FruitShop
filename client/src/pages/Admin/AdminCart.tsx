@@ -111,7 +111,6 @@ const AdminCart: React.FC = () => {
             }
             
         } catch (error) {
-            console.error('Error loading carts:', error);
             toast.error('Lỗi khi tải danh sách giỏ hàng');
         } finally {
             setLoading(false);
@@ -128,7 +127,6 @@ const AdminCart: React.FC = () => {
                 toast.error(result.message || 'Lỗi khi vô hiệu hóa giỏ hàng');
             }
         } catch (error) {
-            console.error('Error disabling cart:', error);
             toast.error('Lỗi khi vô hiệu hóa giỏ hàng');
         }
     };
@@ -143,7 +141,6 @@ const AdminCart: React.FC = () => {
                 toast.error(result.message || 'Lỗi khi kích hoạt giỏ hàng');
             }
         } catch (error) {
-            console.error('Error enabling cart:', error);
             toast.error('Lỗi khi kích hoạt giỏ hàng');
         }
     };
@@ -162,7 +159,6 @@ const AdminCart: React.FC = () => {
                 setIsDetailModalOpen(false);
             }
         } catch (error) {
-            console.error('Error loading cart detail:', error);
             toast.error('Lỗi khi tải chi tiết giỏ hàng');
             setIsDetailModalOpen(false);
         } finally {
@@ -210,7 +206,6 @@ const AdminCart: React.FC = () => {
                 minute: '2-digit'
             }).format(dateObj);
         } catch (error) {
-            console.error('Error formatting date:', error);
             return 'N/A';
         }
     };
