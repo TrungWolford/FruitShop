@@ -49,15 +49,15 @@ class AccountIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private BCryptPasswordEncoder passwordEncoder;
+    private static final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private Account testAccount;
     private Role customerRole;
 
     @BeforeEach
     void setUp() {
-        passwordEncoder = new BCryptPasswordEncoder();
-        
-        // @Transactional sẽ tự động rollback sau mỗi test
+        // Clear database before each test
+        accountRepository.deleteAll();
+        roleRepository.deleteAll();
         
         // Tạo role Customer
         customerRole = new Role();
