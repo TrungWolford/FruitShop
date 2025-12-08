@@ -123,8 +123,6 @@ const ProductPage: React.FC = () => {
   useEffect(() => {
     // Luôn filter để chỉ hiển thị sản phẩm có status = 1
     const activeProducts = products.filter(p => p.status === 1);
-    console.log('🔍 Product Page - Total:', products.length, '| Active (status=1):', activeProducts.length);
-    console.log('🔍 Products with status:', products.map(p => ({ name: p.productName, status: p.status })));
     setFilteredProducts(activeProducts);
   }, [products]);
 
@@ -512,6 +510,7 @@ const ProductPage: React.FC = () => {
                         images: product.images,
                         category: product.categories[0]?.categoryName,
                         categoryCount: product.categories.length,
+                        stock: product.stock, // Thêm stock để kiểm tra tồn kho
                         rating: 4.5
                       }}
                       onAddToCart={() => handleAddToCart(product)}

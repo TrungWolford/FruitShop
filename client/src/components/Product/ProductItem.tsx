@@ -18,6 +18,7 @@ interface ProductItemProps {
     discount?: number;
     category?: string;
     categoryCount?: number; // Số lượng categories
+    stock?: number; // Số lượng tồn kho
   };
   onAddToCart?: () => void;
   onAddToWishlist?: () => void;
@@ -98,10 +99,32 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
 
   // Xử lý thêm vào giỏ hàng với logic createCart trước
   const handleAddToCart = async () => {
+    // Kiểm tra số lượng tồn kho trước
+    if (product.stock !== undefined && product.stock <= 0) {
+      toast.error('Sản phẩm đã hết hàng');
+      return;
+    }
+
     setIsAddingToCart(true);
     try {
       if (isAuthenticated && user) {
-        // User đã đăng nhập → thêm qua API
+        // User đã đăng nhập → kiểm tra số lượng trong giỏ trước
+        const cartResponse = await cartService.getCartItems(user.accountId);
+        
+        if (cartResponse.success && cartResponse.data) {
+          const cartData = cartResponse.data as { items?: Array<{ product: { productId: string }, quantity: number }> };
+          const existingItem = cartData.items?.find(item => item.product.productId === product.productId);
+          const currentQuantityInCart = existingItem ? existingItem.quantity : 0;
+          
+          // Kiểm tra nếu số lượng trong giỏ + 1 vượt quá tồn kho
+          if (product.stock !== undefined && currentQuantityInCart + 1 > product.stock) {
+            toast.error(`Sản phẩm này chỉ còn ${product.stock} sản phẩm trong kho. Bạn đã có ${currentQuantityInCart} trong giỏ hàng`);
+            setIsAddingToCart(false);
+            return;
+          }
+        }
+
+        // Thêm qua API
         const addToCartResponse = await cartService.addToCart({
           productId: product.productId,
           quantity: 1,
@@ -121,8 +144,19 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
           toast.error(addToCartResponse.message || 'Không thể thêm sản phẩm vào giỏ hàng');
         }
       } else {
-        // Guest user → thêm vào localStorage
-        // Lấy imageUrl cho localStorage
+        // Guest user → kiểm tra localStorage
+        const localCartItems = localStorageCartService.getCartItems();
+        const existingItem = localCartItems.find((item: any) => item.productId === product.productId);
+        const currentQuantityInCart = existingItem ? existingItem.quantity : 0;
+        
+        // Kiểm tra nếu số lượng trong giỏ + 1 vượt quá tồn kho
+        if (product.stock !== undefined && currentQuantityInCart + 1 > product.stock) {
+          toast.error(`Sản phẩm này chỉ còn ${product.stock} sản phẩm trong kho. Bạn đã có ${currentQuantityInCart} trong giỏ hàng`);
+          setIsAddingToCart(false);
+          return;
+        }
+
+        // Thêm vào localStorage
         let imageUrl = product.imageUrl;
         if (!imageUrl && product.images && product.images.length > 0) {
           const firstImage = product.images[0];
