@@ -47,6 +47,67 @@ jobs:
           name: backend-test-results
           path: server/target/surefire-reports/
 
+      - name: Create Issue on Test Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const title = '🔴 Backend CI Failed - Tests or Build Error';
+            const body = `## Backend CI Pipeline Failed
+            
+            **Workflow:** ${context.workflow}
+            **Job:** test-backend
+            **Run:** [#${context.runNumber}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+            **Branch:** ${context.ref}
+            **Commit:** ${context.sha.substring(0, 7)}
+            **Triggered by:** @${context.actor}
+            
+            ### Details
+            - **Build/Test Status:** ❌ Failed
+            - **Time:** ${new Date().toISOString()}
+            
+            ### Next Steps
+            1. Check the [workflow logs](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+            2. Review the test results artifact
+            3. Fix the failing tests or build issues
+            4. Push the fix to trigger a new CI run
+            
+            ---
+            *This issue was automatically created by GitHub Actions*`;
+            
+            // Check for existing open issues with same title
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['ci-failure', 'backend'],
+              per_page: 10
+            });
+            
+            const existingIssue = issues.data.find(issue => issue.title === title);
+            
+            if (existingIssue) {
+              // Update existing issue instead of creating new one
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `### 🔄 CI Failed Again\n\n${body}`
+              });
+              console.log(`Updated existing issue #${existingIssue.number}`);
+            } else {
+              // Create new issue
+              const issue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['ci-failure', 'backend', 'bug']
+              });
+              console.log(`Created new issue #${issue.data.number}`);
+            }
+
   deploy-railway:
     name: Deploy to Railway
     needs: test-backend
@@ -64,3 +125,106 @@ jobs:
         run: railway up --service ${{ secrets.RAILWAY_SERVICE_ID }}
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Create Issue on Deploy Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const title = '🚨 Backend Deploy Failed - Railway Deployment Error';
+            const body = `## Backend Deployment to Railway Failed
+            
+            **Workflow:** ${context.workflow}
+            **Job:** deploy-railway
+            **Run:** [#${context.runNumber}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+            **Branch:** ${context.ref}
+            **Commit:** ${context.sha.substring(0, 7)}
+            **Triggered by:** @${context.actor}
+            
+            ### Details
+            - **Deployment Status:** ❌ Failed
+            - **Platform:** Railway
+            - **Time:** ${new Date().toISOString()}
+            
+            ### Possible Causes
+            - Railway service configuration issues
+            - Invalid RAILWAY_TOKEN or RAILWAY_SERVICE_ID
+            - Build or runtime errors on Railway
+            - Resource limits exceeded
+            
+            ### Next Steps
+            1. Check the [workflow logs](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+            2. Verify Railway secrets in repository settings
+            3. Check Railway dashboard for deployment logs
+            4. Ensure Railway service is properly configured
+            
+            ---
+            *This issue was automatically created by GitHub Actions*`;
+            
+            // Check for existing open issues with same title
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['deploy-failure', 'backend', 'railway'],
+              per_page: 10
+            });
+            
+            const existingIssue = issues.data.find(issue => issue.title === title);
+            
+            if (existingIssue) {
+              // Update existing issue instead of creating new one
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `### 🔄 Deployment Failed Again\n\n${body}`
+              });
+              console.log(`Updated existing issue #${existingIssue.number}`);
+            } else {
+              // Create new issue
+              const issue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['deploy-failure', 'backend', 'railway', 'critical']
+              });
+              console.log(`Created new issue #${issue.data.number}`);
+            }
+
+      - name: Close Issue on Successful Deploy
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Find and close related issues
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['deploy-failure', 'backend'],
+              per_page: 10
+            });
+            
+            for (const issue of issues.data) {
+              if (issue.title.includes('Backend Deploy Failed')) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: `✅ **Deployment Successful!**\n\nThe backend has been successfully deployed to Railway.\n\n**Run:** [#${context.runNumber}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n**Commit:** ${context.sha.substring(0, 7)}\n\nClosing this issue.`
+                });
+                
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  state: 'closed'
+                });
+                
+                console.log(`Closed issue #${issue.number}`);
+              }
+            }
