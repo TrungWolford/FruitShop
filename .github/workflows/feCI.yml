@@ -1,5 +1,9 @@
 name: Frontend CI/CD
 
+permissions:
+  contents: read
+  issues: write
+
 on:
   push:
     branches: [ "main" ]
@@ -63,7 +67,7 @@ jobs:
           path: client/dist/
 
       - name: Create Issue on Test/Build Failure
-        if: failure()
+        if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -169,7 +173,7 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Create Issue on Deploy Failure
-        if: failure()
+        if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

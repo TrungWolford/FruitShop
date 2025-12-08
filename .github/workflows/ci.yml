@@ -1,4 +1,7 @@
 name: Backend CI/CD
+permissions:
+  contents: read
+  issues: write
 
 on:
   push:
@@ -48,7 +51,7 @@ jobs:
           path: server/target/surefire-reports/
 
       - name: Create Issue on Test Failure
-        if: failure()
+        if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -127,7 +130,7 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
       - name: Create Issue on Deploy Failure
-        if: failure()
+        if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
