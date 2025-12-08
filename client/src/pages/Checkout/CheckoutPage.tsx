@@ -380,11 +380,11 @@ const CheckoutPage: React.FC = () => {
                 return;
             }
             // Detailed validation logging
-            createOrderRequest.items.forEach((item, index) => {
+            createOrderRequest.items.forEach((_item, _index) => {
             });
             // Validate account exists before creating order
             try {
-                const accountCheck = await accountService.getAccountById(currentUser.accountId);
+                const _accountCheck = await accountService.getAccountById(currentUser.accountId);
             } catch (accountError) {
                 toast.error('Tài khoản không tồn tại hoặc đã bị khóa');
                 return;

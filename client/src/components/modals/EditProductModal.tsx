@@ -56,7 +56,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
     };
 
     // Handle clicking on existing image to replace it
-    const handleExistingImageClick = (index: number) => {
+    const handleExistingImageClick = (_index: number) => {
         // The file input will be triggered by the label
     };
 

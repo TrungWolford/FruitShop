@@ -100,7 +100,7 @@ const PaymentPage: React.FC = () => {
                     
                     logo.src = logoUrl;
                 });
-            } catch (err) {
+            } catch (_err) {
                 reject(err);
             }
         });

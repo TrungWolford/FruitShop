@@ -78,7 +78,7 @@ const HistoryReceipt: React.FC = () => {
                 // Debug: Log product images for each order
                 response.data.forEach((order, orderIndex) => {
                     console.log(`📦 Order ${orderIndex + 1} (${order.orderId}):`);
-                    order.orderDetails.forEach((detail, detailIndex) => {
+                    order.orderDetails.forEach((detail, _detailIndex) => {
                         if (detail.productImages && detail.productImages.length > 0) {
                             detail.productImages.forEach((imageUrl, imageIndex) => {
                                 console.log(
@@ -616,7 +616,7 @@ const HistoryReceipt: React.FC = () => {
                 const newImages = successfulUploads.map(r => r.data!);
                 
                 // Log uploaded images for debugging
-                newImages.forEach((img, idx) => {
+                newImages.forEach((img, _idx) => {
                     // Test if URL is valid
                     if (!img.url || img.url === '') {
                     } else if (!img.url.startsWith('http')) {
@@ -676,8 +676,8 @@ const HistoryReceipt: React.FC = () => {
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const resultCode = urlParams.get('resultCode');
-        const orderId = urlParams.get('orderId');
-        const message = urlParams.get('message');
+        const _orderId = urlParams.get('orderId');
+        const _message = urlParams.get('message');
 
         if (resultCode !== null) {
             if (resultCode === '0') {

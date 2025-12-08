@@ -136,7 +136,7 @@ const ProductDetail: React.FC = () => {
     useEffect(() => {
         // Check if any rating belongs to current user
         if (user && ratings.length > 0) {
-            ratings.forEach((rating, index) => {
+            ratings.forEach((_rating, _index) => {
             });
             
             // 🔧 FIX: If userRating is null but we found user's rating in the list, set it
