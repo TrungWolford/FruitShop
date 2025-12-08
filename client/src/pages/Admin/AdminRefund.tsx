@@ -28,7 +28,7 @@ import type { RefundResponse } from '../../services/refundService';
 
 const AdminRefund: React.FC = () => {
     const navigate = useNavigate();
-    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
+    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.adminAuth);
     const [refunds, setRefunds] = useState<RefundResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');

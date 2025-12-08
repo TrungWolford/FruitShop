@@ -22,7 +22,7 @@ import {
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate()
-  const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.auth)
+  const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.adminAuth)
   
   // State for data from API
   const [products, setProducts] = useState<Product[]>([])

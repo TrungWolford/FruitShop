@@ -4,6 +4,7 @@ import { BrowserRouter as Router } from 'react-router-dom'
 import { Provider } from 'react-redux'
 import { store } from './store'
 import AuthInitializer from './components/Auth/AuthInitializer'
+import AdminAuthInitializer from './components/Auth/AdminAuthInitializer'
 import { Toaster } from 'sonner'
 import './index.css'
 import App from './App.tsx'
@@ -12,6 +13,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
       <AuthInitializer />
+      <AdminAuthInitializer />
       <Router>
         <App />
         <Toaster 

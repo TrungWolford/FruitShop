@@ -22,7 +22,7 @@ import { toast } from 'sonner';
 
 const AdminCategory: React.FC = () => {
     const navigate = useNavigate();
-    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
+    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.adminAuth);
 
     // State for categories data
     const [categories, setCategories] = useState<Category[]>([]);

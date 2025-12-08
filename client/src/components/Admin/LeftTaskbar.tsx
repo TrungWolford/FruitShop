@@ -1,7 +1,7 @@
 import React from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../../hooks/redux'
-import { logout } from '../../store/slices/authSlice'
+import { adminLogout } from '../../store/slices/adminAuthSlice'
 import { 
   LayoutDashboard, 
   Package, 
@@ -23,10 +23,10 @@ const LeftTaskbar: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const dispatch = useAppDispatch()
-  const { user } = useAppSelector((state) => state.auth)
+  const { user } = useAppSelector((state) => state.adminAuth)
 
   const handleLogout = () => {
-    dispatch(logout())
+    dispatch(adminLogout())
     navigate('/')
   }
 

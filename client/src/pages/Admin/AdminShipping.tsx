@@ -28,7 +28,7 @@ import type { ShippingResponse } from '../../services/shippingService';
 
 const AdminShipping: React.FC = () => {
     const navigate = useNavigate();
-    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
+    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.adminAuth);
     const [shippings, setShippings] = useState<ShippingResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');

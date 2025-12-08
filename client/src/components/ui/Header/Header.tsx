@@ -21,12 +21,14 @@ import { productService } from '../../../services/productService';
 import { toast } from 'sonner';
 import { imgaes } from '../../../assets/img';
 import { localStorageCartService } from '@/services/localStorageCartService';
+import { authService } from '@/services/authService';
 import type { CartItem } from '@/types/cart';
 
 const TopNavigation: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
+  const [displayUser, setDisplayUser] = useState(user);
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,6 +36,25 @@ const TopNavigation: React.FC = () => {
   const [hoverCartItems, setHoverCartItems] = useState<CartItem[]>([]);
   const [hasLoadedHoverCart, setHasLoadedHoverCart] = useState(false);
   const [cartStatus, setCartStatus] = useState<number | null>(null);
+
+  // Debug: Log khi user state thay đổi
+  useEffect(() => {
+    console.log('🔍 Header - Auth state changed:', { isAuthenticated, user: user?.accountName, userPhone: user?.accountPhone });
+    setDisplayUser(user);
+  }, [isAuthenticated, user]);
+
+  // Nghe event authUpdated để đồng bộ user từ localStorage khi có login/refresh token
+  useEffect(() => {
+    const handleAuthUpdate = () => {
+      const storedUser = authService.loadUserFromStorage();
+      if (storedUser) {
+        setDisplayUser(storedUser);
+      }
+    };
+
+    window.addEventListener('authUpdated', handleAuthUpdate);
+    return () => window.removeEventListener('authUpdated', handleAuthUpdate);
+  }, []);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -134,14 +155,24 @@ const TopNavigation: React.FC = () => {
       setIsLoginDialogOpen(true);
     };
 
+    const handleAuthUpdate = () => {
+      console.log('🔔 Auth updated event received');
+      // Force component to recognize auth state change
+      if (isAuthenticated && user) {
+        fetchCartItemsCount();
+      }
+    };
+
     window.addEventListener('cartUpdated', handleCartUpdate);
     window.addEventListener('closeCartModal', handleCloseCartModal);
     window.addEventListener('openLoginDialog', handleOpenLoginDialog);
+    window.addEventListener('authUpdated', handleAuthUpdate);
 
     return () => {
       window.removeEventListener('cartUpdated', handleCartUpdate);
       window.removeEventListener('closeCartModal', handleCloseCartModal);
       window.removeEventListener('openLoginDialog', handleOpenLoginDialog);
+      window.removeEventListener('authUpdated', handleAuthUpdate);
     };
   }, [isAuthenticated, user]);
 
@@ -356,13 +387,13 @@ const TopNavigation: React.FC = () => {
         {/* User actions */}
         <div className="flex items-center gap-4 ml-auto">
           {/* Login/Register or User Info */}
-          {isAuthenticated && user ? (
+          {isAuthenticated && displayUser ? (
             <DropdownMenu>
               <DropdownMenuTrigger className="group flex items-center gap-2 hover:text-amber-400 transition-colors cursor-pointer outline-none">
                 <User className="w-7 h-7" />
                 <div className="text-base text-left">
-                  <div className="text-white font-medium group-hover:text-amber-400">{user.accountName}</div>
-                  <div className="text-gray-300 text-sm group-hover:text-amber-400">{user.accountPhone}</div>
+                  <div className="text-white font-medium group-hover:text-amber-400">{displayUser.accountName}</div>
+                  <div className="text-gray-300 text-sm group-hover:text-amber-400">{displayUser.accountPhone}</div>
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-48 mr-4">
@@ -390,7 +421,7 @@ const TopNavigation: React.FC = () => {
                 </DropdownMenuItem>
 
                 {/* Admin Panel - Only show for admin users */}
-                {user.roles && user.roles.some((role) => role.roleName === 'ADMIN') && (
+                {displayUser.roles && displayUser.roles.some((role) => role.roleName === 'ADMIN') && (
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem

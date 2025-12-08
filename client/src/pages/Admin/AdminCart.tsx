@@ -25,7 +25,7 @@ interface CartWithAccount extends Cart {
 
 const AdminCart: React.FC = () => {
     const navigate = useNavigate();
-    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
+    const { user, isAuthenticated, isInitialized } = useAppSelector((state) => state.adminAuth);
     const [carts, setCarts] = useState<CartWithAccount[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');

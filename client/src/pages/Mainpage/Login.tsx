@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
-import { loginStart, loginSuccess, loginFailure } from '../../store/slices/authSlice'
+import { loginStart, loginSuccess, loginFailure, clearAuthError } from '../../store/slices/authSlice'
 import { authService } from '../../services/authService'
 import { 
   Dialog, 
@@ -38,15 +38,15 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
   React.useEffect(() => {
     if (isOpen) {
       // Reset error khi dialog mở
-      dispatch(loginFailure(''))
+      dispatch(clearAuthError())
     }
   }, [isOpen, dispatch])
 
   // Custom onClose handler để reset form sau khi đóng
   const handleClose = () => {
     console.log('🚪 handleClose called - isSubmitting:', isSubmitting, 'loading:', loading, 'error:', error)
-    // Chỉ đóng nếu không đang submit và không có lỗi đang hiển thị
-    if (!isSubmitting && !loading) {
+    // Chỉ đóng nếu không đang submit, không đang loading và KHÔNG có lỗi
+    if (!isSubmitting && !loading && !error) {
       console.log('✅ Closing dialog and resetting form')
       onClose()
       // Reset form sau khi đóng (dùng timeout để tránh flash)
@@ -56,7 +56,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
           password: '',
           rememberMe: false
         })
-        dispatch(loginFailure(''))
+        dispatch(clearAuthError())
       }, 300)
     } else {
       console.log('❌ Dialog close prevented - still processing or has error')
@@ -71,7 +71,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
     }))
     // Clear error when user types
     if (error) {
-      dispatch(loginFailure(''))
+      dispatch(clearAuthError())
     }
   }
 
@@ -112,18 +112,11 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
       })
       
       if (response.success && response.user) {
+        // Dispatch loginSuccess TRƯỚC để Redux state được cập nhật ngay
         dispatch(loginSuccess(response.user))
         
-        // Đóng dialog và reset form sau khi đăng nhập thành công
-        onClose()
-        setTimeout(() => {
-          setFormData({
-            username: '',
-            password: '',
-            rememberMe: false
-          })
-          dispatch(loginFailure(''))
-        }, 300)
+        // Trigger event để các component khác biết auth đã cập nhật
+        window.dispatchEvent(new CustomEvent('authUpdated'))
         
         // Check for intended route (from checkout button)
         const intendedRoute = sessionStorage.getItem('intendedRoute')
@@ -134,35 +127,54 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
           console.log('🔐 User data:', response.user)
           console.log('🔐 localStorage user:', localStorage.getItem('user'))
           console.log('🔐 localStorage isAuthenticated:', localStorage.getItem('isAuthenticated'))
-          // Add a delay to ensure Redux state is updated
+          
+          // Đóng dialog trước khi navigate
+          onClose()
+          setTimeout(() => {
+            setFormData({
+              username: '',
+              password: '',
+              rememberMe: false
+            })
+            dispatch(clearAuthError())
+          }, 300)
+          
+          // Navigate sau một khoảng delay nhỏ
           setTimeout(() => {
             console.log('🔐 Navigating to:', intendedRoute)
             navigate(intendedRoute)
-          }, 300)
+          }, 100)
           return
         }
         
-        // Check user roles and navigate accordingly
+        // Check user roles
         const userRoles = response.user.roles || []
         const isCustomer = userRoles.some(role => role.roleName === 'CUSTOMER')
         
-        // Add a small delay to ensure Redux state is updated
+        if (isCustomer) {
+          toast.success('Đăng nhập thành công! Chào mừng bạn trở lại.')
+        } else {
+          toast.success('Đăng nhập thành công!')
+        }
+        
+        // Đóng dialog SAU khi đã dispatch success để UI kịp cập nhật
         setTimeout(() => {
-          if (isCustomer) {
-            toast.success('Đăng nhập thành công! Chào mừng bạn trở lại.')
-            // Không navigate đến trang customer nữa, ở lại trang hiện tại
-          } else {
-            // Default fallback
-            toast.success('Đăng nhập thành công!')
-            // Không navigate đến trang customer nữa, ở lại trang hiện tại
-          }
+          onClose()
+          setTimeout(() => {
+            setFormData({
+              username: '',
+              password: '',
+              rememberMe: false
+            })
+            dispatch(clearAuthError())
+          }, 300)
         }, 100)
       } else {
         dispatch(loginFailure(response.message || 'Số điện thoại hoặc mật khẩu không đúng'))
         toast.error(response.message || 'Số điện thoại hoặc mật khẩu không đúng')
       }
     } catch (error: any) {
-      console.error('❌ Login Error:', error)
+      console.error(' Login Error:', error)
       
       // Sử dụng error message đã được parse từ authService
       const errorMessage = error.message || 'Số điện thoại hoặc mật khẩu không đúng'
@@ -322,8 +334,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-200" />
-              </div>
-              
+              </div>  
             </div>
             
            

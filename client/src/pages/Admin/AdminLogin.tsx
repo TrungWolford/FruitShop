@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../../hooks/redux'
-import { loginAsync } from '../../store/slices/authSlice'
+import { adminLoginAsync } from '../../store/slices/adminAuthSlice'
 import { Lock, User, AlertCircle, Loader2 } from 'lucide-react'
 // z
 const AdminLogin: React.FC = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const { user, isAuthenticated, loading } = useAppSelector((state) => state.auth)
+  const { user, isAuthenticated, loading } = useAppSelector((state) => state.adminAuth)
   
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -69,7 +69,7 @@ const AdminLogin: React.FC = () => {
     console.log('🔐 Admin Login - Attempting login with:', { email })
 
     try {
-      const result = await dispatch(loginAsync({ email, password })).unwrap()
+      const result = await dispatch(adminLoginAsync({ email, password })).unwrap()
       
       console.log('✅ Admin Login - Response:', result)
       

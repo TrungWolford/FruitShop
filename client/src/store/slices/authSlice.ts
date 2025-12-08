@@ -55,6 +55,10 @@ const authSlice = createSlice({
       state.loading = false
       state.error = action.payload
     },
+    clearAuthError: (state) => {
+      // Chỉ xóa thông báo lỗi, không đụng tới phiên đăng nhập hiện tại
+      state.error = null
+    },
     logout: (state) => {
       state.isAuthenticated = false
       state.user = null
@@ -89,6 +93,9 @@ const authSlice = createSlice({
           state.isAuthenticated = true
           state.user = action.payload.user
           state.error = null
+          // Lưu vào localStorage
+          localStorage.setItem('user', JSON.stringify(action.payload.user))
+          localStorage.setItem('isAuthenticated', 'true')
         } else {
           state.error = action.payload.message || 'Đăng nhập thất bại'
         }
@@ -106,6 +113,7 @@ export const {
   loginFailure, 
   logout, 
   loadUserFromStorage,
+  clearAuthError,
   setInitialized
 } = authSlice.actions
 
