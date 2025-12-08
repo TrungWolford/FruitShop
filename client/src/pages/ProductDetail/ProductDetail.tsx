@@ -441,14 +441,43 @@ const ProductDetail: React.FC = () => {
             return;
         }
 
+        // Kiểm tra số lượng tồn kho
+        if (product.stock <= 0) {
+            toast.error('Sản phẩm đã hết hàng');
+            return;
+        }
+
+        if (quantity > product.stock) {
+            toast.error(`Sản phẩm này chỉ còn ${product.stock} sản phẩm trong kho`);
+            return;
+        }
+
         setIsAddingToCart(true);
         try {
-            // Kiểm tra trạng thái giỏ hàng trước khi thêm
+            // Kiểm tra trạng thái giỏ hàng và số lượng hiện có
             const cartResponse = await cartService.getCartByAccount(user.accountId);
             if (cartResponse.success && cartResponse.data) {
                 const cartData = cartResponse.data as any;
+                
+                // Kiểm tra trạng thái giỏ hàng
                 if (cartData.status !== undefined && cartData.status !== 1) {
                     toast.error('Giỏ hàng đã bị vô hiệu hóa do vi phạm chính sách, vui lòng liên hệ VuaTraiCay để biết thêm chi tiết');
+                    setIsAddingToCart(false);
+                    return;
+                }
+
+                // Kiểm tra số lượng đã có trong giỏ
+                const existingItem = cartData.items?.find((item: any) => item.product.productId === product.productId);
+                const currentQuantityInCart = existingItem ? existingItem.quantity : 0;
+                
+                // Kiểm tra tổng số lượng (trong giỏ + muốn thêm) có vượt quá tồn kho không
+                if (currentQuantityInCart + quantity > product.stock) {
+                    const availableToAdd = product.stock - currentQuantityInCart;
+                    if (availableToAdd <= 0) {
+                        toast.error(`Bạn đã có ${currentQuantityInCart} sản phẩm trong giỏ. Kho chỉ còn ${product.stock} sản phẩm`);
+                    } else {
+                        toast.error(`Sản phẩm này chỉ còn ${product.stock} trong kho. Bạn đã có ${currentQuantityInCart} trong giỏ, chỉ có thể thêm tối đa ${availableToAdd} sản phẩm nữa`);
+                    }
                     setIsAddingToCart(false);
                     return;
                 }
@@ -479,8 +508,24 @@ const ProductDetail: React.FC = () => {
             return;
         }
 
+        if (!product) {
+            toast.error('Không tìm thấy thông tin sản phẩm');
+            return;
+        }
+
         if (quantity <= 0) {
             toast.error('Số lượng phải lớn hơn 0');
+            return;
+        }
+
+        // Kiểm tra số lượng tồn kho
+        if (product.stock <= 0) {
+            toast.error('Sản phẩm đã hết hàng');
+            return;
+        }
+
+        if (quantity > product.stock) {
+            toast.error(`Sản phẩm này chỉ còn ${product.stock} sản phẩm trong kho`);
             return;
         }
 

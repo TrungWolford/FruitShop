@@ -255,6 +255,25 @@ const TopNavigation: React.FC = () => {
 
     try {
       if (isAuthenticated && user) {
+        // Tìm item để lấy productId
+        const item = hoverCartItems.find(i => i.cartItemId === cartItemId);
+        if (!item) {
+          toast.error('Không tìm thấy sản phẩm trong giỏ hàng');
+          return;
+        }
+
+        // Lấy thông tin sản phẩm để kiểm tra stock
+        const productResponse = await productService.getProductById(item.productId);
+        if (productResponse.success && productResponse.data) {
+          const product = productResponse.data;
+          
+          // Kiểm tra stock
+          if (newQuantity > product.stock) {
+            toast.error(`Sản phẩm này chỉ còn ${product.stock} sản phẩm trong kho`);
+            return;
+          }
+        }
+
         const response = await cartService.updateCartItem({
           cartItemId,
           quantity: newQuantity,
@@ -271,6 +290,25 @@ const TopNavigation: React.FC = () => {
           window.dispatchEvent(new CustomEvent('cartUpdated'));
         }
       } else {
+        // Guest user - kiểm tra stock từ localStorage cart
+        const item = hoverCartItems.find(i => i.cartItemId === cartItemId);
+        if (!item) {
+          toast.error('Không tìm thấy sản phẩm trong giỏ hàng');
+          return;
+        }
+
+        // Lấy thông tin sản phẩm để kiểm tra stock
+        const productResponse = await productService.getProductById(item.productId);
+        if (productResponse.success && productResponse.data) {
+          const product = productResponse.data;
+          
+          // Kiểm tra stock
+          if (newQuantity > product.stock) {
+            toast.error(`Sản phẩm này chỉ còn ${product.stock} sản phẩm trong kho`);
+            return;
+          }
+        }
+
         localStorageCartService.updateQuantity(cartItemId, newQuantity);
         // Cập nhật trực tiếp hoverCartItems để UI phản hồi ngay
         setHoverCartItems(prev => 

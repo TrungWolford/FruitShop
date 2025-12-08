@@ -96,6 +96,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
     images: product.images,
     category: product.categories?.[0]?.categoryName || 'Không phân loại',
     categoryCount: product.categories?.length || 0,
+    stock: product.stock, // Thêm stock để kiểm tra tồn kho
     rating: undefined,
     discount: undefined,
   }));
