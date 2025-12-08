@@ -100,8 +100,8 @@ const PaymentPage: React.FC = () => {
                     
                     logo.src = logoUrl;
                 });
-            } catch (err) {
-                reject(err);
+            } catch (error) {
+                reject(error);
             }
         });
     };
@@ -121,7 +121,7 @@ const PaymentPage: React.FC = () => {
                 .then((url: string) => {
                     setGeneratedQrDataUrl(url);
                 })
-                .catch((err: Error) => {
+                .catch((_err: Error) => {
                     // Fallback: generate simple QR without logo
                     QRCode.toDataURL(qrData, {
                         width: 300,

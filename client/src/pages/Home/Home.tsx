@@ -9,13 +9,6 @@ import Footer from '../../components/ui/Footer/Footer';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
-  const handleAddToCart = (productId: string) => {
-    // TODO: Implement add to cart logic
-  };
-
-  const handleAddToWishlist = (productId: string) => {
-    // TODO: Implement wishlist logic
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -40,8 +33,6 @@ const Home: React.FC = () => {
         <ProductGrid 
           title="Sản phẩm nổi bật"
           limit={10}
-          onAddToCart={handleAddToCart}
-          onAddToWishlist={handleAddToWishlist}
         />
         
         {/* Button Xem tất cả sản phẩm */}
