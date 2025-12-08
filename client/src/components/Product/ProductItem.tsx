@@ -145,8 +145,8 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
         }
       } else {
         // Guest user → kiểm tra localStorage
-        const localCart = localStorageCartService.getCart();
-        const existingItem = localCart.items.find(item => item.productId === product.productId);
+        const localCartItems = localStorageCartService.getCartItems();
+        const existingItem = localCartItems.find((item: any) => item.productId === product.productId);
         const currentQuantityInCart = existingItem ? existingItem.quantity : 0;
         
         // Kiểm tra nếu số lượng trong giỏ + 1 vượt quá tồn kho
