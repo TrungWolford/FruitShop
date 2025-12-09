@@ -554,6 +554,15 @@ const HistoryReceipt: React.FC = () => {
         try {
             // Extract image URLs from uploaded images
             const imageUrls = returnImages.map(img => img.url);
+            
+            console.log('📤 Submitting return request with:', {
+                orderItemId: selectedItemForReturn.orderItemId,
+                orderId: selectedItemForReturn.orderId,
+                reason: returnReason,
+                refundAmount: selectedItemForReturn.refundAmount,
+                imageUrls
+            });
+            
             const response = await orderService.returnOrder(
                 selectedItemForReturn.orderItemId,
                 selectedItemForReturn.orderId,
@@ -561,6 +570,8 @@ const HistoryReceipt: React.FC = () => {
                 selectedItemForReturn.refundAmount,
                 imageUrls // Send array of URLs
             );
+
+            console.log('📥 Return response:', response);
 
             if (response.success) {
                 toast.success('Yêu cầu trả hàng đã được gửi thành công!', {
@@ -570,11 +581,13 @@ const HistoryReceipt: React.FC = () => {
                 // Reload orders
                 await fetchOrders();
             } else {
+                console.error('❌ Return failed:', response.message);
                 toast.error(response.message || 'Không thể gửi yêu cầu trả hàng', {
                     duration: 3000,
                 });
             }
         } catch (error) {
+            console.error('❌ Return error:', error);
             toast.error('Có lỗi xảy ra khi gửi yêu cầu trả hàng. Vui lòng thử lại!', {
                 duration: 3000,
             });

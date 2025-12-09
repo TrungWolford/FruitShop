@@ -26,14 +26,27 @@ public class RefundController {
 
     // Customer endpoints - Create refund request
     @PostMapping
-    public ResponseEntity<RefundResponse> createRefund(@RequestBody CreateRefundRequest request) {
+    public ResponseEntity<Map<String, Object>> createRefund(@RequestBody CreateRefundRequest request) {
         try {
             System.out.println("🔔 Incoming CreateRefundRequest: " + request);
             RefundResponse refund = refundService.createRefund(request);
-            return ResponseEntity.ok(refund);
+            
+            // Wrap response in standard format for frontend
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", refund);
+            response.put("message", "Yêu cầu trả hàng đã được gửi thành công");
+            
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            
+            // Return error response in standard format
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage() != null ? e.getMessage() : "Không thể tạo yêu cầu trả hàng");
+            
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 

@@ -30,7 +30,7 @@ public class Refund {
     
     private String imageUrls;       // JSON array of image URLs (for evidence)
 
-    @OneToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "payment_id")
     private Payment originalPayment; // Giao dịch thanh toán gốc (nếu cần liên kết)
 }
