@@ -97,11 +97,14 @@ public class OrderServiceImpl implements OrderService {
 
     Order savedOrder = orderRepository.save(order);
 
-        // Create shipping with status "Chờ xác nhận" (1)
+        // Create NEW shipping by copying from shipping template
+        // (Don't update the template - it may be used by other orders or as saved address)
         Shipping shipping = null;
         Optional<Shipping> shippingTemplateOptional = shippingRepository.findById(request.getShippingId());
         if (shippingTemplateOptional.isPresent()) {
             Shipping template = shippingTemplateOptional.get();
+            
+            // Create new shipping record from template
             shipping = new Shipping();
             shipping.setAccount(accountOptional.get());
             shipping.setOrder(savedOrder);
@@ -110,9 +113,12 @@ public class OrderServiceImpl implements OrderService {
             shipping.setReceiverAddress(template.getReceiverAddress());
             shipping.setCity(template.getCity());
             shipping.setShippingFee(template.getShippingFee());
-            shipping.setStatus(1); // Chờ xác nhận
+            shipping.setStatus(1); // Chờ xác nhận (same as order)
             shipping = shippingRepository.save(shipping);
-            System.out.println("✅ Created shipping with status: 1 (Chờ xác nhận) for order: " + savedOrder.getOrderId());
+            
+            System.out.println("✅ Created NEW shipping " + shipping.getShippingId() + " for order: " + savedOrder.getOrderId());
+            System.out.println("   - Copied from template: " + template.getShippingId());
+            System.out.println("   - Status: 1 (Chờ xác nhận)");
         } else {
             System.err.println("⚠️ Shipping template not found with id: " + request.getShippingId());
         }
@@ -286,6 +292,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderResponse updateOrderStatus(String orderId, int newStatus) {
         Optional<Order> orderOptional = orderRepository.findById(orderId);
         if (orderOptional.isEmpty()) {
@@ -293,9 +300,56 @@ public class OrderServiceImpl implements OrderService {
         }
 
         Order order = orderOptional.get();
+        int oldStatus = order.getStatus();
         order.setStatus(newStatus);
+        
+        // Handle shipping based on order status changes
+        handleShippingStatusUpdate(order, newStatus, oldStatus);
+        
         Order savedOrder = orderRepository.save(order);
         return OrderResponse.fromEntity(savedOrder);
+    }
+    
+    /**
+     * Tự động cập nhật shipping status khi thay đổi trạng thái order:
+     * - Order Status 1 (Chờ xác nhận) -> Shipping Status 1 (Chờ xác nhận)
+     * - Order Status 2 (Đã xác nhận) -> Shipping Status 2 (Chờ giao hàng)
+     * - Order Status 3 (Đang giao) -> Shipping Status 3 (Đang giao)
+     * - Order Status 4 (Hoàn thành) -> Shipping Status 4 (Đã giao)
+     */
+    private void handleShippingStatusUpdate(Order order, int newStatus, int oldStatus) {
+        try {
+            Shipping shipping = order.getShipping();
+            
+            if (shipping == null) {
+                System.err.println("⚠️ No shipping found for order: " + order.getOrderId());
+                return;
+            }
+            
+            // Case 1: Order được xác nhận (1 -> 2)
+            if (newStatus == 2 && oldStatus == 1) {
+                shipping.setStatus(2); // Chờ giao hàng
+                shippingRepository.save(shipping);
+                System.out.println("📦 Updated shipping status to 2 (Chờ giao hàng) for order: " + order.getOrderId());
+            }
+            // Case 2: Order chuyển sang đang giao (2 -> 3)
+            else if (newStatus == 3) {
+                shipping.setStatus(3); // Đang giao
+                shipping.setShippedAt(new Date());
+                shippingRepository.save(shipping);
+                System.out.println("📦 Updated shipping status to 3 (Đang giao) for order: " + order.getOrderId());
+            }
+            // Case 3: Order hoàn thành (3 -> 4)
+            else if (newStatus == 4) {
+                shipping.setStatus(4); // Đã giao
+                shippingRepository.save(shipping);
+                System.out.println("✅ Updated shipping status to 4 (Đã giao) for order: " + order.getOrderId());
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error handling shipping status update: " + e.getMessage());
+            e.printStackTrace();
+            // Don't throw exception - allow order status update to proceed
+        }
     }
 
     @Override
