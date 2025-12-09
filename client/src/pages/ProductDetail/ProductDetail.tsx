@@ -467,7 +467,7 @@ const ProductDetail: React.FC = () => {
                 }
 
                 // Kiểm tra số lượng đã có trong giỏ
-                const existingItem = cartData.items?.find((item: any) => item.product.productId === product.productId);
+                const existingItem = cartData.items?.find((item: any) => item.productId === product.productId);
                 const currentQuantityInCart = existingItem ? existingItem.quantity : 0;
                 
                 // Kiểm tra tổng số lượng (trong giỏ + muốn thêm) có vượt quá tồn kho không
