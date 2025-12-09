@@ -116,8 +116,6 @@ public class RefundServiceImpl implements RefundService {
         
         System.out.println("🔔 Response orderId: " + (response.getOrder() != null ? response.getOrder().getOrderId() : "NULL"));
         System.out.println("🔔 Response orderItemId: " + (response.getOrderItem() != null ? response.getOrderItem().getOrderDetailId() : "NULL"));
-        System.out.println("🔔 Response refundAmount: " + response.getRefundAmount());
-        System.out.println("🔔 Response refundStatus: " + response.getRefundStatus());
         
         return response;
     }

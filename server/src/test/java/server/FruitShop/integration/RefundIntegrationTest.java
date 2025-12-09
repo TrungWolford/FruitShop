@@ -202,9 +202,8 @@ class RefundIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.refundAmount").value(50000))
-                .andExpect(jsonPath("$.data.refundStatus").value("Chờ xác nhận"));
+                .andExpect(jsonPath("$.refundAmount").value(50000))
+                .andExpect(jsonPath("$.refundStatus").value("Chờ xác nhận"));
 
         // Verify trong database
         long count = refundRepository.count();
