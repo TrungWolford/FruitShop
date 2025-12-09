@@ -6,4 +6,22 @@
             <class name="com.fruitshop.tests.LoginTest"/>
         </classes>
     </test>
+    
+    <test name="Register Tests">
+        <classes>
+            <class name="com.fruitshop.tests.RegisterTest"/>
+        </classes>
+    </test>
+    
+    <test name="Product Filter Tests">
+        <classes>
+            <class name="com.fruitshop.tests.ProductFilterTest"/>
+        </classes>
+    </test>
+    
+    <test name="Admin Product Tests">
+        <classes>
+            <class name="com.fruitshop.tests.AdminProductTest"/>
+        </classes>
+    </test>
 </suite>
