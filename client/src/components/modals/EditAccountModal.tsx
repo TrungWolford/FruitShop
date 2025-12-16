@@ -52,20 +52,41 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({ isOpen, onClose, on
 
         setLoading(true);
         try {
-            // Chỉ gửi các trường có giá trị
-            const updateData: UpdateAccountRequest = {
-                accountName: formData.accountName,
-                accountPhone: formData.accountPhone,
-                status: formData.status,
-                roleIds: formData.roleIds,
-            };
+            // Chỉ gửi các trường có thay đổi (partial update)
+            const updateData: Partial<UpdateAccountRequest> = {};
 
-            // Chỉ thêm password nếu người dùng nhập mới
+            // Chỉ thêm trường nếu có giá trị và khác với giá trị cũ
+            if (formData.accountName && formData.accountName.trim() && formData.accountName !== account.accountName) {
+                updateData.accountName = formData.accountName;
+            }
+
+            if (formData.accountPhone && formData.accountPhone.trim() && formData.accountPhone !== account.accountPhone) {
+                updateData.accountPhone = formData.accountPhone;
+            }
+
             if (formData.password && formData.password.trim()) {
                 updateData.password = formData.password;
             }
 
-            await accountService.updateAccount(account.accountId, updateData);
+            if (formData.status !== account.status) {
+                updateData.status = formData.status;
+            }
+
+            // Kiểm tra roleIds có thay đổi không
+            const oldRoleIds = account.roles.map((role) => role.roleId).sort().join(',');
+            const newRoleIds = (formData.roleIds || []).sort().join(',');
+            if (newRoleIds && oldRoleIds !== newRoleIds) {
+                updateData.roleIds = formData.roleIds;
+            }
+
+            // Kiểm tra có gì thay đổi không
+            if (Object.keys(updateData).length === 0) {
+                toast.info('Không có thay đổi nào để cập nhật');
+                setLoading(false);
+                return;
+            }
+
+            await accountService.updateAccount(account.accountId, updateData as UpdateAccountRequest);
 
             toast.success('Cập nhật tài khoản thành công!');
 
@@ -94,7 +115,7 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({ isOpen, onClose, on
                         Sửa tài khoản
                     </DialogTitle>
                     <DialogDescription>
-                        Cập nhật thông tin tài khoản. Để trống mật khẩu nếu không muốn thay đổi.
+                        Chỉ cập nhật các trường bạn muốn thay đổi. Để trống các trường không muốn sửa.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -108,8 +129,7 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({ isOpen, onClose, on
                             id="accountName"
                             value={formData.accountName}
                             onChange={(e) => handleInputChange('accountName', e.target.value)}
-                            placeholder="Nhập tên tài khoản"
-                            required
+                            placeholder="Để trống nếu không muốn thay đổi"
                         />
                     </div>
 
@@ -122,8 +142,7 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({ isOpen, onClose, on
                             id="accountPhone"
                             value={formData.accountPhone}
                             onChange={(e) => handleInputChange('accountPhone', e.target.value)}
-                            placeholder="Nhập số điện thoại"
-                            required
+                            placeholder="Để trống nếu không muốn thay đổi"
                         />
                     </div>
 

@@ -93,15 +93,23 @@ public class AccountServiceImpl implements AccountService {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account not found with id: " + accountId));
 
-        account.setAccountName(request.getAccountName());
-        account.setAccountPhone(request.getAccountPhone());
-        if(request.getPassword() != null){
+        // Chỉ cập nhật các trường có giá trị (partial update)
+        if (request.getAccountName() != null && !request.getAccountName().trim().isEmpty()) {
+            account.setAccountName(request.getAccountName());
+        }
+        
+        if (request.getAccountPhone() != null && !request.getAccountPhone().trim().isEmpty()) {
+            account.setAccountPhone(request.getAccountPhone());
+        }
+        
+        if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
             account.setPassword(passwordEncoder.encode(request.getPassword()));
-        } else{
-            account.setPassword(account.getPassword());
         }
 
-        account.setStatus(request.getStatus());
+        // Chỉ cập nhật status nếu được gửi lên (không null)
+        if (request.getStatus() != null) {
+            account.setStatus(request.getStatus());
+        }
 
         // Update roles if provided
         if (request.getRoleIds() != null) {
