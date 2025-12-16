@@ -110,7 +110,7 @@ const ProductDetail: React.FC = () => {
                     setTotalRatings(response.totalElements);
                 } else if (response.success && response.data) {
                     // Fallback: Nếu có wrapper
-                    console.log('✅ Ratings data (with wrapper):', response.data);
+                    console.log(' Ratings data (with wrapper):', response.data);
                     setRatings(response.data.content);
                     setTotalPages(response.data.totalPages);
                     setTotalRatings(response.data.totalElements);
@@ -123,8 +123,10 @@ const ProductDetail: React.FC = () => {
                 } else if (avgResponse.success && typeof avgResponse.data === 'number') {
                     setAverageRating(avgResponse.data);
                 }
-            } catch (error) {
-            } finally {
+            } catch (error) {console.log(error);
+                toast.error('Đã xảy ra lỗi khi tải đánh giá sản phẩm');
+            }
+             finally {
                 setRatingsLoading(false);
             }
         };
@@ -179,7 +181,8 @@ const ProductDetail: React.FC = () => {
 
     // Debug: Log when userRating changes
     useEffect(() => {
-        if (userRating) {
+        if (userRating) { 
+            // console.log(' User has rated this product:', userRating);
         } else {
             console.log('⚠️ User has NOT rated this product (userRating is null)');
         }
@@ -842,7 +845,7 @@ const ProductDetail: React.FC = () => {
                                         </div>
                                         <div>
                                             <p className="text-sm font-semibold text-gray-800 leading-relaxed">
-                                                Tư vấn chọn sách
+                                                Tư vấn sản phẩm
                                             </p>
                                         </div>
                                     </div>
@@ -864,7 +867,7 @@ const ProductDetail: React.FC = () => {
                                         </div>
                                         <div>
                                             <p className="text-sm font-semibold text-gray-800 leading-relaxed">
-                                                Cam kết 100% sách thật
+                                                Cam kết 100% sản phẩm tươi mới
                                             </p>
                                         </div>
                                     </div>
@@ -913,7 +916,7 @@ const ProductDetail: React.FC = () => {
                                     {product.description || 'Chưa có mô tả sản phẩm.'}
                                 </p>
                                 <div className="mt-4">
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Thông tin sách:</h3>
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Thông tin sản phẩm:</h3>
                                     <ul className="list-disc list-inside space-y-1 text-gray-700">
                                         {/* author and cover removed from details */}
                                         <li>Mã sản phẩm: {product.productId}</li>

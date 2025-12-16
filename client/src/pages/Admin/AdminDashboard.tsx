@@ -295,7 +295,7 @@ const AdminDashboard: React.FC = () => {
                           <p className="text-sm text-gray-500">{product.description?.slice(0, 60) || ''}</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-medium text-red-600">Còn {product.stock} cuốn</p>
+                          <p className="font-medium text-red-600">Còn {product.stock} sản phẩm</p>
                           <p className="text-sm text-gray-500">{formatPrice(product.price)}</p>
                         </div>
                       </div>
