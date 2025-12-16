@@ -116,6 +116,10 @@ public class AccountController {
             AccountResponse account = accountService.authenticateAccount(request.getAccountPhone(), request.getPassword());
             return ResponseEntity.ok(account);
         } catch (RuntimeException e) {
+            // Kiểm tra nếu là tài khoản bị vô hiệu hóa
+            if (e.getMessage() != null && e.getMessage().contains("deactivated")) {
+                return ResponseEntity.status(403).body("Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.");
+            }
             return ResponseEntity.status(401).body("Tài khoản hoặc mật khẩu không đúng");
         }
     }
