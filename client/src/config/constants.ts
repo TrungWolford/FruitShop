@@ -365,6 +365,10 @@ export const VALIDATION_RULES = {
     MAX_LENGTH: 100,
     MESSAGE: 'Tên danh mục phải từ 2-100 ký tự',
   },
+  DESCRIPTION: {
+    MAX_LENGTH: 3600,
+    MESSAGE: 'Mô tả không được vượt quá 3600 ký tự',
+  },
   PRICE: {
     MIN: 0,
     MESSAGE: 'Giá sản phẩm phải lớn hơn 0',

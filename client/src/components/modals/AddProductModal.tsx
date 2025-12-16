@@ -418,6 +418,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSu
                             placeholder="Nhập mô tả chi tiết về sản phẩm..."
                             rows={4}
                             className="w-full"
+                            maxLength={VALIDATION_RULES.DESCRIPTION.MAX_LENGTH}
                         />
                     </div>
 

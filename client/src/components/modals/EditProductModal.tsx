@@ -544,6 +544,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
                                     placeholder="Nhập mô tả chi tiết về sản phẩm..."
                                     rows={4}
                                     className="border-gray-300 focus:border-amber-500 focus:ring-amber-500/20 resize-none"
+                                    maxLength={3600}
                                 />
                             </div>
 
