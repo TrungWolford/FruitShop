@@ -37,21 +37,21 @@ export const authService = {
       // Parse error message from backend
       let errorMessage = 'Số điện thoại hoặc mật khẩu không đúng';
       
-      // Nếu backend trả về string trong response.data
-      if (typeof error.response?.data === 'string') {
+      // Ưu tiên lấy message từ backend response
+      if (typeof error.response?.data === 'string' && error.response.data.trim() !== '') {
         errorMessage = error.response.data;
       } 
       // Nếu backend trả về object với message property
       else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       }
-      // Xử lý theo status code
+      // Chỉ dùng default message nếu không có message từ backend
       else if (error.response?.status === 401) {
         errorMessage = 'Số điện thoại hoặc mật khẩu không đúng';
       } else if (error.response?.status === 400) {
         errorMessage = 'Số điện thoại hoặc mật khẩu không đúng';
       } else if (error.response?.status === 403) {
-        errorMessage = 'Tài khoản không có quyền truy cập';
+        errorMessage = 'Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.';
       } else if (error.response?.status >= 500) {
         errorMessage = 'Lỗi hệ thống. Vui lòng thử lại sau';
       }
