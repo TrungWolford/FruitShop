@@ -8,6 +8,6 @@ public class UpdateAccountRequest {
     private String accountName;
     private String accountPhone;
     private String password;
-    private Integer status;  // Đổi từ int sang Integer để có thể null (partial update)
+    private int status;  // Bắt buộc - luôn phải có giá trị
     private Set<String> roleIds;
 }

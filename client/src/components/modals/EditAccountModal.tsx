@@ -52,15 +52,17 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({ isOpen, onClose, on
 
         setLoading(true);
         try {
-            // Chỉ gửi các trường có thay đổi (partial update)
-            const updateData: Partial<UpdateAccountRequest> = {};
+            // Partial update: chỉ gửi các trường có thay đổi (trừ status - bắt buộc)
+            const updateData: Partial<UpdateAccountRequest> = {
+                status: formData.status,  // Status luôn gửi (bắt buộc)
+            };
 
-            // Chỉ thêm trường nếu có giá trị và khác với giá trị cũ
-            if (formData.accountName && formData.accountName.trim() && formData.accountName !== account.accountName) {
+            // So sánh với giá trị cũ, chỉ thêm nếu khác
+            if (formData.accountName && formData.accountName !== account.accountName) {
                 updateData.accountName = formData.accountName;
             }
 
-            if (formData.accountPhone && formData.accountPhone.trim() && formData.accountPhone !== account.accountPhone) {
+            if (formData.accountPhone && formData.accountPhone !== account.accountPhone) {
                 updateData.accountPhone = formData.accountPhone;
             }
 
@@ -68,19 +70,22 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({ isOpen, onClose, on
                 updateData.password = formData.password;
             }
 
-            if (formData.status !== account.status) {
-                updateData.status = formData.status;
-            }
-
-            // Kiểm tra roleIds có thay đổi không
-            const oldRoleIds = account.roles.map((role) => role.roleId).sort().join(',');
+            // So sánh roleIds
+            const oldRoleIds = account.roles.map((r) => r.roleId).sort().join(',');
             const newRoleIds = (formData.roleIds || []).sort().join(',');
             if (newRoleIds && oldRoleIds !== newRoleIds) {
                 updateData.roleIds = formData.roleIds;
             }
 
-            // Kiểm tra có gì thay đổi không
-            if (Object.keys(updateData).length === 0) {
+            // Kiểm tra có thay đổi không (status luôn có nên kiểm tra > 1)
+            const hasChanges = 
+                updateData.accountName || 
+                updateData.accountPhone || 
+                updateData.password || 
+                updateData.roleIds ||
+                formData.status !== account.status;
+                
+            if (!hasChanges) {
                 toast.info('Không có thay đổi nào để cập nhật');
                 setLoading(false);
                 return;
@@ -115,7 +120,7 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({ isOpen, onClose, on
                         Sửa tài khoản
                     </DialogTitle>
                     <DialogDescription>
-                        Chỉ cập nhật các trường bạn muốn thay đổi. Để trống các trường không muốn sửa.
+                        Chỉ nhập các trường bạn muốn thay đổi. Để nguyên nếu không muốn sửa.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -129,7 +134,7 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({ isOpen, onClose, on
                             id="accountName"
                             value={formData.accountName}
                             onChange={(e) => handleInputChange('accountName', e.target.value)}
-                            placeholder="Để trống nếu không muốn thay đổi"
+                            placeholder="Giữ nguyên nếu không đổi"
                         />
                     </div>
 
@@ -142,7 +147,7 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({ isOpen, onClose, on
                             id="accountPhone"
                             value={formData.accountPhone}
                             onChange={(e) => handleInputChange('accountPhone', e.target.value)}
-                            placeholder="Để trống nếu không muốn thay đổi"
+                            placeholder="Giữ nguyên nếu không đổi"
                         />
                     </div>
 
