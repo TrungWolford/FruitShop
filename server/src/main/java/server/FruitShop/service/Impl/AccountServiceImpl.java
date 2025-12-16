@@ -95,7 +95,12 @@ public class AccountServiceImpl implements AccountService {
 
         account.setAccountName(request.getAccountName());
         account.setAccountPhone(request.getAccountPhone());
-        account.setPassword(passwordEncoder.encode(request.getPassword()));
+        if(request.getPassword() != null){
+            account.setPassword(passwordEncoder.encode(request.getPassword()));
+        } else{
+            account.setPassword(account.getPassword());
+        }
+
         account.setStatus(request.getStatus());
 
         // Update roles if provided
