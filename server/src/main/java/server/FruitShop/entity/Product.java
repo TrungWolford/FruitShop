@@ -32,6 +32,7 @@ public class Product {
 
     private long stock;
 
+    @Column(length = 3600)
     private String description;
 
     private Date createdAt;
