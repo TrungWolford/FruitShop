@@ -100,7 +100,10 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
         password: formData.password
       })
       
-      if (response.success && response.user) {
+      console.log('🔐 Login response:', response)
+      
+      // Kiểm tra response có hợp lệ không (phải có user object với accountId)
+      if (response.success && response.user && response.user.accountId) {
         // Dispatch loginSuccess TRƯỚC để Redux state được cập nhật ngay
         dispatch(loginSuccess(response.user))
         
@@ -163,8 +166,16 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
       // Sử dụng error message đã được parse từ authService
       const errorMessage = error.message || 'Số điện thoại hoặc mật khẩu không đúng'
       
-      dispatch(loginFailure(errorMessage))
-      toast.error(errorMessage)
+      // Kiểm tra nếu là tài khoản bị vô hiệu hóa
+      if (errorMessage.toLowerCase().includes('deactivated') || errorMessage.includes('vô hiệu hóa') || errorMessage.includes('tạm ngưng')) {
+        dispatch(loginFailure('Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.'))
+        toast.error('Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.', {
+          duration: 5000
+        })
+      } else {
+        dispatch(loginFailure(errorMessage))
+        toast.error(errorMessage)
+      }
       
       // KHÔNG redirect khi login failed - giữ user ở trang login
     } finally {

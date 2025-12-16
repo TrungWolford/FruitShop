@@ -171,7 +171,7 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({ isOpen, onClose, on
                             Trạng thái
                         </Label>
                         <Select
-                            value={(formData.status || 1).toString()}
+                            value={formData.status !== undefined ? formData.status.toString() : '1'}
                             onValueChange={(value) => handleInputChange('status', parseInt(value))}
                         >
                             <SelectTrigger>

@@ -38,8 +38,13 @@ axiosInstance.interceptors.response.use(
     
     const originalRequest = error.config as CustomAxiosRequestConfig;
 
+    // Kiểm tra nếu là request login thì không xử lý 401 đặc biệt
+    const isLoginRequest = originalRequest?.url?.includes('/login') || 
+                           originalRequest?.url?.includes('/auth');
+
     // If the error is 401 and we haven't tried to refresh the token yet
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+    // KHÔNG xử lý logout/redirect cho login request
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isLoginRequest) {
       originalRequest._retry = true;
 
       try {

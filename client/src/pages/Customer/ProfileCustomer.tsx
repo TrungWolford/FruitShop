@@ -174,20 +174,53 @@ const ProfileCustomer: React.FC = () => {
         }
     };
 
-    const handleChangePassword = () => {
+    const handleChangePassword = async () => {
+        // Validation
+        if (!passwordData.currentPassword) {
+            toast.error('Vui lòng nhập mật khẩu hiện tại');
+            return;
+        }
+        
+        if (!passwordData.newPassword) {
+            toast.error('Vui lòng nhập mật khẩu mới');
+            return;
+        }
+        
+        if (passwordData.newPassword.length < 6) {
+            toast.error('Mật khẩu mới phải có ít nhất 6 ký tự');
+            return;
+        }
+        
         if (passwordData.newPassword !== passwordData.confirmPassword) {
             toast.error('Mật khẩu mới không khớp!');
             return;
         }
 
-        // TODO: Implement API call to change password
-        setIsChangingPassword(false);
-        setPasswordData({
-            currentPassword: '',
-            newPassword: '',
-            confirmPassword: '',
-        });
-        toast.success('Đổi mật khẩu thành công!');
+        if (!user?.accountId) return;
+
+        try {
+            setLoading(true);
+            
+            // Gọi API cập nhật mật khẩu
+            await accountService.updateAccount(user.accountId, {
+                password: passwordData.newPassword,
+                accountName: accountData?.accountName,
+                accountPhone: accountData?.accountPhone,
+                status: accountData?.status || 1,
+            });
+            
+            setIsChangingPassword(false);
+            setPasswordData({
+                currentPassword: '',
+                newPassword: '',
+                confirmPassword: '',
+            });
+            toast.success('Đổi mật khẩu thành công!');
+        } catch (error) {
+            toast.error('Không thể đổi mật khẩu. Vui lòng thử lại.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleCancelEdit = () => {
