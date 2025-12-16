@@ -125,7 +125,12 @@ jobs:
         run: npm install -g @railway/cli
 
       - name: Deploy to Railway
-        run: railway up --service ${{ secrets.RAILWAY_SERVICE_ID }}
+        run: |
+          echo "🚀 Starting Railway deployment..."
+          echo "Service ID: ${{ secrets.RAILWAY_SERVICE_ID }}"
+          railway up --service ${{ secrets.RAILWAY_SERVICE_ID }} 2>&1 | tee deploy.log
+          echo "✅ Deployment command completed"
+          cat deploy.log
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
