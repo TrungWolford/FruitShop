@@ -6,6 +6,7 @@ import { Button } from '../ui/Button/Button';
 import { ArrowRight } from 'lucide-react';
 import { productService } from '../../services/productService';
 import type { Product as ApiProduct } from '../../types/product';
+import AgentChatBot from '../Ai-Agentic';
 
 interface ProductGridProps {
   title?: string;
@@ -129,17 +130,20 @@ const ProductGrid: React.FC<ProductGridProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
         {loading
           ? Array.from({ length: limit || 8 }).map((_, i) => (
-              <div key={i} className="h-64 bg-gray-100 animate-pulse rounded-lg" />
-            ))
+            <div key={i} className="h-64 bg-gray-100 animate-pulse rounded-lg" />
+          ))
           : transformedProducts.map((product) => (
-              <ProductItem
-                key={product.productId}
-                product={product}
-                onAddToCart={() => onAddToCart?.(product.productId)}
-                onAddToWishlist={() => onAddToWishlist?.(product.productId)}
-              />
-            ))}
+            <ProductItem
+              key={product.productId}
+              product={product}
+              onAddToCart={() => onAddToCart?.(product.productId)}
+              onAddToWishlist={() => onAddToWishlist?.(product.productId)}
+            />
+          ))}
       </div>
+
+
+
 
       {/* View All Button - Mobile & Bottom */}
       {showViewAll && isLimited && (

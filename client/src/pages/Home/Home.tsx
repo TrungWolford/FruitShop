@@ -6,35 +6,40 @@ import MainBanner from '../../components/Home/MainBanner';
 import ProductGrid from '../../components/Product/ProductGrid';
 import CategoryMainPage from '../../components/Category/CategoryMainPage';
 import Footer from '../../components/ui/Footer/Footer';
+import AgentChatBot from '@/components/Ai-Agentic';
+
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
 
+
+
   return (
     <div className="min-h-screen bg-gray-50">
       <TopNavigation />
-  {/* Hero Section with Category and Banner side by side */}
-        <section className="container mx-auto px-4 py-6">
-          <div className="grid grid-cols-12 gap-6">
-            {/* Left: Category Menu */}
-            <div className="col-span-12 lg:col-span-3">
-              <CategoryMainPage />
-            </div>
-            
-            {/* Right: Main Banner */}
-            <div className="col-span-12 lg:col-span-9">
-              <MainBanner />
-            </div>
+      {/* Hero Section with Category and Banner side by side */}
+      <section className="container mx-auto px-4 py-6">
+        <div className="grid grid-cols-12 gap-6">
+          {/* Left: Category Menu */}
+          <div className="col-span-12 lg:col-span-3">
+            <CategoryMainPage />
           </div>
-        </section>
-      
+
+          {/* Right: Main Banner */}
+          <div className="col-span-12 lg:col-span-9">
+            <MainBanner />
+          </div>
+        </div>
+      </section>
+
       {/* Featured Products */}
       <section className="container mx-auto px-36 py-8">
-        <ProductGrid 
+        <AgentChatBot />
+        <ProductGrid
           title="Sản phẩm nổi bật"
           limit={10}
         />
-        
+
         {/* Button Xem tất cả sản phẩm */}
         <div className="flex justify-center mt-8">
           <button
@@ -45,9 +50,9 @@ const Home: React.FC = () => {
           </button>
         </div>
       </section>
-      
-      
-      
+
+
+
       <Footer />
     </div>
   );
