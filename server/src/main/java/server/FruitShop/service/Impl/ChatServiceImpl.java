@@ -19,6 +19,7 @@ import server.FruitShop.repository.AccountRepository;
 import server.FruitShop.repository.ChatMessageRepository;
 import server.FruitShop.repository.ChatSessionRepository;
 import server.FruitShop.service.ChatService;
+import server.FruitShop.service.GeminiService;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,14 +30,17 @@ public class ChatServiceImpl implements ChatService {
     private final ChatSessionRepository chatSessionRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final AccountRepository accountRepository;
+    private final GeminiService geminiService;
 
     @Autowired
     public ChatServiceImpl(ChatSessionRepository chatSessionRepository,
                            ChatMessageRepository chatMessageRepository,
-                           AccountRepository accountRepository) {
+                           AccountRepository accountRepository,
+                           GeminiService geminiService) {
         this.chatSessionRepository = chatSessionRepository;
         this.chatMessageRepository = chatMessageRepository;
         this.accountRepository = accountRepository;
+        this.geminiService = geminiService;
     }
 
     // ================================================================
@@ -159,12 +163,14 @@ public class ChatServiceImpl implements ChatService {
                 request.getIntent(), request.getMetadata());
         chatMessageRepository.save(userMessage);
 
-        // 3. Detect intent nếu chưa có
-        String detectedIntent = detectIntent(request.getContent(), request.getIntent());
+        // 3. Detect intent bằng Gemini (hoặc dùng hint từ frontend)
+        String detectedIntent = (request.getIntent() != null && !request.getIntent().isBlank())
+                ? request.getIntent()
+                : geminiService.detectIntent(request.getContent());
 
-        // 4. Sinh bot reply dựa trên intent
-        String botReply = generateBotReply(detectedIntent, request.getContent(), request.getMetadata());
-        String botMetadata = generateBotMetadata(detectedIntent, request.getMetadata());
+        // 4. Sinh bot reply bằng Gemini (dataContext = null, sẽ mở rộng sau với dữ liệu DB thực)
+        String botReply = geminiService.generateReply(detectedIntent, request.getContent(), request.getMetadata());
+        String botMetadata = buildBotMetadata(detectedIntent, request.getContent());
 
         ChatMessage botMessage = buildMessage(session, null, botReply, "SYSTEM", "TEXT", detectedIntent, botMetadata);
         chatMessageRepository.save(botMessage);
@@ -275,57 +281,30 @@ public class ChatServiceImpl implements ChatService {
     }
 
     /**
-     * Detect intent từ nội dung tin nhắn (rule-based đơn giản).
-     * TODO: Thay thế bằng gọi AI/NLP API (OpenAI, Gemini, Rasa...) để chính xác hơn.
+     * Trích xuất keyword từ tin nhắn (dùng Gemini) và đóng gói thành metadata JSON.
+     * Frontend dùng metadata này để hiển thị chip/button context (VD: tên sp, orderId).
+     * TODO: Truy vấn DB thực lấy productId / orderId rồi nhúng vào đây.
      */
-    private String detectIntent(String content, String hintIntent) {
-        // Nếu frontend đã gợi ý intent → dùng luôn
-        if (hintIntent != null && !hintIntent.isBlank()) return hintIntent;
-
-        String lower = content.toLowerCase();
-
-        if (lower.contains("so sánh") || lower.contains("compare"))       return "PRODUCT_COMPARE";
-        if (lower.contains("đơn hàng") || lower.contains("order"))        return "ORDER_LOOKUP";
-        if (lower.contains("đặt hàng") || lower.contains("mua"))          return "ORDER_PLACE";
-        if (lower.contains("thanh toán") || lower.contains("payment"))     return "PAYMENT";
-        if (lower.contains("gợi ý") || lower.contains("recommend"))        return "PRODUCT_SUGGEST";
-        if (lower.contains("sản phẩm") || lower.contains("product"))       return "PRODUCT_ADVICE";
-
-        return "GENERAL";
-    }
-
-    /**
-     * Sinh nội dung text reply của bot theo intent.
-     * TODO: Gọi AI API để tạo câu trả lời tự nhiên hơn.
-     */
-    private String generateBotReply(String intent, String userContent, String metadata) {
-        if (intent == null) return "Xin chào! Tôi có thể giúp gì cho bạn?";
-
+    private String buildBotMetadata(String intent, String userMessage) {
+        if (intent == null) return null;
         return switch (intent) {
-            case "PRODUCT_ADVICE"  -> "Bạn đang muốn tìm hiểu về sản phẩm nào? Tôi sẽ tư vấn cho bạn ngay!";
-            case "PRODUCT_COMPARE" -> "Bạn muốn so sánh những sản phẩm nào? Hãy cho tôi biết tên hoặc mã sản phẩm nhé!";
-            case "ORDER_LOOKUP"    -> "Bạn muốn tra cứu đơn hàng nào? Hãy cung cấp mã đơn hàng cho tôi nhé!";
-            case "PRODUCT_SUGGEST" -> "Để gợi ý sản phẩm phù hợp, bạn có thể cho tôi biết ngân sách hoặc loại sản phẩm bạn muốn không?";
-            case "ORDER_PLACE"     -> "Tôi sẽ hỗ trợ bạn đặt hàng! Bạn muốn mua sản phẩm gì?";
-            case "PAYMENT"         -> "Shop hỗ trợ thanh toán qua MoMo và COD (thanh toán khi nhận hàng). Bạn muốn chọn phương thức nào?";
-            default                -> "Tôi có thể tư vấn sản phẩm, so sánh giá, tra cứu đơn hàng hoặc hỗ trợ bạn đặt hàng. Bạn cần gì ạ?";
+            case "PRODUCT_ADVICE", "PRODUCT_COMPARE", "ORDER_PLACE", "PRODUCT_SUGGEST" -> {
+                String keyword = geminiService.extractProductKeyword(userMessage);
+                yield "UNKNOWN".equals(keyword) ? null
+                        : "{\"keyword\":\"" + keyword + "\"}";
+            }
+            case "ORDER_LOOKUP" -> {
+                String orderId = geminiService.extractOrderId(userMessage);
+                yield "UNKNOWN".equals(orderId) ? null
+                        : "{\"orderId\":\"" + orderId + "\"}";
+            }
+            default -> null;
         };
-    }
-
-    /**
-     * Sinh metadata JSON cho bot reply theo intent.
-     * TODO: Truy vấn DB thực để lấy dữ liệu sản phẩm / đơn hàng và nhúng vào metadata.
-     */
-    private String generateBotMetadata(String intent, String requestMetadata) {
-        // Placeholder — sẽ được implement khi tích hợp AI + truy vấn dữ liệu thực
-        return null;
     }
 
     /** Cập nhật orderFlowState của session theo metadata gửi lên */
     private void updateOrderFlowState(ChatSession session, String metadata) {
         if (metadata == null) return;
-        // TODO: Parse metadata JSON và cập nhật orderFlowState tương ứng
-        // VD: {"orderFlowState": "CONFIRMING"} → session.setOrderFlowState("CONFIRMING")
         if (metadata.contains("CONFIRMING")) session.setOrderFlowState("CONFIRMING");
         else if (metadata.contains("PAYING")) session.setOrderFlowState("PAYING");
         else if (metadata.contains("DONE"))   session.setOrderFlowState("DONE");
