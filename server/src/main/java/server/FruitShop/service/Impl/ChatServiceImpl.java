@@ -18,6 +18,7 @@ import server.FruitShop.exception.ResourceNotFoundException;
 import server.FruitShop.repository.AccountRepository;
 import server.FruitShop.repository.ChatMessageRepository;
 import server.FruitShop.repository.ChatSessionRepository;
+import server.FruitShop.dto.response.ChatBot.GeminiAgentResult;
 import server.FruitShop.service.ChatService;
 import server.FruitShop.service.GeminiService;
 
@@ -163,14 +164,11 @@ public class ChatServiceImpl implements ChatService {
                 request.getIntent(), request.getMetadata());
         chatMessageRepository.save(userMessage);
 
-        // 3. Detect intent bằng Gemini (hoặc dùng hint từ frontend)
-        String detectedIntent = (request.getIntent() != null && !request.getIntent().isBlank())
-                ? request.getIntent()
-                : geminiService.detectIntent(request.getContent());
-
-        // 4. Sinh bot reply bằng Gemini (dataContext = null, sẽ mở rộng sau với dữ liệu DB thực)
-        String botReply = geminiService.generateReply(detectedIntent, request.getContent(), request.getMetadata());
-        String botMetadata = buildBotMetadata(detectedIntent, request.getContent());
+        // 3. Agentic chat: Gemini tự gọi tool query DB và sinh câu trả lời
+        GeminiAgentResult agentResult = geminiService.agentChat(request.getContent(), request.getSenderId());
+        String detectedIntent = agentResult.intent();
+        String botReply = agentResult.reply();
+        String botMetadata = agentResult.metadata();
 
         ChatMessage botMessage = buildMessage(session, null, botReply, "SYSTEM", "TEXT", detectedIntent, botMetadata);
         chatMessageRepository.save(botMessage);
@@ -278,28 +276,6 @@ public class ChatServiceImpl implements ChatService {
         message.setMetadata(metadata);
         message.setDeleted(false);
         return message;
-    }
-
-    /**
-     * Trích xuất keyword từ tin nhắn (dùng Gemini) và đóng gói thành metadata JSON.
-     * Frontend dùng metadata này để hiển thị chip/button context (VD: tên sp, orderId).
-     * TODO: Truy vấn DB thực lấy productId / orderId rồi nhúng vào đây.
-     */
-    private String buildBotMetadata(String intent, String userMessage) {
-        if (intent == null) return null;
-        return switch (intent) {
-            case "PRODUCT_ADVICE", "PRODUCT_COMPARE", "ORDER_PLACE", "PRODUCT_SUGGEST" -> {
-                String keyword = geminiService.extractProductKeyword(userMessage);
-                yield "UNKNOWN".equals(keyword) ? null
-                        : "{\"keyword\":\"" + keyword + "\"}";
-            }
-            case "ORDER_LOOKUP" -> {
-                String orderId = geminiService.extractOrderId(userMessage);
-                yield "UNKNOWN".equals(orderId) ? null
-                        : "{\"orderId\":\"" + orderId + "\"}";
-            }
-            default -> null;
-        };
     }
 
     /** Cập nhật orderFlowState của session theo metadata gửi lên */
