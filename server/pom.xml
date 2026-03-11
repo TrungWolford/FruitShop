@@ -108,16 +108,16 @@
 		</dependency>
 
 		<!-- ============================
-		     GEMINI AI (Google GenAI SDK)
+		     GEMINI AI — Gọi REST API trực tiếp (không dùng SDK)
+		     OkHttp: HTTP client nhẹ, không conflict với Spring
 		     ============================ -->
-		<!-- Google Gemini Java SDK (chính thức từ Google) -->
 		<dependency>
-			<groupId>com.google.genai</groupId>
-			<artifactId>google-genai</artifactId>
-			<version>0.7.0</version>
+			<groupId>com.squareup.okhttp3</groupId>
+			<artifactId>okhttp</artifactId>
+			<version>4.12.0</version>
 		</dependency>
 
-		<!-- Jackson để parse JSON metadata từ bot -->
+		<!-- Jackson để build/parse JSON request-response Gemini -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>

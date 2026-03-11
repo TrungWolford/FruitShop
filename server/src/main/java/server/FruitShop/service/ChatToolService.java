@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import server.FruitShop.entity.Order;
-import server.FruitShop.entity.OrderItem;
 import server.FruitShop.entity.Product;
 import server.FruitShop.repository.OrderRepository;
 import server.FruitShop.repository.ProductRepository;
