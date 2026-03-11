@@ -106,6 +106,22 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
+
+		<!-- ============================
+		     GEMINI AI (Google GenAI SDK)
+		     ============================ -->
+		<!-- Google Gemini Java SDK (chính thức từ Google) -->
+		<dependency>
+			<groupId>com.google.genai</groupId>
+			<artifactId>google-genai</artifactId>
+			<version>0.7.0</version>
+		</dependency>
+
+		<!-- Jackson để parse JSON metadata từ bot -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
