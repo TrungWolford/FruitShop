@@ -3,8 +3,8 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, ChevronRight, Menu, ChevronLeft } from 'lucide-react';
 import type { Product, Category } from '../../types/product';
 import { toast } from 'sonner';
-import TopNavigation from '../../components/ui/Header/Header';
-import Footer from '../../components/ui/Footer/Footer';
+import TopNavigation from '../../components/layout/Header/Header';
+import Footer from '../../components/layout/Footer/Footer';
 import { categoryService } from '../../services/categoryService';
 import { productService } from '../../services/productService';
 import ProductItem from '../../components/Product/ProductItem';
@@ -84,20 +84,20 @@ const ProductPage: React.FC = () => {
   const { categoryName } = useParams<{ categoryName: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  
+
   const searchQuery = searchParams.get('q'); // Lấy search query từ URL
-  
+
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const pageSize = 12; // 12 sản phẩm mỗi trang
-  
+
   // Price filter states
   const [selectedPriceRange, setSelectedPriceRange] = useState<string | null>(null);
   const priceRanges = [
@@ -147,21 +147,21 @@ const ProductPage: React.FC = () => {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      
+
       let response;
-      
+
       // Get price range values if selected
-      const priceRange = selectedPriceRange 
+      const priceRange = selectedPriceRange
         ? priceRanges.find(range => range.value === selectedPriceRange)
         : null;
-      
+
       if (searchQuery) {
         // Search mode - gọi search API với minPrice, maxPrice nếu có
         if (selectedPriceRange && priceRange) {
           // Gọi search API với minPrice và maxPrice
           response = await productService.searchProducts(
-            searchQuery, 
-            currentPage, 
+            searchQuery,
+            currentPage,
             pageSize,
             priceRange.minPrice,
             priceRange.maxPrice,
@@ -175,7 +175,7 @@ const ProductPage: React.FC = () => {
         // Find categoryId from categories list
         const decodedCategoryName = decodeURIComponent(categoryName);
         const selectedCategory = categories.find(cat => cat.categoryName === decodedCategoryName);
-        
+
         if (selectedCategory) {
           // Use API to filter products by category (với price filter nếu có)
           response = await productService.filterProducts({
@@ -188,8 +188,8 @@ const ProductPage: React.FC = () => {
           });
         } else {
           // Fallback to mock data if category not found
-          response = { 
-            content: mockProducts.filter(product => 
+          response = {
+            content: mockProducts.filter(product =>
               product.categories.some(cat => cat.categoryName === decodedCategoryName)
             ),
             totalPages: 1,
@@ -206,18 +206,18 @@ const ProductPage: React.FC = () => {
           size: pageSize
         });
       }
-      
+
       setProducts(response.content || []);
       setTotalPages(response.totalPages || 0);
       setTotalElements(response.totalElements || 0);
     } catch (error) {
       toast.error('Không thể tải danh sách sản phẩm');
-      
+
       // Fallback to mock data
       let filteredData = [...mockProducts];
       if (categoryName) {
         const decodedCategoryName = decodeURIComponent(categoryName);
-        filteredData = mockProducts.filter(product => 
+        filteredData = mockProducts.filter(product =>
           product.categories.some(cat => cat.categoryName === decodedCategoryName)
         );
       }
@@ -259,7 +259,7 @@ const ProductPage: React.FC = () => {
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
     const maxPagesToShow = 5;
-    
+
     if (totalPages <= maxPagesToShow) {
       // Show all pages if total pages is less than max
       for (let i = 0; i < totalPages; i++) {
@@ -268,40 +268,40 @@ const ProductPage: React.FC = () => {
     } else {
       // Show first page
       pages.push(0);
-      
+
       // Calculate range around current page
       let startPage = Math.max(1, currentPage - 1);
       let endPage = Math.min(totalPages - 2, currentPage + 1);
-      
+
       // Adjust if we're near the start
       if (currentPage <= 2) {
         endPage = 3;
       }
-      
+
       // Adjust if we're near the end
       if (currentPage >= totalPages - 3) {
         startPage = totalPages - 4;
       }
-      
+
       // Add ellipsis if needed
       if (startPage > 1) {
         pages.push('...');
       }
-      
+
       // Add middle pages
       for (let i = startPage; i <= endPage; i++) {
         pages.push(i);
       }
-      
+
       // Add ellipsis if needed
       if (endPage < totalPages - 2) {
         pages.push('...');
       }
-      
+
       // Show last page
       pages.push(totalPages - 1);
     }
-    
+
     return pages;
   };
 
@@ -335,7 +335,7 @@ const ProductPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Main content - 7.5 columns */}
             <div className="col-span-8">
               <div className="animate-pulse">
@@ -362,7 +362,7 @@ const ProductPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#f2f3f5]">
       <TopNavigation />
-      
+
       <main className="max-w-8xl mx-auto px-16 pt-0 pb-8">
         {/* Main content with 2.5:7.5 layout */}
         <div className="grid grid-cols-10 gap-6">
@@ -381,75 +381,68 @@ const ProductPage: React.FC = () => {
                   <div
                     key={category.categoryId}
                     onClick={() => handleCategoryClick(category.categoryName)}
-                    className={`flex items-center justify-between py-2 px-2 hover:bg-blue-50 hover:text-blue-600 rounded cursor-pointer transition-all duration-200 group relative ${
-                      categoryName && decodeURIComponent(categoryName) === category.categoryName 
-                        ? 'bg-blue-50 text-blue-600' 
-                        : ''
-                    }`}
+                    className={`flex items-center justify-between py-2 px-2 hover:bg-blue-50 hover:text-blue-600 rounded cursor-pointer transition-all duration-200 group relative ${categoryName && decodeURIComponent(categoryName) === category.categoryName
+                      ? 'bg-blue-50 text-blue-600'
+                      : ''
+                      }`}
                   >
                     {/* Blue bar on hover or active */}
-                    <div className={`absolute left-0 top-0 bottom-0 w-1 bg-blue-600 transition-opacity duration-200 ${
-                      categoryName && decodeURIComponent(categoryName) === category.categoryName 
-                        ? 'opacity-100' 
-                        : 'opacity-0 group-hover:opacity-100'
-                    }`}></div>
-                    <span className={`text-sm font-semibold transition-colors ${
-                      categoryName && decodeURIComponent(categoryName) === category.categoryName 
-                        ? 'text-blue-600' 
-                        : 'text-gray-700 group-hover:text-blue-600'
-                    }`}>
+                    <div className={`absolute left-0 top-0 bottom-0 w-1 bg-blue-600 transition-opacity duration-200 ${categoryName && decodeURIComponent(categoryName) === category.categoryName
+                      ? 'opacity-100'
+                      : 'opacity-0 group-hover:opacity-100'
+                      }`}></div>
+                    <span className={`text-sm font-semibold transition-colors ${categoryName && decodeURIComponent(categoryName) === category.categoryName
+                      ? 'text-blue-600'
+                      : 'text-gray-700 group-hover:text-blue-600'
+                      }`}>
                       {category.categoryName}
                     </span>
-                    <ChevronRight className={`w-4 h-4 transition-all duration-200 ${
-                      categoryName && decodeURIComponent(categoryName) === category.categoryName 
-                        ? 'text-blue-500' 
-                        : 'text-gray-400 group-hover:text-blue-500 group-hover:translate-x-0.5'
-                    }`} />
+                    <ChevronRight className={`w-4 h-4 transition-all duration-200 ${categoryName && decodeURIComponent(categoryName) === category.categoryName
+                      ? 'text-blue-500'
+                      : 'text-gray-400 group-hover:text-blue-500 group-hover:translate-x-0.5'
+                      }`} />
                   </div>
                 ))}
               </div>
             </div>
-            
+
             {/* Price Filter - Show when searching or viewing category */}
             {(searchQuery || categoryName) && (
               <div className="bg-white shadow-sm border border-gray-200 p-4 mt-4">
                 <div className="flex items-center gap-2 mb-4">
                   <h2 className="text-sm font-extrabold text-gray-900">LỌC THEO GIÁ</h2>
                 </div>
-                
+
                 <div className="space-y-2">
                   {priceRanges.map((range) => (
                     <div
                       key={range.value}
                       onClick={() => handlePriceRangeChange(range.value)}
-                      className={`py-2 px-3 rounded cursor-pointer transition-all duration-200 ${
-                        selectedPriceRange === range.value
-                          ? 'bg-blue-50 border border-blue-500 text-blue-600'
-                          : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
-                      }`}
+                      className={`py-2 px-3 rounded cursor-pointer transition-all duration-200 ${selectedPriceRange === range.value
+                        ? 'bg-blue-50 border border-blue-500 text-blue-600'
+                        : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
+                        }`}
                     >
                       <div className="flex items-center gap-2">
-                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                          selectedPriceRange === range.value
-                            ? 'border-blue-500 bg-blue-500'
-                            : 'border-gray-300'
-                        }`}>
+                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${selectedPriceRange === range.value
+                          ? 'border-blue-500 bg-blue-500'
+                          : 'border-gray-300'
+                          }`}>
                           {selectedPriceRange === range.value && (
                             <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 12 12">
                               <path d="M10 3L4.5 8.5L2 6" stroke="currentColor" strokeWidth="2" fill="none" />
                             </svg>
                           )}
                         </div>
-                        <span className={`text-sm font-medium ${
-                          selectedPriceRange === range.value ? 'text-blue-600' : 'text-gray-700'
-                        }`}>
+                        <span className={`text-sm font-medium ${selectedPriceRange === range.value ? 'text-blue-600' : 'text-gray-700'
+                          }`}>
                           {range.label}
                         </span>
                       </div>
                     </div>
                   ))}
                 </div>
-                
+
                 {/* Clear filter button */}
                 {selectedPriceRange && (
                   <button
@@ -465,16 +458,16 @@ const ProductPage: React.FC = () => {
               </div>
             )}
           </div>
-          
+
           {/* Main content - 7.5 columns */}
           <div className="col-span-8">
             {/* Header */}
             <div className="mb-6 mt-6">
               <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                {searchQuery 
+                {searchQuery
                   ? `Kết quả tìm kiếm: "${searchQuery}"`
-                  : categoryName 
-                    ? decodeURIComponent(categoryName) 
+                  : categoryName
+                    ? decodeURIComponent(categoryName)
                     : 'Tất Cả Sản Phẩm'
                 }
               </h1>
@@ -526,11 +519,10 @@ const ProductPage: React.FC = () => {
                     <button
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 0}
-                      className={`flex items-center gap-1 px-4 py-2 rounded-lg font-medium transition-colors ${
-                        currentPage === 0
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border border-gray-200'
-                      }`}
+                      className={`flex items-center gap-1 px-4 py-2 rounded-lg font-medium transition-colors ${currentPage === 0
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border border-gray-200'
+                        }`}
                     >
                       <ChevronLeft className="w-4 h-4" />
                       <span>Trước</span>
@@ -544,11 +536,10 @@ const ProductPage: React.FC = () => {
                         ) : (
                           <button
                             onClick={() => handlePageChange(page as number)}
-                            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                              currentPage === page
-                                ? 'bg-blue-600 text-white shadow-md'
-                                : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border border-gray-200'
-                            }`}
+                            className={`px-4 py-2 rounded-lg font-medium transition-colors ${currentPage === page
+                              ? 'bg-blue-600 text-white shadow-md'
+                              : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border border-gray-200'
+                              }`}
                           >
                             {(page as number) + 1}
                           </button>
@@ -560,11 +551,10 @@ const ProductPage: React.FC = () => {
                     <button
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={currentPage === totalPages - 1}
-                      className={`flex items-center gap-1 px-4 py-2 rounded-lg font-medium transition-colors ${
-                        currentPage === totalPages - 1
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border border-gray-200'
-                      }`}
+                      className={`flex items-center gap-1 px-4 py-2 rounded-lg font-medium transition-colors ${currentPage === totalPages - 1
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border border-gray-200'
+                        }`}
                     >
                       <span>Sau</span>
                       <ChevronRight className="w-4 h-4" />
@@ -576,7 +566,7 @@ const ProductPage: React.FC = () => {
           </div>
         </div>
       </main>
-      
+
       <Footer />
     </div>
   );

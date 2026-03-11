@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, User, ShoppingCart, Phone, LogOut, UserCircle, History, Settings, X } from 'lucide-react';
-import { Button } from '../Button/Button';
-import { Input } from '../input';
+import { Button } from '../../ui/Button/Button';
+import { Input } from '../../ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '../dropdowns/dropdown-menu';
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '../dropdowns/hover';
+} from '../../ui/dropdowns/dropdown-menu';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '../../ui/dropdowns/hover';
 
 import { useAppSelector, useAppDispatch } from '@/hooks/redux';
 import { logout } from '@/store/slices/authSlice';

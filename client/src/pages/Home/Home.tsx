@@ -1,12 +1,12 @@
 // src/pages/Home/Home.tsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import TopNavigation from '../../components/ui/Header/Header';
-import MainBanner from '../../components/Home/MainBanner';
+import TopNavigation from '../../components/layout/Header/Header';
+import MainBanner from './Banner/MainBanner';
 import ProductGrid from '../../components/Product/ProductGrid';
 import CategoryMainPage from '../../components/Category/CategoryMainPage';
-import Footer from '../../components/ui/Footer/Footer';
-import AgentChatBot from '@/components/Ai-Agentic';
+import Footer from '../../components/layout/Footer/Footer';
+import AgentChatBot from '@/components/AiAgentic';
 
 
 const Home: React.FC = () => {
