@@ -89,7 +89,15 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ onClose }) => {
             </span>
           </div>
         ))}
-        {isLoading && <div className="text-gray-200 text-sm">Loading...</div>}
+        {isLoading && (
+          <div className="flex justify-start">
+            <span className="inline-flex items-center gap-1 rounded-lg bg-gray-200 px-4 py-3">
+              <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:0ms]" />
+              <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:150ms]" />
+              <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:300ms]" />
+            </span>
+          </div>
+        )}
         <div ref={messageEndRef}></div>
       </div>
 
