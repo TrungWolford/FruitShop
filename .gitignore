@@ -25,3 +25,7 @@ Thumbs.db
 # Logs
 *.log
 logs/
+
+# Compiled class files
+*.class
+**/target/
