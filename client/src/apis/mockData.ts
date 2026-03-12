@@ -977,7 +977,7 @@ export const mockLoginResponse = {
 // ==============================
 
 // ------ HELPER: tìm account theo phone + password ------
-export const mockLogin = (phone, password) => {
+export const mockLogin = (phone: string, password: string) => {
   const found = mockAccounts.find(
     (acc) => acc.accountPhone === phone && acc.password === password
   );
@@ -992,38 +992,38 @@ export const mockLogin = (phone, password) => {
 };
 
 // ------ HELPER: tìm product theo ID ------
-export const getProductById = (productId) =>
+export const getProductById = (productId: string) =>
   mockProducts.find((p) => p.productId === productId) || null;
 
 // ------ HELPER: tìm products theo category ------
-export const getProductsByCategory = (categoryId) =>
+export const getProductsByCategory = (categoryId: string) =>
   mockProducts.filter((p) =>
     p.categories.some((c) => c.categoryId === categoryId)
   );
 
 // ------ HELPER: tìm orders theo accountId ------
-export const getOrdersByAccount = (accountId) =>
+export const getOrdersByAccount = (accountId: string) =>
   mockOrders.filter((o) => o.accountId === accountId);
 
 // ------ HELPER: tìm order theo orderId ------
-export const getOrderById = (orderId) =>
+export const getOrderById = (orderId: string) =>
   mockOrders.find((o) => o.orderId === orderId) || null;
 
 // ------ HELPER: tìm orders theo status ------
-export const getOrdersByStatus = (status) =>
+export const getOrdersByStatus = (status: number) =>
   mockOrders.filter((o) => o.status === status);
 
 // ------ HELPER: tìm shipping theo orderId ------
-export const getShippingByOrder = (orderId) =>
+export const getShippingByOrder = (orderId: string) =>
   mockShippings.find((s) => s.orderId === orderId) || null;
 
 // ------ HELPER: tìm refunds theo orderId ------
-export const getRefundsByOrder = (orderId) =>
+export const getRefundsByOrder = (orderId: string) =>
   mockRefunds.filter((r) => r.order.orderId === orderId);
 
 // ------ HELPER: Map order status number to text ------
-export const getOrderStatusText = (status) => {
-  const statusMap = {
+export const getOrderStatusText = (status: number): string => {
+  const statusMap: Record<number, string> = {
     0: "Đã hủy",
     1: "Chờ xác nhận",
     2: "Đã xác nhận",
@@ -1034,8 +1034,8 @@ export const getOrderStatusText = (status) => {
 };
 
 // ------ HELPER: Map shipping status number to text ------
-export const getShippingStatusText = (status) => {
-  const statusMap = {
+export const getShippingStatusText = (status: number): string => {
+  const statusMap: Record<number, string> = {
     0: "Đã hủy",
     1: "Đang chuẩn bị",
     2: "Đang giao",
@@ -1045,8 +1045,8 @@ export const getShippingStatusText = (status) => {
 };
 
 // ------ HELPER: Map payment status number to text ------
-export const getPaymentStatusText = (status) => {
-  const statusMap = {
+export const getPaymentStatusText = (status: number): string => {
+  const statusMap: Record<number, string> = {
     0: "Đang chờ",
     1: "Đã thanh toán",
     2: "Thất bại",
