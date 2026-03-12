@@ -17,7 +17,7 @@ const Footer: React.FC = () => {
                 <p className="text-sm text-white">Đơn hàng từ 200.000đ</p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-3">
               <div className="bg-amber-400 p-3 rounded-full">
                 <Shield className="h-6 w-6 text-white" />
@@ -27,7 +27,7 @@ const Footer: React.FC = () => {
                 <p className="text-sm text-white">Bảo mật 100%</p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-3">
               <div className="bg-amber-400 p-3 rounded-full">
                 <RotateCcw className="h-6 w-6 text-white" />
@@ -37,7 +37,7 @@ const Footer: React.FC = () => {
                 <p className="text-sm text-white">Trong vòng 30 ngày</p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-3">
               <div className="bg-amber-400 p-3 rounded-full">
                 <Phone className="h-6 w-6 text-white" />
@@ -64,7 +64,7 @@ const Footer: React.FC = () => {
                 <span className="text-xl font-bold">VuaTraiCay.com</span>
               </div>
               <p className="text-white text-sm leading-relaxed">
-                Hệ thống nhà sách trực tuyến hàng đầu Việt Nam với hàng triệu đầu sách đa dạng, 
+                Hệ thống nhà sách trực tuyến hàng đầu Việt Nam với hàng triệu đầu sách đa dạng,
                 phục vụ nhu cầu đọc sách của mọi lứa tuổi.
               </p>
               <div className="flex space-x-3">
@@ -122,7 +122,7 @@ const Footer: React.FC = () => {
                   <span className="text-sm">info@vuatraicay.vn</span>
                 </div>
               </div>
-              
+
               {/* Payment Methods */}
               <div className="mt-6">
                 <h4 className="font-semibold mb-3">Phương thức thanh toán</h4>
@@ -146,7 +146,7 @@ const Footer: React.FC = () => {
         </div>
       </div>
 
-      
+
 
       {/* Copyright */}
       <div className="bg-orange-500 border-t  py-4">

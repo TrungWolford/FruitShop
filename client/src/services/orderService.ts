@@ -1,5 +1,6 @@
 import axiosInstance from '../libs/axios';
 import { API } from '../config/constants';
+import { mockOrders, getOrdersByAccount as mockGetOrdersByAccount, getOrderById as mockGetOrderById } from '@/apis/mockData';
 
 // Types
 export interface OrderDetailResponse {
@@ -71,7 +72,7 @@ export function mapBackendOrderToFrontend(o: any): OrderResponse {
       // Check if it's in dd/MM/yyyy HH:mm:ss format (Vietnamese format)
       const vnDatePattern = /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}):(\d{2})$/;
       const match = String(dateValue).match(vnDatePattern);
-      
+
       if (match) {
         // Parse Vietnamese format: dd/MM/yyyy HH:mm:ss
         const [, day, month, year, hours, minutes, seconds] = match;
@@ -82,7 +83,7 @@ export function mapBackendOrderToFrontend(o: any): OrderResponse {
           return date.toISOString();
         }
       }
-      
+
       // Try standard date parsing
       const date = new Date(dateValue);
       if (isNaN(date.getTime())) {
@@ -137,7 +138,7 @@ export const orderService = {
   createOrder: async (request: CreateOrderRequest): Promise<{ success: boolean; data?: OrderResponse; message?: string }> => {
     try {
       console.log('Request items detail:', JSON.stringify(request.items, null, 2));
-      
+
       const response = await axiosInstance.post(API.CREATE_ORDER, request);
       const mapped = response.data ? mapBackendOrderToFrontend(response.data) : undefined;
       return {
@@ -159,39 +160,30 @@ export const orderService = {
       const response = await axiosInstance.get(API.GET_ALL_ORDERS, {
         params: { page, size }
       });
-      
-      // Backend returns Spring Page format with { content: OrderResponse[], totalPages, totalElements, etc. }
+
       let orders: OrderResponse[] = [];
-      
+
       if (response.data && response.data.content) {
-        // Spring Page format
         orders = response.data.content.map((o: any) => mapBackendOrderToFrontend(o));
       } else if (Array.isArray(response.data)) {
-        // Direct array format
         orders = response.data.map((o: any) => mapBackendOrderToFrontend(o));
       } else if (response.data === null || response.data === undefined) {
-        // No data
         orders = [];
       }
-      
+
       return {
         success: true,
         data: orders
       };
     } catch (error: any) {
-      // Return empty array instead of failing when backend has issues
-      if (error.response?.status === 500) {
-        return {
-          success: true,
-          data: [],
-          message: 'Không có dữ liệu đơn hàng'
-        };
-      }
-      
+      console.warn('⚠️ Backend không phản hồi, dùng mock data cho getAllOrders');
+      // Fallback: dùng mock data
+      const start = page * size;
+      const paginatedOrders = mockOrders.slice(start, start + size).map((o: any) => mapBackendOrderToFrontend(o));
       return {
-        success: false,
-        data: [],
-        message: error.response?.data?.message || 'Không thể tải danh sách đơn hàng'
+        success: true,
+        data: paginatedOrders,
+        message: 'Dữ liệu từ mock data'
       };
     }
   },
@@ -200,17 +192,19 @@ export const orderService = {
   getOrdersByAccount: async (accountId: string): Promise<{ success: boolean; data?: OrderResponse[]; message?: string }> => {
     try {
       const response = await axiosInstance.get(API.GET_ORDERS_BY_ACCOUNT(accountId));
-      // Backend returns OrderResponse with fields: createdAt, orderItems, payment (object)
-      // Map backend shape to frontend OrderResponse expected by components
       const mapped: OrderResponse[] = (response.data || []).map((o: any) => mapBackendOrderToFrontend(o));
       return {
         success: true,
         data: mapped
       };
     } catch (error: any) {
+      console.warn('⚠️ Backend không phản hồi, dùng mock data cho getOrdersByAccount');
+      // Fallback: tìm trong mock data
+      const mockData = mockGetOrdersByAccount(accountId).map((o: any) => mapBackendOrderToFrontend(o));
       return {
-        success: false,
-        message: error.response?.data?.message || 'Không thể tải đơn hàng'
+        success: true,
+        data: mockData,
+        message: 'Dữ liệu từ mock data'
       };
     }
   },
@@ -225,9 +219,19 @@ export const orderService = {
         data: mapped
       };
     } catch (error: any) {
+      console.warn('⚠️ Backend không phản hồi, dùng mock data cho getOrderById');
+      // Fallback: tìm trong mock data
+      const mockOrder = mockGetOrderById(orderId);
+      if (mockOrder) {
+        return {
+          success: true,
+          data: mapBackendOrderToFrontend(mockOrder),
+          message: 'Dữ liệu từ mock data'
+        };
+      }
       return {
         success: false,
-        message: error.response?.data?.message || 'Không thể tải đơn hàng'
+        message: 'Không tìm thấy đơn hàng'
       };
     }
   },
@@ -253,7 +257,7 @@ export const orderService = {
   returnOrder: async (
     orderItemId: string,  // OrderItem ID for per-item refund
     orderId: string,      // Order ID for refund
-    reason: string, 
+    reason: string,
     refundAmount: number,
     imageUrls?: string[]  // Changed from images to imageUrls to match backend
   ): Promise<{ success: boolean; data?: any; message?: string }> => {
@@ -355,15 +359,15 @@ export const orderService = {
       const response = await axiosInstance.get(API.FILTER_ORDERS_BY_STATUS, {
         params: { status, page, size }
       });
-      
+
       let orders: OrderResponse[] = [];
-      
+
       if (response.data && response.data.content) {
         orders = response.data.content.map((o: any) => mapBackendOrderToFrontend(o));
       } else if (Array.isArray(response.data)) {
         orders = response.data.map((o: any) => mapBackendOrderToFrontend(o));
       }
-      
+
       return {
         success: true,
         data: orders
@@ -378,24 +382,24 @@ export const orderService = {
 
   // Get orders by date range (admin)
   getOrdersByDateRange: async (
-    startDate: string, 
-    endDate: string, 
-    page: number = 0, 
+    startDate: string,
+    endDate: string,
+    page: number = 0,
     size: number = 10
   ): Promise<{ success: boolean; data?: OrderResponse[]; message?: string }> => {
     try {
       const response = await axiosInstance.get(API.FILTER_ORDERS_BY_DATE, {
         params: { startDate, endDate, page, size }
       });
-      
+
       let orders: OrderResponse[] = [];
-      
+
       if (response.data && response.data.content) {
         orders = response.data.content.map((o: any) => mapBackendOrderToFrontend(o));
       } else if (Array.isArray(response.data)) {
         orders = response.data.map((o: any) => mapBackendOrderToFrontend(o));
       }
-      
+
       return {
         success: true,
         data: orders
@@ -410,23 +414,23 @@ export const orderService = {
 
   // Search orders by keyword (orderId or accountName)
   searchOrders: async (
-    keyword: string, 
-    page: number = 0, 
+    keyword: string,
+    page: number = 0,
     size: number = 10
   ): Promise<{ success: boolean; data?: OrderResponse[]; message?: string }> => {
     try {
       const response = await axiosInstance.get(API.SEARCH_ORDERS, {
         params: { keyword, page, size }
       });
-      
+
       let orders: OrderResponse[] = [];
-      
+
       if (response.data && response.data.content) {
         orders = response.data.content.map((o: any) => mapBackendOrderToFrontend(o));
       } else if (Array.isArray(response.data)) {
         orders = response.data.map((o: any) => mapBackendOrderToFrontend(o));
       }
-      
+
       return {
         success: true,
         data: orders
@@ -441,23 +445,23 @@ export const orderService = {
 
   // Filter orders by status
   filterOrdersByStatus: async (
-    status: number, 
-    page: number = 0, 
+    status: number,
+    page: number = 0,
     size: number = 10
   ): Promise<{ success: boolean; data?: OrderResponse[]; message?: string }> => {
     try {
       const response = await axiosInstance.get(API.FILTER_ORDERS, {
         params: { status, page, size }
       });
-      
+
       let orders: OrderResponse[] = [];
-      
+
       if (response.data && response.data.content) {
         orders = response.data.content.map((o: any) => mapBackendOrderToFrontend(o));
       } else if (Array.isArray(response.data)) {
         orders = response.data.map((o: any) => mapBackendOrderToFrontend(o));
       }
-      
+
       return {
         success: true,
         data: orders
@@ -483,15 +487,15 @@ export const orderService = {
       if (status !== null) params.status = status;
 
       const response = await axiosInstance.get(API.SEARCH_AND_FILTER_ORDERS, { params });
-      
+
       let orders: OrderResponse[] = [];
-      
+
       if (response.data && response.data.content) {
         orders = response.data.content.map((o: any) => mapBackendOrderToFrontend(o));
       } else if (Array.isArray(response.data)) {
         orders = response.data.map((o: any) => mapBackendOrderToFrontend(o));
       }
-      
+
       return {
         success: true,
         data: orders

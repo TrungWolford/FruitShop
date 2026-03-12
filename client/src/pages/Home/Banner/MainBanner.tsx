@@ -1,5 +1,5 @@
 import React from 'react';
-import { imgaes } from '@/assets/img';
+import images from '@/assets';
 
 const MainBanner: React.FC = () => {
   return (
@@ -35,7 +35,7 @@ const MainBanner: React.FC = () => {
           {/* Left section - 7 columns - Banner 1 */}
           <div className="col-span-7 relative">
             <img
-              src={imgaes.banner3}
+              src={images.banner3}
               alt="Banner 1"
               className="w-full h-full object-cover"
               onError={(e) => {
@@ -49,7 +49,7 @@ const MainBanner: React.FC = () => {
             {/* Banner 2 */}
             <div className="flex-1 relative">
               <img
-                src={imgaes.banner4}
+                src={images.banner4}
                 alt="Ảnh banner 4"
                 className="w-full h-full object-cover"
                 onError={(e) => {
@@ -61,7 +61,7 @@ const MainBanner: React.FC = () => {
             {/* Banner 3 */}
             <div className="flex-1 relative">
               <img
-                src={imgaes.banner}
+                src={images.banner}
                 alt="Banner trái cây"
                 className="w-full h-full object-cover"
                 onError={(e) => {
@@ -73,7 +73,7 @@ const MainBanner: React.FC = () => {
             {/* Banner 4 */}
             <div className="flex-1 relative">
               <img
-                src={imgaes.banner2}
+                src={images.banner2}
                 alt="Banner 4"
                 className="w-full h-full object-cover"
                 onError={(e) => {

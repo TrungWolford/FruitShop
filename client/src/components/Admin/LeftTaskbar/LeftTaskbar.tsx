@@ -1,13 +1,13 @@
 import React from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useAppSelector, useAppDispatch } from '../../hooks/redux'
-import { adminLogout } from '../../store/slices/adminAuthSlice'
-import { 
-  LayoutDashboard, 
-  Package, 
-  Tags, 
-  Users, 
-  Shield, 
+import { useAppSelector, useAppDispatch } from '../../../hooks/redux'
+import { adminLogout } from '../../../store/slices/adminAuthSlice'
+import {
+  LayoutDashboard,
+  Package,
+  Tags,
+  Users,
+  Shield,
   LogOut,
   User,
   Home,
@@ -116,16 +116,15 @@ const LeftTaskbar: React.FC = () => {
           {menuItems.map((item) => {
             const Icon = item.icon
             const isActive = isActivePath(item.path)
-            
+
             return (
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-colors ${
-                  isActive 
-                    ? 'bg-amber-500 text-white shadow-lg' 
+                className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-colors ${isActive
+                    ? 'bg-amber-500 text-white shadow-lg'
                     : 'text-slate-300 hover:bg-slate-700 hover:text-white'
-                }`}
+                  }`}
               >
                 <Icon className="w-5 h-5" />
                 <span className="font-medium">{item.label}</span>
@@ -133,26 +132,26 @@ const LeftTaskbar: React.FC = () => {
             )
           })}
         </nav>
-        </div>
-
-        {/* Footer - Customer Page & Logout */}
-        <div className="p-3 border-t border-slate-700 space-y-2">
-          <button
-            onClick={() => navigate('/')}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-slate-300 hover:bg-blue-600 hover:text-white rounded-lg transition-colors text-sm"
-          >
-            <Home className="w-4 h-4" />
-            <span className="font-medium">Về trang khách hàng</span>
-          </button>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-slate-300 hover:bg-red-600 hover:text-white rounded-lg transition-colors text-sm"
-          >
-            <LogOut className="w-4 h-4" />
-            <span className="font-medium">Đăng xuất</span>
-          </button>
-        </div>
       </div>
+
+      {/* Footer - Customer Page & Logout */}
+      <div className="p-3 border-t border-slate-700 space-y-2">
+        <button
+          onClick={() => navigate('/')}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-slate-300 hover:bg-blue-600 hover:text-white rounded-lg transition-colors text-sm"
+        >
+          <Home className="w-4 h-4" />
+          <span className="font-medium">Về trang khách hàng</span>
+        </button>
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-slate-300 hover:bg-red-600 hover:text-white rounded-lg transition-colors text-sm"
+        >
+          <LogOut className="w-4 h-4" />
+          <span className="font-medium">Đăng xuất</span>
+        </button>
+      </div>
+    </div>
   )
 }
 

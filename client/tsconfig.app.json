@@ -29,7 +29,8 @@
 
     /* Additional options */
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "allowJs": true
   },
   "include": ["src"]
 }
