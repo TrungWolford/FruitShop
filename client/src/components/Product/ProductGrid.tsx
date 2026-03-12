@@ -6,7 +6,6 @@ import { Button } from '../ui/Button/Button';
 import { ArrowRight } from 'lucide-react';
 import { productService } from '../../services/productService';
 import type { Product as ApiProduct } from '../../types/product';
-import AgentChatBot from '../Ai-Agentic';
 
 interface ProductGridProps {
   title?: string;
@@ -63,6 +62,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
             setTotalProducts(data.length);
           }
         }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         setProducts([]);
         setTotalProducts(0);
