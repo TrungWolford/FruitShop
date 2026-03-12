@@ -1,40 +1,48 @@
 import React, { useState, useEffect, useRef } from "react";
 import images from "@/assets";
 import { X, SendHorizontal } from "lucide-react";
-import { chatMessageAi, Message } from "@/services/geminiService/geminiService";
+import { chatMessageAi, createSession, Message } from "@/services/geminiService/geminiService";
 
 
 interface ChatMessageProps {
   onClose: () => void;
 }
+type DisplayMessage = { content: string; senderRole: 'CUSTOMER' | 'SYSTEM' }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ onClose }) => {
   const [inputValue, setInputValue] = useState("");
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'model',
-      text: 'Chào bạn! Mình là nhân viên của FruitShop. Mình có thể giúp gì cho bạn hôm nay? 🍎'
-    }
-  ])
+  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [messages, setMessages] = useState<DisplayMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const messageEndRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+   createSession()
+   .then(data => setSessionId(data.sessionId))
+   .catch(console.error)
+  },[])
 
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
 
-    const newUserMessage: Message = { role: 'user', text: inputValue }
-    const updateMessages = [...messages, newUserMessage];
-    setMessages(updateMessages)
+    const newUserMessage: DisplayMessage = { senderRole: 'CUSTOMER', content: inputValue.trim() }
+    setMessages(prev => [...prev, newUserMessage])
     setInputValue("")
     setIsLoading(true)
 
     try {
-      const aiResponeText = await chatMessageAi(updateMessages)
+      if (!sessionId) throw new Error('Session not ready')
+      const payload: Message = {
+        sessionId,
+        content: newUserMessage.content,
+        senderRole: 'CUSTOMER',
+        messageType: 'TEXT',
+        senderId: null,
+      }
+      const aiResponeText = await chatMessageAi(payload)
 
-      setMessages(prev => [...prev, {
-        role: 'model',
-        text: aiResponeText
-      }])
+      const aiMessage: DisplayMessage = { content: aiResponeText.content, senderRole: 'SYSTEM' }
+      setMessages(prev => [...prev, aiMessage])
     } catch (error) {
       console.error("Xin lỗi, vui lòng thử lại sau nhé!", error)
     } finally {
@@ -75,9 +83,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ onClose }) => {
       {/* Hiển thị thông tin chat */}
       <div className="flex-1 p-3 overflow-y-auto space-y-3">
         {messages.map((msg, index) => (
-          <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <span className={`max-w-[80%] rounded-lg px-3 py-2 ${msg.role === 'user' ? 'bg-[#FB923C]' : 'bg-gray-200'}`}>
-              {msg.text}
+          <div key={index} className={`flex ${msg.senderRole === 'CUSTOMER' ? 'justify-end' : 'justify-start'}`}>
+            <span className={`max-w-[80%] rounded-lg px-3 py-2 ${msg.senderRole === 'CUSTOMER' ? 'bg-[#FB923C]' : 'bg-gray-200'}`}>
+              {msg.content}
             </span>
           </div>
         ))}

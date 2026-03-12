@@ -145,8 +145,8 @@ export const API = {
   GET_PAYMENT_BY_TRANSACTION_ID: (transactionId: string) => `/payment/transaction/${transactionId}`, // GET /api/payment/transaction/{transactionId}
 
   //Chatbot
-  SESSION: '/sessions',
-  MESSAGE: '/messages'
+  SESSION: '/chat/sessions',
+  MESSAGE: '/chat/messages'
 
 } as const;
 
