@@ -158,6 +158,10 @@ public class ChatServiceImpl implements ChatService {
             sender = accountRepository.findById(request.getSenderId()).orElse(null);
         }
 
+        // Lấy lịch sử hội thoại TRƯỚC khi lưu tin nhắn hiện tại (để Gemini có context)
+        List<ChatMessage> conversationHistory = chatMessageRepository
+                .findByChatSession_SessionIdAndDeletedFalseOrderByCreatedAtAsc(session.getSessionId());
+
         ChatMessage userMessage = buildMessage(session, sender, request.getContent(),
                 request.getSenderRole() != null ? request.getSenderRole() : "CUSTOMER",
                 request.getMessageType() != null ? request.getMessageType() : "TEXT",
@@ -165,7 +169,8 @@ public class ChatServiceImpl implements ChatService {
         chatMessageRepository.save(userMessage);
 
         // 3. Agentic chat: Gemini tự gọi tool query DB và sinh câu trả lời
-        GeminiAgentResult agentResult = geminiService.agentChat(request.getContent(), request.getSenderId());
+        GeminiAgentResult agentResult = geminiService.agentChat(
+                request.getContent(), request.getSenderId(), conversationHistory);
         String detectedIntent = agentResult.intent();
         String botReply = agentResult.reply();
         String botMetadata = agentResult.metadata();

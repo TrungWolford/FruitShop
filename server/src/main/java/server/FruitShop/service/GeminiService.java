@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import server.FruitShop.dto.response.ChatBot.GeminiAgentResult;
+import server.FruitShop.entity.ChatMessage;
 
 import java.util.List;
 import java.util.Map;
@@ -145,8 +146,12 @@ public class GeminiService {
 
     /**
      * Gemini tự quyết định gọi tool nào để lấy dữ liệu DB, rồi sinh câu trả lời.
+     *
+     * @param conversationHistory Lịch sử tin nhắn trước đó của session (không bao gồm tin nhắn hiện tại).
+     *                            Dùng để Gemini hiểu context multi-turn (VD: user đã chọn sản phẩm gì).
      */
-    public GeminiAgentResult agentChat(String userMessage, String accountId) {
+    public GeminiAgentResult agentChat(String userMessage, String accountId,
+                                       List<ChatMessage> conversationHistory) {
         try {
             String url = BASE_URL.formatted(model, apiKey);
 
@@ -156,27 +161,38 @@ public class GeminiService {
             // systemInstruction
             ObjectNode sysPart = objectMapper.createObjectNode();
             sysPart.put("text", """
-                    Bạn là trợ lý AI của cửa hàng trái cây FruitShop.
+                    Bạn là trợ lý AI của cửa hàng FruitShop.
                     Trả lời thân thiện, ngắn gọn bằng tiếng Việt (tối đa 3-4 câu).
                     Nếu cần thông tin sản phẩm hoặc đơn hàng, hãy dùng các tools được cung cấp.
                     accountId của user hiện tại: %s
+                    
+                    QUY TRÌNH ĐẶT HÀNG QUA CHAT (đúng thứ tự sau):
+                    Bước 1. Gọi searchProducts để tìm sản phẩm → xác nhận sản phẩm và số lượng.
+                    Bước 2. Gọi getUserShippingAddresses để kiểm tra địa chỉ:
+                       - Có địa chỉ → cho user chọn hoặc nhập mới.
+                       - Chưa có → hỏi: Tên người nhận, SĐT, Địa chỉ, Tỉnh/TP.
+                    Bước 3. **BắT BUỘC**: Khi user cung cấp thông tin địa chỉ, PHẢI gọi createShippingAddress ngay.
+                    Bước 4. Hỏi phương thức thanh toán (COD hoặc chuyển khoản).
+                    Bước 5. Tóm tắt đơn hàng → hỏi xác nhận.
+                    Bước 6. User đồng ý → gọi createOrderFromChat.
                     """.formatted(accountId != null ? accountId : "không có (khách vãng lai)"));
             ObjectNode sysContent = objectMapper.createObjectNode();
             sysContent.set("parts", objectMapper.createArrayNode().add(sysPart));
             body.set("systemInstruction", sysContent);
 
-            // contents (lịch sử hội thoại — bắt đầu với tin nhắn user)
-            ArrayNode contents = objectMapper.createArrayNode();
-            ObjectNode userPart = objectMapper.createObjectNode();
-            userPart.put("text", userMessage);
-            ObjectNode userContent = objectMapper.createObjectNode();
-            userContent.put("role", "user");
-            userContent.set("parts", objectMapper.createArrayNode().add(userPart));
-            contents.add(userContent);
+            // contents — lịch sử hội thoại + tin nhắn hiện tại
+            ArrayNode contents = buildContentsWithHistory(conversationHistory, userMessage);
             body.set("contents", contents);
 
             // tools (function declarations)
             body.set("tools", buildFunctionDeclarations());
+
+            // toolConfig — AUTO: Gemini tự quyết định gọi tool khi cần
+            ObjectNode toolConfig = objectMapper.createObjectNode();
+            ObjectNode fnCallingConfig = objectMapper.createObjectNode();
+            fnCallingConfig.put("mode", "AUTO");
+            toolConfig.set("function_calling_config", fnCallingConfig);
+            body.set("tool_config", toolConfig);
 
             // generationConfig
             ObjectNode genConfig = objectMapper.createObjectNode();
@@ -188,9 +204,17 @@ public class GeminiService {
             String capturedIntent = "GENERAL";
             String capturedMetadata = null;
 
-            for (int round = 0; round < 3; round++) {
+            for (int round = 0; round < 5; round++) {
                 String responseJson = callGeminiRaw(url, body.toString());
                 if (responseJson == null) break;
+
+                // Nếu Gemini trả lỗi HTTP (429, 403...) → trả thẳng debug message
+                if (responseJson.contains("\"__error__\"")) {
+                    JsonNode errNode = objectMapper.readTree(responseJson);
+                    String errCode = errNode.path("__error__").asText();
+                    String detail = errNode.path("detail").asText();
+                    return GeminiAgentResult.of("[DEBUG] Gemini API error: " + errCode + " — " + detail, null, "GENERAL");
+                }
 
                 JsonNode root = objectMapper.readTree(responseJson);
                 JsonNode candidate = root.path("candidates").path(0);
@@ -253,7 +277,7 @@ public class GeminiService {
         } catch (Exception e) {
             System.err.println("[GeminiService] agentChat error: " + e.getMessage());
             e.printStackTrace();
-            return GeminiAgentResult.of(getFallbackReply("GENERAL"), null, "GENERAL");
+            return GeminiAgentResult.of("[DEBUG] agentChat exception: " + e.getMessage(), null, "GENERAL");
         }
     }
 
@@ -268,13 +292,16 @@ public class GeminiService {
             String responseJson = callGeminiRaw(url, body.toString());
             if (responseJson == null) return null;
 
+            // Nếu là lỗi HTTP, trả thẳng message lỗi
+            if (responseJson.contains("__error__")) return responseJson;
+
             JsonNode root = objectMapper.readTree(responseJson);
             return root.path("candidates").path(0)
                     .path("content").path("parts").path(0)
                     .path("text").asText(null);
         } catch (Exception e) {
             System.err.println("[GeminiService] Error calling Gemini API: " + e.getMessage());
-            return null;
+            return "[DEBUG] callGemini exception: " + e.getMessage();
         }
     }
 
@@ -292,7 +319,8 @@ public class GeminiService {
                 if (!response.isSuccessful()) {
                     String errBody = response.body() != null ? response.body().string() : "";
                     System.err.println("[GeminiService] HTTP " + response.code() + ": " + errBody);
-                    return null;
+                    // Trả về JSON lỗi để caller biết nguyên nhân
+                    return "{\"__error__\": \"HTTP_" + response.code() + "\", \"detail\": " + objectMapper.valueToTree(errBody) + "}";
                 }
                 return response.body() != null ? response.body().string() : null;
             }
@@ -300,6 +328,65 @@ public class GeminiService {
             System.err.println("[GeminiService] HTTP error: " + e.getMessage());
             return null;
         }
+    }
+
+    // ================================================================
+    // PRIVATE — Build conversation history for multi-turn context
+    // ================================================================
+
+    /**
+     * Xây dựng mảng contents cho Gemini từ lịch sử hội thoại + tin nhắn hiện tại.
+     * Gemini yêu cầu luân phiên user/model. History được truyền vào đây là
+     * các tin nhắn ĐÃ LƯU TRƯỚC khi gửi tin nhắn hiện tại.
+     */
+    private ArrayNode buildContentsWithHistory(List<ChatMessage> history, String currentUserMessage) {
+        ArrayNode contents = objectMapper.createArrayNode();
+
+        if (history != null && !history.isEmpty()) {
+            // Chỉ lấy text messages của CUSTOMER (user) và SYSTEM (model bot)
+            List<ChatMessage> filtered = history.stream()
+                    .filter(m -> !m.isDeleted() && "TEXT".equals(m.getMessageType()))
+                    .filter(m -> "CUSTOMER".equals(m.getSenderRole()) || "SYSTEM".equals(m.getSenderRole()))
+                    .collect(java.util.stream.Collectors.toList());
+
+            // Giới hạn 8 tin nhắn (4 lượt trao đổi) để tránh vượt context
+            int startIdx = Math.max(0, filtered.size() - 8);
+            filtered = filtered.subList(startIdx, filtered.size());
+
+            // Đảm bảo bắt đầu bằng "user" (Gemini yêu cầu)
+            while (!filtered.isEmpty() && "SYSTEM".equals(filtered.get(0).getSenderRole())) {
+                filtered = filtered.subList(1, filtered.size());
+            }
+
+            // Thêm từng tin nhắn vào contents, giữ luân phiên user/model
+            String lastAddedRole = null;
+            for (ChatMessage msg : filtered) {
+                String role = "CUSTOMER".equals(msg.getSenderRole()) ? "user" : "model";
+                if (role.equals(lastAddedRole)) continue; // bỏ qua nếu trùng vai
+
+                ObjectNode part = objectMapper.createObjectNode();
+                part.put("text", msg.getContent());
+                ObjectNode content = objectMapper.createObjectNode();
+                content.put("role", role);
+                content.set("parts", objectMapper.createArrayNode().add(part));
+                contents.add(content);
+                lastAddedRole = role;
+            }
+
+            // Nếu tin nhắn cuối cùng trong history là "user", cần skip để thêm tin hiện tại
+            // (Gemini không cho phép 2 user messages liên tiếp trong contents thông thường,
+            //  nhưng chúng ta đã lọc ở trên nên lastAddedRole sẽ là "model" hoặc null)
+        }
+
+        // Thêm tin nhắn hiện tại của user
+        ObjectNode userPart = objectMapper.createObjectNode();
+        userPart.put("text", currentUserMessage);
+        ObjectNode userContent = objectMapper.createObjectNode();
+        userContent.put("role", "user");
+        userContent.set("parts", objectMapper.createArrayNode().add(userPart));
+        contents.add(userContent);
+
+        return contents;
     }
 
     // ================================================================
@@ -312,9 +399,9 @@ public class GeminiService {
         ArrayNode fnDeclarations = objectMapper.createArrayNode();
 
         fnDeclarations.add(buildFn("searchProducts",
-                "Tìm kiếm sản phẩm trái cây theo tên. Dùng khi user hỏi về sản phẩm cụ thể hoặc muốn mua hàng.",
+                "Tìm kiếm sản phẩm theo tên. Dùng khi user hỏi về sản phẩm cụ thể hoặc muốn mua hàng.",
                 Map.of(
-                        "keyword", Map.of("type", "STRING", "description", "Từ khóa tên sản phẩm (VD: táo, xoài cát)"),
+                        "keyword", Map.of("type", "STRING", "description", "Từ khóa tên sản phẩm (VD: Đắc nhân tâm, Nhà giả kim)"),
                         "limit", Map.of("type", "INTEGER", "description", "Số kết quả tối đa, mặc định 5")
                 ), List.of("keyword")));
 
@@ -339,6 +426,34 @@ public class GeminiService {
                 "Lấy chi tiết 1 đơn hàng cụ thể. Dùng khi user cung cấp mã đơn hàng.",
                 Map.of("orderId", Map.of("type", "STRING", "description", "Mã đơn hàng cần tra cứu")),
                 List.of("orderId")));
+
+        fnDeclarations.add(buildFn("getUserShippingAddresses",
+                "Lấy danh sách địa chỉ giao hàng đã lưu của user. Gọi trước khi đặt hàng để biết user có địa chỉ nào.",
+                Map.of("accountId", Map.of("type", "STRING", "description", "ID tài khoản của user")),
+                List.of("accountId")));
+
+        fnDeclarations.add(buildFn("createShippingAddress",
+                "Tạo địa chỉ giao hàng mới cho user. " +
+                "Gọi NGAY khi user cung cấp thông tin địa chỉ (tên, số điện thoại, địa chỉ, thành phố) - " +
+                "dù được viết theo bất kỳ định dạng nào (cách nhau bằng dấu /, phẩy, xuống dòng, v.v.). " +
+                "Trích xuất các trường tương ứng và lưu vào hệ thống ngay. KHÔNG yêu cầu user nhập lại hay làm thủ công.",
+                Map.of(
+                        "accountId",       Map.of("type", "STRING", "description", "ID tài khoản user"),
+                        "receiverName",    Map.of("type", "STRING", "description", "Tên người nhận hàng"),
+                        "receiverPhone",   Map.of("type", "STRING", "description", "Số điện thoại người nhận"),
+                        "receiverAddress", Map.of("type", "STRING", "description", "Số nhà, tên đường, phường/xã"),
+                        "city",            Map.of("type", "STRING", "description", "Tỉnh hoặc thành phố")
+                ), List.of("accountId", "receiverName", "receiverPhone", "receiverAddress", "city")));
+
+        fnDeclarations.add(buildFn("createOrderFromChat",
+                "Tạo đơn hàng sau khi user xác nhận mua. Trả về hóa đơn chi tiết. " +
+                "Chỉ gọi sau khi đã có đủ: danh sách sản phẩm, địa chỉ giao hàng (shippingId), phương thức thanh toán.",
+                Map.of(
+                        "accountId",     Map.of("type", "STRING",  "description", "ID tài khoản của user"),
+                        "itemsJson",     Map.of("type", "STRING",  "description", "JSON string danh sách sản phẩm, VD: [{\"productId\":\"abc\",\"quantity\":2}]"),
+                        "shippingId",    Map.of("type", "STRING",  "description", "ID địa chỉ giao hàng đã chọn"),
+                        "paymentMethod", Map.of("type", "INTEGER", "description", "0=COD (tiền mặt), 1=Chuyển khoản")
+                ), List.of("accountId", "itemsJson", "shippingId")));
 
         toolWrapper.set("functionDeclarations", fnDeclarations);
         tools.add(toolWrapper);
@@ -390,6 +505,26 @@ public class GeminiService {
             }
             case "getOrderDetail" -> chatToolService.getOrderDetail(
                     args.path("orderId").asText(""));
+            case "getUserShippingAddresses" -> {
+                String id = args.has("accountId") ? args.path("accountId").asText() : contextAccountId;
+                yield chatToolService.getUserShippingAddresses(id);
+            }
+            case "createShippingAddress" -> {
+                String id = args.has("accountId") ? args.path("accountId").asText() : contextAccountId;
+                yield chatToolService.createShippingAddress(
+                        id,
+                        args.path("receiverName").asText(""),
+                        args.path("receiverPhone").asText(""),
+                        args.path("receiverAddress").asText(""),
+                        args.path("city").asText(""));
+            }
+            case "createOrderFromChat" -> {
+                String id = args.has("accountId") ? args.path("accountId").asText() : contextAccountId;
+                String itemsJson = args.path("itemsJson").asText("[]");
+                String shippingId = args.path("shippingId").asText("");
+                int paymentMethod = args.path("paymentMethod").asInt(0);
+                yield chatToolService.createOrderFromChat(id, itemsJson, shippingId, paymentMethod);
+            }
             default -> "{\"error\":\"Unknown tool: " + toolName + "\"}";
         };
     }
@@ -397,22 +532,26 @@ public class GeminiService {
     private String buildMetadataJson(String toolName, String toolResult) {
         if (toolResult == null || toolResult.contains("\"error\"")) return null;
         String type = switch (toolName) {
-            case "searchProducts"     -> "PRODUCT_LIST";
-            case "getProductDetail"   -> "PRODUCT_DETAIL";
-            case "suggestProducts"    -> "PRODUCT_SUGGEST";
-            case "getOrdersByAccount" -> "ORDER_LIST";
-            case "getOrderDetail"     -> "ORDER_DETAIL";
-            default                   -> "DATA";
+            case "searchProducts"          -> "PRODUCT_LIST";
+            case "getProductDetail"        -> "PRODUCT_DETAIL";
+            case "suggestProducts"         -> "PRODUCT_SUGGEST";
+            case "getOrdersByAccount"      -> "ORDER_LIST";
+            case "getOrderDetail"          -> "ORDER_DETAIL";
+            case "getUserShippingAddresses"-> "SHIPPING_ADDRESSES";
+            case "createShippingAddress"   -> "SHIPPING_CREATED";
+            case "createOrderFromChat"     -> "ORDER_INVOICE";
+            default                        -> "DATA";
         };
         return "{\"type\":\"" + type + "\",\"data\":" + toolResult + "}";
     }
 
     private String toolNameToIntent(String toolName) {
         return switch (toolName) {
-            case "searchProducts", "getProductDetail" -> "PRODUCT_ADVICE";
-            case "suggestProducts"                    -> "PRODUCT_SUGGEST";
-            case "getOrdersByAccount", "getOrderDetail" -> "ORDER_LOOKUP";
-            default                                   -> "GENERAL";
+            case "searchProducts", "getProductDetail"          -> "PRODUCT_ADVICE";
+            case "suggestProducts"                             -> "PRODUCT_SUGGEST";
+            case "getOrdersByAccount", "getOrderDetail"        -> "ORDER_LOOKUP";
+            case "getUserShippingAddresses", "createShippingAddress", "createOrderFromChat" -> "ORDER_PLACE";
+            default                                            -> "GENERAL";
         };
     }
 
@@ -423,7 +562,7 @@ public class GeminiService {
             case "PRODUCT_COMPARE" -> "Bạn muốn so sánh những sản phẩm nào? Cho tôi biết tên nhé!";
             case "ORDER_LOOKUP"    -> "Bạn muốn tra cứu đơn hàng nào? Hãy cung cấp mã đơn hàng!";
             case "PRODUCT_SUGGEST" -> "Cho tôi biết ngân sách để gợi ý sản phẩm phù hợp!";
-            case "ORDER_PLACE"     -> "Bạn muốn mua sản phẩm gì? Tôi sẽ hỗ trợ đặt hàng ngay!";
+            case "ORDER_PLACE"     -> "Bạn muốn mua sản phẩm gì? Hãy cho tôi biết tên sản phẩm và số lượng!";
             case "PAYMENT"         -> "Shop hỗ trợ thanh toán MoMo và COD. Bạn muốn chọn phương thức nào?";
             default                -> "Tôi có thể tư vấn sản phẩm, tra cứu đơn hàng hoặc hỗ trợ đặt hàng. Bạn cần gì?";
         };
