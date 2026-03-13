@@ -63,4 +63,10 @@ public interface ChatService {
 
     /** Admin gửi reply vào session của customer */
     ChatResponse adminReply(ChatRequest request);
+
+    /** Danh sách ticket đang chờ nhân viên phản hồi (status=2) */
+    List<ChatSessionResponse> getPendingTickets();
+
+    /** Lấy danh sách tin nhắn cho dialog chăm sóc KH */
+    List<ChatResponse> getTicketMessages(String sessionId);
 }

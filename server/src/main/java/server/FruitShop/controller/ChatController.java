@@ -173,4 +173,36 @@ public class ChatController {
         ChatResponse response = chatService.adminReply(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    /**
+     * GET /api/chat/admin/customer-care/tickets
+     * Danh sách ticket đang chờ nhân viên trả lời trực tiếp (status=2)
+     */
+    @GetMapping("/admin/customer-care/tickets")
+    public ResponseEntity<List<ChatSessionResponse>> getPendingCustomerCareTickets() {
+        return ResponseEntity.ok(chatService.getPendingTickets());
+    }
+
+    /**
+     * GET /api/chat/admin/customer-care/tickets/{sessionId}/messages
+     * Lấy lịch sử tin nhắn của ticket để mở dialog chat
+     */
+    @GetMapping("/admin/customer-care/tickets/{sessionId}/messages")
+    public ResponseEntity<List<ChatResponse>> getCustomerCareTicketMessages(@PathVariable String sessionId) {
+        return ResponseEntity.ok(chatService.getTicketMessages(sessionId));
+    }
+
+    /**
+     * POST /api/chat/admin/customer-care/tickets/{sessionId}/reply
+     * Trả lời trực tiếp ticket của khách hàng
+     * Body: { senderId, content, messageType }
+     */
+    @PostMapping("/admin/customer-care/tickets/{sessionId}/reply")
+    public ResponseEntity<ChatResponse> replyCustomerCareTicket(@PathVariable String sessionId,
+                                                                @RequestBody ChatRequest request) {
+        request.setSessionId(sessionId);
+        request.setSenderRole("ADMIN");
+        ChatResponse response = chatService.adminReply(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
 }

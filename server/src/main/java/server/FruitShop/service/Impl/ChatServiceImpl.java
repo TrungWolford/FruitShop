@@ -164,6 +164,18 @@ public class ChatServiceImpl implements ChatService {
                 request.getIntent(), request.getMetadata());
         chatMessageRepository.save(userMessage);
 
+        String senderRole = request.getSenderRole() != null ? request.getSenderRole() : "CUSTOMER";
+        // Khi customer yêu cầu chat trực tiếp, chuyển session sang trạng thái chờ nhân viên phản hồi.
+        if ("CUSTOMER".equalsIgnoreCase(senderRole)
+            && request.getIntent() != null
+            && "HUMAN_SUPPORT".equalsIgnoreCase(request.getIntent())) {
+            session.setStatus(2); // 2 = Pending admin
+            session.setLastMessage(request.getContent());
+            session.setUnreadCount(session.getUnreadCount() + 1);
+            chatSessionRepository.save(session);
+            return ChatResponse.fromEntity(userMessage);
+        }
+
         // NEW: Lấy lịch sử hội thoại từ DB (10 tin nhắn gần nhất)
         List<ChatMessage> conversationHistory = 
             chatMessageRepository.findRecentMessagesBySessionId(session.getSessionId(), 10);
@@ -255,6 +267,10 @@ public class ChatServiceImpl implements ChatService {
         ChatSession session = chatSessionRepository.findById(request.getSessionId())
                 .orElseThrow(() -> new ResourceNotFoundException("Chat session not found: " + request.getSessionId()));
 
+        if (request.getContent() == null || request.getContent().isBlank()) {
+            throw new IllegalArgumentException("Reply content must not be blank");
+        }
+
         Account adminSender = null;
         if (request.getSenderId() != null) {
             adminSender = accountRepository.findById(request.getSenderId()).orElse(null);
@@ -268,9 +284,26 @@ public class ChatServiceImpl implements ChatService {
         // Cập nhật preview tin nhắn cuối trong session
         session.setLastMessage(request.getContent());
         session.setStatus(1); // Admin đã reply → session chuyển về mở
+        session.setUnreadCount(0);
         chatSessionRepository.save(session);
 
         return ChatResponse.fromEntity(adminMessage);
+    }
+
+    @Override
+    public List<ChatSessionResponse> getPendingTickets() {
+        return chatSessionRepository.findByStatusOrderByUpdatedAtDesc(2)
+                .stream()
+                .map(ChatSessionResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ChatResponse> getTicketMessages(String sessionId) {
+        if (!chatSessionRepository.existsById(sessionId)) {
+            throw new ResourceNotFoundException("Chat session not found: " + sessionId);
+        }
+        return getMessagesBySession(sessionId);
     }
 
     // ================================================================
