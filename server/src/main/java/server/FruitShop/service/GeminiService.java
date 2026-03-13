@@ -145,8 +145,9 @@ public class GeminiService {
 
     /**
      * Gemini tự quyết định gọi tool nào để lấy dữ liệu DB, rồi sinh câu trả lời.
+     * Hỗ trợ multi-turn conversation với context history.
      */
-    public GeminiAgentResult agentChat(String userMessage, String accountId) {
+    public GeminiAgentResult agentChat(String userMessage, String accountId, List<server.FruitShop.entity.ChatMessage> conversationHistory) {
         try {
             String url = BASE_URL.formatted(model, apiKey);
 
@@ -165,8 +166,25 @@ public class GeminiService {
             sysContent.set("parts", objectMapper.createArrayNode().add(sysPart));
             body.set("systemInstruction", sysContent);
 
-            // contents (lịch sử hội thoại — bắt đầu với tin nhắn user)
+            // NEW: Multi-turn contents (lịch sử + tin hiện tại)
             ArrayNode contents = objectMapper.createArrayNode();
+
+            // Thêm lịch sử hội thoại
+            if (conversationHistory != null && !conversationHistory.isEmpty()) {
+                for (server.FruitShop.entity.ChatMessage msg : conversationHistory) {
+                    ObjectNode msgPart = objectMapper.createObjectNode();
+                    msgPart.put("text", msg.getContent());
+                    
+                    ObjectNode msgContent = objectMapper.createObjectNode();
+                    String role = msg.getSenderRole().equalsIgnoreCase("SYSTEM") ? "model" : "user";
+                    msgContent.put("role", role);
+                    msgContent.set("parts", objectMapper.createArrayNode().add(msgPart));
+                    
+                    contents.add(msgContent);
+                }
+            }
+
+            // Thêm tin nhắn hiện tại
             ObjectNode userPart = objectMapper.createObjectNode();
             userPart.put("text", userMessage);
             ObjectNode userContent = objectMapper.createObjectNode();
@@ -255,6 +273,11 @@ public class GeminiService {
             e.printStackTrace();
             return GeminiAgentResult.of(getFallbackReply("GENERAL"), null, "GENERAL");
         }
+    }
+
+    // NEW: Overload method (2 params) để backward compatibility
+    public GeminiAgentResult agentChat(String userMessage, String accountId) {
+        return agentChat(userMessage, accountId, null);
     }
 
     // ================================================================
