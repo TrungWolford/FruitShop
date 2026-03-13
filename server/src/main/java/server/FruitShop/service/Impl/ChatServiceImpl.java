@@ -164,8 +164,24 @@ public class ChatServiceImpl implements ChatService {
                 request.getIntent(), request.getMetadata());
         chatMessageRepository.save(userMessage);
 
+        // NEW: Lấy lịch sử hội thoại từ DB (10 tin nhắn gần nhất)
+        List<ChatMessage> conversationHistory = 
+            chatMessageRepository.findRecentMessagesBySessionId(session.getSessionId(), 10);
+        java.util.Collections.reverse(conversationHistory); // Đảo để thứ tự cũ → mới
+
+        System.out.println("[DEBUG] Session: " + session.getSessionId());
+        System.out.println("[DEBUG] History size: " + conversationHistory.size());
+        conversationHistory.forEach(m -> 
+            System.out.println("[DEBUG]   - " + m.getSenderRole() + ": " + m.getContent())
+        );
+
         // 3. Agentic chat: Gemini tự gọi tool query DB và sinh câu trả lời
-        GeminiAgentResult agentResult = geminiService.agentChat(request.getContent(), request.getSenderId());
+        // ✅ Truyền conversation history vào (MULTI-TURN)
+        GeminiAgentResult agentResult = geminiService.agentChat(
+            request.getContent(), 
+            request.getSenderId(), 
+            conversationHistory  // ← History được truyền vào đây
+        );
         String detectedIntent = agentResult.intent();
         String botReply = agentResult.reply();
         String botMetadata = agentResult.metadata();
