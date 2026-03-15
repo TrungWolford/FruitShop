@@ -4,6 +4,11 @@ import { useAppSelector } from '../../hooks/redux';
 import { roleService } from '../../services/adminAccountService';
 import type { Role } from '../../types/account';
 import LeftTaskbar from '../../components/Admin/LeftTaskbar/LeftTaskbar';
+import Header from '@/components/Admin/Header';
+import Container from '@/components/Admin/Container';
+
+const TASKBAR_MARGIN_TOP = 'mt-[60px]';
+
 import AddRoleModal from '../../components/modals/AddRoleModal';
 import EditRoleModal from '../../components/modals/EditRoleModal';
 import DeleteRoleModal from '../../components/modals/DeleteRoleModal';
@@ -102,9 +107,12 @@ const AdminRoles: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <LeftTaskbar />
+      {/* Header */}
+      <Header />
+      <LeftTaskbar className={`${TASKBAR_MARGIN_TOP}`} />
 
-      <div className="ml-64 p-4">
+      {/* body */}
+      <Container className="">
         {/* Header */}
         <div className="mb-3">
           <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -258,30 +266,30 @@ const AdminRoles: React.FC = () => {
             )}
           </div>
         </div>
+      </Container>
 
-        {/* Create Role Modal */}
-        <AddRoleModal
-          isOpen={isCreateModalOpen}
-          onClose={() => setIsCreateModalOpen(false)}
-          onSuccess={loadRoles}
-        />
+      {/* Create Role Modal */}
+      <AddRoleModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={loadRoles}
+      />
 
-        {/* Edit Role Modal */}
-        <EditRoleModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          onSuccess={loadRoles}
-          role={selectedRole}
-        />
+      {/* Edit Role Modal */}
+      <EditRoleModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSuccess={loadRoles}
+        role={selectedRole}
+      />
 
-        {/* Delete Role Modal */}
-        <DeleteRoleModal
-          isOpen={isDeleteModalOpen}
-          onClose={() => setIsDeleteModalOpen(false)}
-          onSuccess={loadRoles}
-          role={selectedRole}
-        />
-      </div>
+      {/* Delete Role Modal */}
+      <DeleteRoleModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onSuccess={loadRoles}
+        role={selectedRole}
+      />
     </div>
   );
 };

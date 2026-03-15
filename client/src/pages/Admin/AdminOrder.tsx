@@ -3,6 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../hooks/redux';
 import { toast } from 'sonner';
 import LeftTaskbar from '../../components/Admin/LeftTaskbar/LeftTaskbar';
+import Header from '@/components/Admin/Header';
+import Container from '@/components/Admin/Container';
+
+const TASKBAR_MARGIN_TOP = 'mt-[60px]';
+
 import { Button } from '../../components/ui/Button/Button';
 import { Input } from '../../components/ui/input';
 import { Badge } from '../../components/ui/badge';
@@ -319,9 +324,12 @@ const AdminOrder: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <LeftTaskbar />
+      {/* Header */}
+      <Header />
+      <LeftTaskbar className={`${TASKBAR_MARGIN_TOP}`} />
 
-      <div className="ml-64 p-4">
+      {/* body */}
+      <Container className="">
         {/* Header */}
         <div className="mb-3">
           <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -601,7 +609,7 @@ const AdminOrder: React.FC = () => {
             )}
           </div>
         </div>
-      </div>
+      </Container>
 
       {/* Detail Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>

@@ -2,6 +2,7 @@ import axios from "axios";
 import type { AxiosResponse, AxiosError, InternalAxiosRequestConfig } from "axios";
 import { store } from "../store";
 import { logout } from "../store/slices/authSlice";
+import { adminLogout } from "../store/slices/adminAuthSlice";
 import { CONFIG, STORAGE_KEYS } from "../config/constants";
 
 interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
@@ -48,7 +49,17 @@ axiosInstance.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        // Dispatch logout action to clear auth state
+        const isAdminSession =
+          localStorage.getItem('admin_isAuthenticated') === 'true' ||
+          Boolean(localStorage.getItem('admin_user'));
+
+        if (isAdminSession) {
+          store.dispatch(adminLogout());
+          window.location.href = '/admin/login';
+          return Promise.reject(error);
+        }
+
+        // Dispatch customer logout action to clear auth state
         store.dispatch(logout());
         localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
         localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);

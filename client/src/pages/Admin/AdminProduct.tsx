@@ -4,6 +4,11 @@ import { useAppSelector } from '../../hooks/redux';
 import { toast } from 'sonner';
 // Remove mock data imports - using productService instead
 import LeftTaskbar from '../../components/Admin/LeftTaskbar/LeftTaskbar';
+import Header from '@/components/Admin/Header';
+import Container from '@/components/Admin/Container';
+
+const TASKBAR_MARGIN_TOP = 'mt-[60px]';
+
 import AddProductModal from '../../components/modals/AddProductModal';
 import EditProductModal from '../../components/modals/EditProductModal';
 import ViewProductModal from '../../components/modals/ViewProductModal';
@@ -272,9 +277,12 @@ const AdminProduct: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <LeftTaskbar />
+      {/* Header */}
+      <Header />
+      <LeftTaskbar className={`${TASKBAR_MARGIN_TOP}`} />
 
-      <div className="ml-64 p-4">
+      {/* body */}
+      <Container className="">
         {/* Header */}
         <div className="mb-3">
           <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -658,7 +666,7 @@ const AdminProduct: React.FC = () => {
           onSuccess={handleEditProductSuccess}
           product={editingProduct}
         />
-      </div>
+      </Container>
     </div>
   );
 };

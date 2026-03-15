@@ -17,10 +17,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ onClose }) => {
   const messageEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-   createSession()
-   .then(data => setSessionId(data.sessionId))
-   .catch(console.error)
-  },[])
+    createSession()
+      .then(data => setSessionId(data.sessionId))
+      .catch(console.error)
+  }, [])
 
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -50,7 +50,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ onClose }) => {
     }
   }
 
-  const handleEnter = (e: any) => {
+  const handleEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter')
       handleSend()
   }

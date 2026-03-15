@@ -4,6 +4,11 @@ import { useAppSelector } from '../../hooks/redux';
 import { categoryService } from '../../services/categoryService';
 import type { Category } from '../../types/category';
 import LeftTaskbar from '../../components/Admin/LeftTaskbar/LeftTaskbar';
+import Header from '@/components/Admin/Header';
+import Container from '@/components/Admin/Container';
+
+const TASKBAR_MARGIN_TOP = 'mt-[60px]';
+
 import AddCategoryModal from '../../components/modals/AddCategoryModal';
 import EditCategoryModal from '../../components/modals/EditCategoryModal';
 import DeleteCategoryModal from '../../components/modals/DeleteCategoryModal';
@@ -174,8 +179,12 @@ const AdminCategory: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <LeftTaskbar />
-      <div className="ml-64 p-4">
+      {/* Header */}
+      <Header />
+      <LeftTaskbar className={`${TASKBAR_MARGIN_TOP}`} />
+
+      {/* body */}
+      <Container className="">
         {/* Header */}
         <div className="mb-3">
           <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -417,7 +426,7 @@ const AdminCategory: React.FC = () => {
           onSuccess={loadCategories}
           category={selectedCategory}
         />
-      </div>
+      </Container>
     </div>
   );
 };

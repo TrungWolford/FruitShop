@@ -19,6 +19,11 @@ import {
   Eye,
   AlertTriangle
 } from 'lucide-react'
+import Header from '@/components/Admin/Header'
+import Container from '@/components/Admin/Container'
+
+const TASKBAR_MARGIN_TOP = 'mt-[60px]'
+
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate()
@@ -85,10 +90,11 @@ const AdminDashboard: React.FC = () => {
           setOrders([])
         }
       } catch (error) {
+        console.error(error)
         setOrders([])
       }
-
     } catch (error) {
+      console.error(error)
     } finally {
       setLoading(false)
     }
@@ -153,31 +159,27 @@ const AdminDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <LeftTaskbar />
-        <div className="ml-64 p-8 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
+        <Header />
+        <LeftTaskbar className={`${TASKBAR_MARGIN_TOP}`}/>
+        <Container>
+          <div className="flex h-64 items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
+            </div>
           </div>
-        </div>
+        </Container>
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <LeftTaskbar />
-
-      <div className="ml-64 p-4">
-        {/* Header */}
-        <div className="mb-3">
-          <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <BarChart className="w-5 h-5 text-amber-500" />
-            Dashboard
-          </h1>
-          <p className="text-gray-600 mt-0.5 text-base">Tổng quan hệ thống quản lý Vựa trái cây</p>
-        </div>
-
+      {/* Header */}
+      <Header />
+      <LeftTaskbar className={`${TASKBAR_MARGIN_TOP}`}/>
+      {/* body */}
+      <Container className="">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           {stats.map((stat, index) => {
@@ -307,7 +309,7 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
+      </Container>
     </div>
   )
 }
