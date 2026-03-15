@@ -4,6 +4,11 @@ import { useAppSelector } from '../../hooks/redux';
 import { accountService, roleService } from '../../services/adminAccountService';
 import type { Account, Role, PaginatedResponse } from '../../types/account';
 import LeftTaskbar from '../../components/Admin/LeftTaskbar/LeftTaskbar';
+import Header from '@/components/Admin/Header';
+import Container from '@/components/Admin/Container';
+
+const TASKBAR_MARGIN_TOP = 'mt-[60px]';
+
 import AddAccountModal from '../../components/modals/AddAccountModal';
 import EditAccountModal from '../../components/modals/EditAccountModal';
 import { Button } from '../../components/ui/Button/Button';
@@ -232,9 +237,12 @@ const AdminAccounts: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <LeftTaskbar />
+      {/* Header */}
+      <Header />
+      <LeftTaskbar className={`${TASKBAR_MARGIN_TOP}`} />
 
-      <div className="ml-64 p-4">
+      {/* body */}
+      <Container className="">
         {/* Header */}
         <div className="mb-3">
           <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -577,7 +585,7 @@ const AdminAccounts: React.FC = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
+      </Container>
     </div>
   );
 };

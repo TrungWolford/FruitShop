@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, User, ShoppingCart, Phone, LogOut, UserCircle, History, Settings, X } from 'lucide-react';
@@ -117,7 +118,7 @@ const TopNavigation: React.FC = () => {
 
     window.addEventListener('cartUpdated', updateCartCount);
     return () => window.removeEventListener('cartUpdated', updateCartCount);
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user,]);
 
   // Listen for cart updates
   useEffect(() => {
@@ -486,7 +487,7 @@ const TopNavigation: React.FC = () => {
                   className={`flex items-center group ${isAuthenticated && user && cartStatus !== null && cartStatus !== 1
                     ? 'cursor-not-allowed opacity-60'
                     : 'cursor-pointer'
-                    }`}
+                  }`}
                   onClick={handleCartClick}
                   onMouseEnter={() => {
                     // Chỉ fetch hover cart nếu cart không bị khóa
