@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { 
-  Button, 
-  Input, 
+import {
+  Button,
+  Input,
   Label,
   Checkbox,
   Card,
@@ -12,8 +12,8 @@ import {
   CardTitle
 } from '../../components/ui'
 import { Eye, EyeOff, Lock, User, Phone, Loader2 } from 'lucide-react'
-import TopNavigation from '../../components/ui/Header/Header'
-import Footer from '../../components/ui/Footer/Footer'
+import TopNavigation from '../../components/layout/Header/Header'
+import Footer from '../../components/layout/Footer/Footer'
 import { registerService } from '../../services/registerService'
 import { toast } from 'sonner'
 
@@ -103,25 +103,25 @@ const Register: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!validateForm()) {
       return
     }
 
     setIsLoading(true)
 
-         try {
-       // Register account directly - let backend handle phone validation
-       const registerData = {
-         accountName: formData.fullName.trim(),
-         accountPhone: formData.phone.trim(),
-         password: formData.password
-       }
+    try {
+      // Register account directly - let backend handle phone validation
+      const registerData = {
+        accountName: formData.fullName.trim(),
+        accountPhone: formData.phone.trim(),
+        password: formData.password
+      }
 
-       await registerService.registerAccount(registerData)
-      
+      await registerService.registerAccount(registerData)
+
       toast.success('Đăng ký tài khoản thành công! Vui lòng đăng nhập.')
-      
+
       // Reset form
       setFormData({
         fullName: '',
@@ -130,25 +130,25 @@ const Register: React.FC = () => {
         confirmPassword: '',
         acceptTerms: false
       })
-      
+
       // Navigate to login
       navigate('/')
-         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-         } catch (error: any) {
-       let errorMessage = 'Không thể đăng ký tài khoản. Vui lòng thử lại!'
-       
-       if (error.response?.status === 400) {
-         errorMessage = error.response?.data?.message || 'Thông tin đăng ký không hợp lệ'
-       } else if (error.response?.status === 409) {
-         errorMessage = 'Số điện thoại này đã được đăng ký'
-       } else if (error.response?.status === 500) {
-         errorMessage = 'Lỗi máy chủ. Vui lòng thử lại sau!'
-       } else if (error.message) {
-         errorMessage = error.message
-       }
-       
-       toast.error(errorMessage)
-     } finally {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      let errorMessage = 'Không thể đăng ký tài khoản. Vui lòng thử lại!'
+
+      if (error.response?.status === 400) {
+        errorMessage = error.response?.data?.message || 'Thông tin đăng ký không hợp lệ'
+      } else if (error.response?.status === 409) {
+        errorMessage = 'Số điện thoại này đã được đăng ký'
+      } else if (error.response?.status === 500) {
+        errorMessage = 'Lỗi máy chủ. Vui lòng thử lại sau!'
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+
+      toast.error(errorMessage)
+    } finally {
       setIsLoading(false)
     }
   }
@@ -161,7 +161,7 @@ const Register: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <TopNavigation />
-      
+
       <main className="flex-1 bg-gray-50 py-12">
         <div className="container mx-auto px-4">
           <div className="max-w-lg mx-auto">
@@ -281,7 +281,7 @@ const Register: React.FC = () => {
                         id="acceptTerms"
                         name="acceptTerms"
                         checked={formData.acceptTerms}
-                        onCheckedChange={(checked) => 
+                        onCheckedChange={(checked) =>
                           setFormData(prev => ({ ...prev, acceptTerms: checked as boolean }))
                         }
                         required
@@ -300,8 +300,8 @@ const Register: React.FC = () => {
                   </div>
 
                   {/* Submit Button */}
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 h-12 text-base rounded-md"
                     disabled={!formData.acceptTerms || isLoading}
                   >

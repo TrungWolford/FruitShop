@@ -1,4 +1,4 @@
-package server.FruitShop.service;
+package server.FruitShop.service.ChatBot;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;

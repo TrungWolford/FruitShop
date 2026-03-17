@@ -1,5 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import ErrorBoundary from '@/components/ui/ErrorBoundary/ErrorBoundary'
 import Home from '../pages/Home/Home';
 import Register from '../pages/Mainpage/Register';
 import ProfileCustomer from '../pages/Customer/ProfileCustomer';
@@ -17,63 +18,67 @@ import AdminPayment from '../pages/Admin/AdminPayment';
 import AdminRefund from '../pages/Admin/AdminRefund';
 import AdminShipping from '../pages/Admin/AdminShipping';
 import AdminRating from '../pages/Admin/AdminRating';
+import AdminMessages from '../pages/Admin/AdminMessages';
 import CheckoutPage from '../pages/Checkout/CheckoutPage';
 import ProductDetail from '../pages/ProductDetail/ProductDetail';
 import PaymentPage from '../pages/Payment/PaymentPage';
 import OrderSuccessPage from '../pages/OrderSuccess/OrderSuccessPage';
-import ErrorBoundary from '../components/ErrorBoundary';
 
 const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/account/register" element={<Register />} />
-      <Route path="/account/profile" element={<ProfileCustomer />} />
-      <Route path="/customer/orders" element={<HistoryReceipt />} />
-      <Route path="/checkout" element={<CheckoutPage />} />
-      <Route path="/payment" element={<PaymentPage />} />
-      <Route path="/order-success" element={<OrderSuccessPage />} />
-      <Route
-        path="/product"
-        element={
-          <ErrorBoundary>
-            <ProductPage />
-          </ErrorBoundary>
-        }
-      />
-      <Route
-        path="/product/search"
-        element={
-          <ErrorBoundary>
-            <ProductPage />
-          </ErrorBoundary>
-        }
-      />
-      <Route
-        path="/product/collection/:categoryName"
-        element={
-          <ErrorBoundary>
-            <ProductPage />
-          </ErrorBoundary>
-        }
-      />
-      <Route
-        path="/collection/:categoryName"
-        element={
-          <ErrorBoundary>
-            <ProductPage />
-          </ErrorBoundary>
-        }
-      />
-      <Route
-        path="/product/:productName"
-        element={
-          <ErrorBoundary>
-            <ProductDetail />
-          </ErrorBoundary>
-        }
-      />
-      {/* Admin routes */}
+      {/* Customer routes - có Header + Footer qua DefaultLayout */}
+      <Route>
+        <Route path="/" element={<Home />} />
+        <Route path="/account/register" element={<Register />} />
+        <Route path="/account/profile" element={<ProfileCustomer />} />
+        <Route path="/customer/orders" element={<HistoryReceipt />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/payment" element={<PaymentPage />} />
+        <Route path="/order-success" element={<OrderSuccessPage />} />
+        <Route
+          path="/product"
+          element={
+            <ErrorBoundary>
+              <ProductPage />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/product/search"
+          element={
+            <ErrorBoundary>
+              <ProductPage />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/product/collection/:categoryName"
+          element={
+            <ErrorBoundary>
+              <ProductPage />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/collection/:categoryName"
+          element={
+            <ErrorBoundary>
+              <ProductPage />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/product/:productName"
+          element={
+            <ErrorBoundary>
+              <ProductDetail />
+            </ErrorBoundary>
+          }
+        />
+      </Route>
+
+      {/* Admin routes - không có DefaultLayout */}
       <Route path="/admin" element={<AdminLogin />} />
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
@@ -87,6 +92,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/admin/accounts" element={<AdminAccounts />} />
       <Route path="/admin/roles" element={<AdminRoles />} />
       <Route path="/admin/categories" element={<AdminCategory />} />
+      <Route path="/admin/messages" element={<AdminMessages />} />
 
       {/* Redirect old auth routes to home */}
       <Route path="/auth/login" element={<Navigate to="/" replace />} />

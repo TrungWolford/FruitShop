@@ -26,6 +26,9 @@ public interface ChatSessionRepository extends JpaRepository<ChatSession, String
     // Lấy session theo status — phân trang (admin lọc theo trạng thái)
     Page<ChatSession> findByStatusOrderByUpdatedAtDesc(int status, Pageable pageable);
 
+    // Lấy session theo status (không phân trang)
+    List<ChatSession> findByStatusOrderByUpdatedAtDesc(int status);
+
     // Lấy session kèm messages (tránh N+1 query)
     @Query("SELECT DISTINCT s FROM ChatSession s LEFT JOIN FETCH s.messages WHERE s.sessionId = :sessionId")
     Optional<ChatSession> findByIdWithMessages(@Param("sessionId") String sessionId);

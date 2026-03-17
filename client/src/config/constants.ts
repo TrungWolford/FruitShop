@@ -1,9 +1,10 @@
+
 // Production URL (Railway) hoặc localhost cho development
-const PRODUCTION_API_URL = "https://fruitshop.up.railway.app";
+const PRODUCTION_API_URL = "https://fruitshop-665b.onrender.com";
 const DEV_API_URL = "http://localhost:8080";
 
 // Tự động chọn URL dựa trên môi trường
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ||
   (import.meta.env.PROD ? PRODUCTION_API_URL : DEV_API_URL);
 
 export const CONFIG = {
@@ -33,7 +34,7 @@ export const API = {
   DELETE_PRODUCT: (productId: string) => `/product/${productId}`, // DELETE /api/product/{productId} (Admin only)
   FILTER_PRODUCTS: '/product/filter', // GET /api/product/filter?categoryId=xxx&status=1&minPrice=0&maxPrice=999999999&page=0&size=10
   SEARCH_PRODUCTS: '/product/search', // GET /api/product/search?keywords=xxx&page=0&size=10
- 
+
   // File Upload - Cloudinary
   UPLOAD_IMAGE: '/upload/image', // POST /api/upload/image
   UPLOAD_FILE: '/upload/file', // POST /api/upload/file  
@@ -142,6 +143,19 @@ export const API = {
   GET_PAYMENTS_BY_STATUS: (status: number) => `/payment/status/${status}`, // GET /api/payment/status/{status}?page=0&size=10
   UPDATE_PAYMENT_STATUS: (paymentId: string) => `/payment/${paymentId}/status`, // PUT /api/payment/{paymentId}/status?status=1
   GET_PAYMENT_BY_TRANSACTION_ID: (transactionId: string) => `/payment/transaction/${transactionId}`, // GET /api/payment/transaction/{transactionId}
+
+  //Chatbot
+  SESSION: '/chat/sessions',
+  MESSAGE: '/chat/messages',
+
+  //adminChat
+  GET_ADMIN_SESSIONS: '/chat/admin/sessions',
+  GET_PENDING_TICKETS: '/chat/admin/customer-care/tickets',
+  GET_TICKET_MESSAGES: (sessionId: string) => `/chat/admin/customer-care/tickets/${sessionId}/messages`,
+  REPLY_TICKET: (sessionId: string) => `/chat/admin/customer-care/tickets/${sessionId}/reply`,
+  MARK_SESSION_AS_READ: (sessionId: string) => `/chat/sessions/${sessionId}/read`,
+  UPDATE_SESSION: (sessionId: string) => `/chat/sessions/${sessionId}`,
+
 } as const;
 
 // HTTP Status Codes
@@ -185,19 +199,19 @@ export const APP_CONFIG = {
     ALLOWED_VIDEO_TYPES: ['video/mp4', 'video/webm', 'video/ogg'],
     ALLOWED_DOCUMENT_TYPES: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
   },
-  
+
   // Account status constants
   ACCOUNT_STATUS: {
     INACTIVE: 0,   // Không hoạt động
     ACTIVE: 1,     // Đang hoạt động
   },
-  
+
   // Product status constants
   PRODUCT_STATUS: {
     INACTIVE: 0,   // Không hoạt động
     ACTIVE: 1,     // Đang hoạt động
   },
-  
+
   // Order status constants
   ORDER_STATUS: {
     PENDING: 0,      // Chờ xử lý
@@ -206,7 +220,7 @@ export const APP_CONFIG = {
     DELIVERED: 3,    // Đã giao hàng
     CANCELLED: 4,    // Đã hủy
   },
-  
+
   // Role types
   ROLE_TYPES: {
     ADMIN: 'ADMIN',
@@ -224,29 +238,29 @@ export const ERROR_MESSAGES = {
   VALIDATION_ERROR: 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.',
   FILE_TOO_LARGE: 'File quá lớn. Kích thước tối đa cho phép là 10MB.',
   INVALID_FILE_TYPE: 'Định dạng file không được hỗ trợ.',
-  
+
   // Account specific errors
   ACCOUNT_NOT_FOUND: 'Không tìm thấy tài khoản.',
   ACCOUNT_CREATE_FAILED: 'Tạo tài khoản thất bại.',
   ACCOUNT_UPDATE_FAILED: 'Cập nhật tài khoản thất bại.',
   LOGIN_FAILED: 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.',
-  
+
   // Product specific errors
   PRODUCT_NOT_FOUND: 'Không tìm thấy sản phẩm.',
   PRODUCT_CREATE_FAILED: 'Tạo sản phẩm thất bại.',
   PRODUCT_UPDATE_FAILED: 'Cập nhật sản phẩm thất bại.',
-  
+
   // Category specific errors
   CATEGORY_NOT_FOUND: 'Không tìm thấy danh mục.',
   CATEGORY_CREATE_FAILED: 'Tạo danh mục thất bại.',
   CATEGORY_UPDATE_FAILED: 'Cập nhật danh mục thất bại.',
-  
+
   // Order specific errors
   ORDER_NOT_FOUND: 'Không tìm thấy đơn hàng.',
   ORDER_CREATE_FAILED: 'Tạo đơn hàng thất bại.',
   ORDER_UPDATE_FAILED: 'Cập nhật đơn hàng thất bại.',
   ORDER_CANCEL_FAILED: 'Hủy đơn hàng thất bại.',
-  
+
   // Cart specific errors
   CART_NOT_FOUND: 'Không tìm thấy giỏ hàng.',
   CART_ADD_ITEM_FAILED: 'Thêm sản phẩm vào giỏ hàng thất bại.',
@@ -260,27 +274,27 @@ export const SUCCESS_MESSAGES = {
   UPDATE_SUCCESS: 'Cập nhật thành công!',
   DELETE_SUCCESS: 'Xóa thành công!',
   SAVE_SUCCESS: 'Lưu thành công!',
-  
+
   // Account specific success
   ACCOUNT_CREATED: 'Tạo tài khoản thành công!',
   ACCOUNT_UPDATED: 'Cập nhật tài khoản thành công!',
   LOGIN_SUCCESS: 'Đăng nhập thành công!',
   LOGOUT_SUCCESS: 'Đăng xuất thành công!',
-  
+
   // Product specific success
   PRODUCT_CREATED: 'Tạo sản phẩm thành công!',
   PRODUCT_UPDATED: 'Cập nhật sản phẩm thành công!',
   PRODUCT_STATUS_CHANGED: 'Thay đổi trạng thái sản phẩm thành công!',
-  
+
   // Category specific success
   CATEGORY_CREATED: 'Tạo danh mục thành công!',
   CATEGORY_UPDATED: 'Cập nhật danh mục thành công!',
-  
+
   // Order specific success
   ORDER_CREATED: 'Tạo đơn hàng thành công!',
   ORDER_UPDATED: 'Cập nhật đơn hàng thành công!',
   ORDER_CANCELLED: 'Hủy đơn hàng thành công!',
-  
+
   // Cart specific success
   CART_ITEM_ADDED: 'Thêm sản phẩm vào giỏ hàng thành công!',
   CART_ITEM_UPDATED: 'Cập nhật giỏ hàng thành công!',
@@ -291,35 +305,35 @@ export const SUCCESS_MESSAGES = {
 // Route Paths
 export const ROUTES = {
   HOME: '/',
-  
+
   // Auth routes
   REGISTER: '/account/register',
-  
+
   // Product routes
   PRODUCTS: '/products',
   PRODUCT_DETAIL: (id: string) => `/products/${id}`,
   PRODUCT_CREATE: '/products/create',
   PRODUCT_EDIT: (id: string) => `/products/edit/${id}`,
-  
+
   // Category routes
   CATEGORIES: '/categories',
   CATEGORY_DETAIL: (id: string) => `/categories/${id}`,
   CATEGORY_CREATE: '/categories/create',
   CATEGORY_EDIT: (id: string) => `/categories/edit/${id}`,
-  
+
   // Order routes
   ORDERS: '/orders',
   ORDER_DETAIL: (id: string) => `/orders/${id}`,
   ORDER_HISTORY: '/orders/history',
-  
+
   // Cart routes
   CART: '/cart',
   CHECKOUT: '/checkout',
-  
+
   // Account routes
   PROFILE: '/profile',
   ACCOUNT_SETTINGS: '/account/settings',
-  
+
   // Admin routes
   ADMIN: {
     DASHBOARD: '/admin',
@@ -330,7 +344,7 @@ export const ROUTES = {
     ROLES: '/admin/roles',
     SHIPPING: '/admin/shipping',
   },
-  
+
   // Search
   SEARCH: '/search',
 } as const;

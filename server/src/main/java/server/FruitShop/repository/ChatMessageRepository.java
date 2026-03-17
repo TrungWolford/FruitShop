@@ -38,4 +38,15 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, String
     @Modifying
     @Query("UPDATE ChatMessage m SET m.deleted = true WHERE m.chatSession.sessionId = :sessionId")
     int softDeleteAllBySessionId(@Param("sessionId") String sessionId);
+
+    // Lấy N tin nhắn gần nhất của session (cho context memory)
+    @Query(value = """
+            SELECT * FROM chat_messages 
+            WHERE session_id = :sessionId AND deleted = false
+            ORDER BY created_at DESC
+            LIMIT :limit
+            """, nativeQuery = true)
+    List<ChatMessage> findRecentMessagesBySessionId(
+            @Param("sessionId") String sessionId,
+            @Param("limit") int limit);
 }

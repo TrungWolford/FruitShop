@@ -1,25 +1,26 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, User, ShoppingCart, Phone, LogOut, UserCircle, History, Settings, X } from 'lucide-react';
-import { Button } from '../Button/Button';
-import { Input } from '../input';
+import { Button } from '../../ui/Button/Button';
+import { Input } from '../../ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '../dropdowns/dropdown-menu';
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '../dropdowns/hover';
+} from '../../ui/dropdowns/dropdown-menu';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '../../ui/dropdowns/hover';
 
-import { useAppSelector, useAppDispatch } from '../../../hooks/redux';
-import { logout } from '../../../store/slices/authSlice';
-import LoginDialog from '../../../pages/Mainpage/Login';
+import { useAppSelector, useAppDispatch } from '@/hooks/redux';
+import { logout } from '@/store/slices/authSlice';
+import LoginDialog from '@/pages/Mainpage/Login';
 import Cart from '../../Cart/Cart';
-import { cartService } from '../../../services/cartService';
-import { productService } from '../../../services/productService';
+import { cartService } from '@/services/cartService';
+import { productService } from '@/services/productService';
 import { toast } from 'sonner';
-import { imgaes } from '../../../assets/img';
+import images from '@/assets';
 import { localStorageCartService } from '@/services/localStorageCartService';
 import { authService } from '@/services/authService';
 import type { CartItem } from '@/types/cart';
@@ -62,7 +63,7 @@ const TopNavigation: React.FC = () => {
 
   // Handle search
   const handleSearch = async () => {
-    
+
     if (!searchQuery.trim()) {
       toast.error('Vui lòng nhập từ khóa tìm kiếm');
       return;
@@ -73,7 +74,7 @@ const TopNavigation: React.FC = () => {
       // Response trực tiếp có content, totalElements (không có success, data wrapper)
       if (response && response.content) {
         toast.success(`Tìm thấy ${response.totalElements || 0} sản phẩm`);
-        
+
         // Navigate to search results page
         navigate(`/product/search?q=${encodeURIComponent(searchQuery)}`);
       } else {
@@ -117,7 +118,7 @@ const TopNavigation: React.FC = () => {
 
     window.addEventListener('cartUpdated', updateCartCount);
     return () => window.removeEventListener('cartUpdated', updateCartCount);
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user,]);
 
   // Listen for cart updates
   useEffect(() => {
@@ -168,7 +169,7 @@ const TopNavigation: React.FC = () => {
       if (response.success && response.data) {
         let count = 0;
         let status: number | null = null;
-        
+
         if (Array.isArray(response.data)) {
           count = response.data.reduce((total, item) => total + item.quantity, 0);
         } else if (typeof response.data === 'object' && 'items' in response.data) {
@@ -176,7 +177,7 @@ const TopNavigation: React.FC = () => {
           count = cartData.items?.reduce((total: number, item: CartItem) => total + item.quantity, 0) || 0;
           status = cartData.status ?? null;
         }
-        
+
         setCartItemCount(count);
         setCartStatus(status);
       }
@@ -191,7 +192,7 @@ const TopNavigation: React.FC = () => {
   const fetchHoverCartItems = async () => {
     // Chỉ fetch nếu chưa load hoặc cart vừa update
     if (hasLoadedHoverCart && hoverCartItems.length > 0) return;
-    
+
     try {
       if (isAuthenticated && user) {
         const response = await cartService.getCartItems(user.accountId);
@@ -220,21 +221,21 @@ const TopNavigation: React.FC = () => {
   const getImageUrl = (item: CartItem): string => {
     // Lấy image đầu tiên từ images array
     const imageUrl = item.images?.[0];
-    
+
     if (!imageUrl) {
       return '/placeholder-image.svg';
     }
-    
+
     // If already a full URL
     if (imageUrl.startsWith('http')) {
       return imageUrl;
     }
-    
+
     // If already starts with /products/
     if (imageUrl.startsWith('/products/')) {
       return imageUrl;
     }
-    
+
     // Clean and add /products/ prefix
     const cleanUrl = imageUrl.startsWith('/') ? imageUrl.slice(1) : imageUrl;
     return `/products/${cleanUrl}`;
@@ -266,7 +267,7 @@ const TopNavigation: React.FC = () => {
         const productResponse = await productService.getProductById(item.productId);
         if (productResponse.success && productResponse.data) {
           const product = productResponse.data;
-          
+
           // Kiểm tra stock
           if (newQuantity > product.stock) {
             toast.error(`Sản phẩm này chỉ còn ${product.stock} sản phẩm trong kho`);
@@ -280,10 +281,10 @@ const TopNavigation: React.FC = () => {
         });
         if (response.success) {
           // Cập nhật trực tiếp hoverCartItems để UI phản hồi ngay
-          setHoverCartItems(prev => 
-            prev.map(item => 
-              item.cartItemId === cartItemId 
-                ? { ...item, quantity: newQuantity } 
+          setHoverCartItems(prev =>
+            prev.map(item =>
+              item.cartItemId === cartItemId
+                ? { ...item, quantity: newQuantity }
                 : item
             )
           );
@@ -301,7 +302,7 @@ const TopNavigation: React.FC = () => {
         const productResponse = await productService.getProductById(item.productId);
         if (productResponse.success && productResponse.data) {
           const product = productResponse.data;
-          
+
           // Kiểm tra stock
           if (newQuantity > product.stock) {
             toast.error(`Sản phẩm này chỉ còn ${product.stock} sản phẩm trong kho`);
@@ -311,10 +312,10 @@ const TopNavigation: React.FC = () => {
 
         localStorageCartService.updateQuantity(cartItemId, newQuantity);
         // Cập nhật trực tiếp hoverCartItems để UI phản hồi ngay
-        setHoverCartItems(prev => 
-          prev.map(item => 
-            item.cartItemId === cartItemId 
-              ? { ...item, quantity: newQuantity } 
+        setHoverCartItems(prev =>
+          prev.map(item =>
+            item.cartItemId === cartItemId
+              ? { ...item, quantity: newQuantity }
               : item
           )
         );
@@ -376,7 +377,7 @@ const TopNavigation: React.FC = () => {
             className="flex items-center hover:opacity-80 transition-opacity cursor-pointer"
           >
             <div className=" px-3 py-2 rounded-md mr-3">
-              <img src={imgaes.logo} alt="" className="w-15 h-16 bg-contain" />
+              <img src={images.logo} alt="" className="w-15 h-16 bg-contain" />
             </div>
           </button>
 
@@ -483,10 +484,9 @@ const TopNavigation: React.FC = () => {
             <HoverCard openDelay={200} closeDelay={300}>
               <HoverCardTrigger asChild>
                 <div
-                  className={`flex items-center group ${
-                    isAuthenticated && user && cartStatus !== null && cartStatus !== 1 
-                      ? 'cursor-not-allowed opacity-60' 
-                      : 'cursor-pointer'
+                  className={`flex items-center group ${isAuthenticated && user && cartStatus !== null && cartStatus !== 1
+                    ? 'cursor-not-allowed opacity-60'
+                    : 'cursor-pointer'
                   }`}
                   onClick={handleCartClick}
                   onMouseEnter={() => {
@@ -518,88 +518,88 @@ const TopNavigation: React.FC = () => {
                   </div>
                 ) : (
                   <div className="flex flex-col items-start justify-center">
-                  <h1 className="text-[#F36F40] text-center w-full mb-4">GIỎ HÀNG</h1>
+                    <h1 className="text-[#F36F40] text-center w-full mb-4">GIỎ HÀNG</h1>
 
-                  {hoverCartItems.length === 0 ? (
-                    <div className="w-full text-center py-8 text-gray-500">
-                      <ShoppingCart className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-                      <p>Giỏ hàng trống</p>
-                    </div>
-                  ) : (
-                    <div className="w-full space-y-4">
-                      {hoverCartItems.map((item) => (
-                        <div key={item.cartItemId} className="flex items-start justify-between w-full">
-                          <div className="flex">
-                            <img
-                              src={getImageUrl(item)}
-                              alt={item.productName}
-                              className="w-20 h-20 object-cover rounded"
-                              onError={(e) => {
-                                const target = e.currentTarget;
-                                // Chỉ set placeholder 1 lần để tránh loop
-                                if (!target.dataset.errorHandled) {
-                                  target.dataset.errorHandled = 'true';
-                                  target.src = '/placeholder-image.svg';
-                                }
-                              }}
-                            />
-                            <div className="flex flex-col ml-2">
-                              <h4 className="text-sm font-medium line-clamp-2 mb-2">{item.productName}</h4>
-                              <div className="flex items-center">
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleUpdateQuantity(item.cartItemId, item.quantity, -1)}
-                                  className="w-6 h-6 p-0 rounded-full bg-[#FEF8F7] text-[#F26F3F] hover:bg-[#F26F3F] hover:text-white"
-                                  hover="none"
-                                  disabled={item.quantity <= 1}
-                                >
-                                  -
-                                </Button>
-                                <Input
-                                  value={item.quantity}
-                                  readOnly
-                                  className="w-12 h-6 mx-2 text-center text-sm rounded-[0px]"
-                                />
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleUpdateQuantity(item.cartItemId, item.quantity, 1)}
-                                  className="w-6 h-6 p-0 rounded-full bg-[#FEF8F7] text-[#F26F3F] hover:bg-[#F26F3F] hover:text-white"
-                                  hover="none"
-                                >
-                                  +
-                                </Button>
+                    {hoverCartItems.length === 0 ? (
+                      <div className="w-full text-center py-8 text-gray-500">
+                        <ShoppingCart className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                        <p>Giỏ hàng trống</p>
+                      </div>
+                    ) : (
+                      <div className="w-full space-y-4">
+                        {hoverCartItems.map((item) => (
+                          <div key={item.cartItemId} className="flex items-start justify-between w-full">
+                            <div className="flex">
+                              <img
+                                src={getImageUrl(item)}
+                                alt={item.productName}
+                                className="w-20 h-20 object-cover rounded"
+                                onError={(e) => {
+                                  const target = e.currentTarget;
+                                  // Chỉ set placeholder 1 lần để tránh loop
+                                  if (!target.dataset.errorHandled) {
+                                    target.dataset.errorHandled = 'true';
+                                    target.src = '/placeholder-image.svg';
+                                  }
+                                }}
+                              />
+                              <div className="flex flex-col ml-2">
+                                <h4 className="text-sm font-medium line-clamp-2 mb-2">{item.productName}</h4>
+                                <div className="flex items-center">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleUpdateQuantity(item.cartItemId, item.quantity, -1)}
+                                    className="w-6 h-6 p-0 rounded-full bg-[#FEF8F7] text-[#F26F3F] hover:bg-[#F26F3F] hover:text-white"
+                                    hover="none"
+                                    disabled={item.quantity <= 1}
+                                  >
+                                    -
+                                  </Button>
+                                  <Input
+                                    value={item.quantity}
+                                    readOnly
+                                    className="w-12 h-6 mx-2 text-center text-sm rounded-[0px]"
+                                  />
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleUpdateQuantity(item.cartItemId, item.quantity, 1)}
+                                    className="w-6 h-6 p-0 rounded-full bg-[#FEF8F7] text-[#F26F3F] hover:bg-[#F26F3F] hover:text-white"
+                                    hover="none"
+                                  >
+                                    +
+                                  </Button>
+                                </div>
                               </div>
                             </div>
+                            <div className="flex flex-col items-end">
+                              <button
+                                onClick={() => handleRemoveItem(item.cartItemId)}
+                                className="text-gray-400 hover:text-red-500 mb-2"
+                              >
+                                <X className="w-5 h-5" />
+                              </button>
+                              <h4 className="text-sm font-semibold text-red-600">
+                                {formatPrice(item.productPrice * item.quantity)}
+                              </h4>
+                            </div>
                           </div>
-                          <div className="flex flex-col items-end">
-                            <button
-                              onClick={() => handleRemoveItem(item.cartItemId)}
-                              className="text-gray-400 hover:text-red-500 mb-2"
-                            >
-                              <X className="w-5 h-5" />
-                            </button>
-                            <h4 className="text-sm font-semibold text-red-600">
-                              {formatPrice(item.productPrice * item.quantity)}
-                            </h4>
-                          </div>
+                        ))}
+
+                        {cartItemCount > 3 && (
+                          <p className="text-center text-gray-500 text-sm">+{cartItemCount - 3} sản phẩm khác</p>
+                        )}
+
+                        <div className="pt-4 border-t">
+                          <Button
+                            onClick={() => setIsCartOpen(true)}
+                            className="w-full bg-primary text-white hover:bg-[#F38258]"
+                          >
+                            Xem giỏ hàng đầy đủ
+                          </Button>
                         </div>
-                      ))}
-
-                      {cartItemCount > 3 && (
-                        <p className="text-center text-gray-500 text-sm">+{cartItemCount - 3} sản phẩm khác</p>
-                      )}
-
-                      <div className="pt-4 border-t">
-                        <Button
-                          onClick={() => setIsCartOpen(true)}
-                          className="w-full bg-primary text-white hover:bg-[#F38258]"
-                        >
-                          Xem giỏ hàng đầy đủ
-                        </Button>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
                 )}
               </HoverCardContent>
             </HoverCard>

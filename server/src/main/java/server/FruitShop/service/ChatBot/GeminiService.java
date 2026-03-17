@@ -1,4 +1,4 @@
-package server.FruitShop.service;
+package server.FruitShop.service.ChatBot;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,7 +41,7 @@ public class GeminiService {
     @Autowired
     public GeminiService(
             @Value("${gemini.api-key}") String apiKey,
-            @Value("${gemini.model:gemini-2.0-flash}") String model,
+            @Value("${gemini.model:gemini-1.5-flash}") String model,
             @Value("${gemini.max-output-tokens:1024}") int maxOutputTokens,
             @Value("${gemini.temperature:0.7}") float temperature,
             ChatToolService chatToolService) {
@@ -104,6 +104,7 @@ public class GeminiService {
                 - PRODUCT_SUGGEST  : nhờ gợi ý sản phẩm phù hợp
                 - ORDER_PLACE      : muốn đặt hàng / mua sản phẩm
                 - PAYMENT          : hỏi về thanh toán, phương thức thanh toán
+                - HUMAN_SUPPORT    : yêu cầu liên hệ/ nhắn tin trao đổi trực tiếp với nhân viên bán hàng
                 - REFUND           : yêu cầu hoàn trả / trả hàng / hoàn tiền
                 - GENERAL          : câu hỏi khác / chào hỏi / không liên quan
                 Tin nhắn: "%s"
@@ -115,7 +116,7 @@ public class GeminiService {
         String cleaned = result.trim().toUpperCase().split("\\s+")[0];
         List<String> validIntents = List.of(
                 "PRODUCT_ADVICE", "PRODUCT_COMPARE", "ORDER_LOOKUP",
-                "PRODUCT_SUGGEST", "ORDER_PLACE", "PAYMENT", "REFUND", "GENERAL");
+                "PRODUCT_SUGGEST", "ORDER_PLACE", "PAYMENT", "GENERAL");
         return validIntents.contains(cleaned) ? cleaned : "GENERAL";
     }
 
@@ -150,9 +151,10 @@ public class GeminiService {
      *
      * @param conversationHistory Lịch sử tin nhắn trước đó của session (không bao gồm tin nhắn hiện tại).
      *                            Dùng để Gemini hiểu context multi-turn (VD: user đã chọn sản phẩm gì).
+     * Hỗ trợ multi-turn conversation với context history.
      */
     public GeminiAgentResult agentChat(String userMessage, String accountId,
-                                       List<ChatMessage> conversationHistory) {
+                                       List<ChatMessage> conversationHistory, List<server.FruitShop.entity.ChatMessage> conversationHistory) {
         try {
             String url = BASE_URL.formatted(model, apiKey);
 
@@ -198,8 +200,31 @@ public class GeminiService {
             sysContent.set("parts", objectMapper.createArrayNode().add(sysPart));
             body.set("systemInstruction", sysContent);
 
-            // contents — lịch sử hội thoại + tin nhắn hiện tại
-            ArrayNode contents = buildContentsWithHistory(conversationHistory, userMessage);
+            // NEW: Multi-turn contents (lịch sử + tin hiện tại)
+            ArrayNode contents = objectMapper.createArrayNode();
+
+            // Thêm lịch sử hội thoại
+            if (conversationHistory != null && !conversationHistory.isEmpty()) {
+                for (server.FruitShop.entity.ChatMessage msg : conversationHistory) {
+                    ObjectNode msgPart = objectMapper.createObjectNode();
+                    msgPart.put("text", msg.getContent());
+                    
+                    ObjectNode msgContent = objectMapper.createObjectNode();
+                    String role = msg.getSenderRole().equalsIgnoreCase("SYSTEM") ? "model" : "user";
+                    msgContent.put("role", role);
+                    msgContent.set("parts", objectMapper.createArrayNode().add(msgPart));
+                    
+                    contents.add(msgContent);
+                }
+            }
+
+            // Thêm tin nhắn hiện tại
+            ObjectNode userPart = objectMapper.createObjectNode();
+            userPart.put("text", userMessage);
+            ObjectNode userContent = objectMapper.createObjectNode();
+            userContent.put("role", "user");
+            userContent.set("parts", objectMapper.createArrayNode().add(userPart));
+            contents.add(userContent);
             body.set("contents", contents);
 
             // tools (function declarations)
@@ -297,6 +322,11 @@ public class GeminiService {
             e.printStackTrace();
             return GeminiAgentResult.of("[DEBUG] agentChat exception: " + e.getMessage(), null, "GENERAL");
         }
+    }
+
+    // NEW: Overload method (2 params) để backward compatibility
+    public GeminiAgentResult agentChat(String userMessage, String accountId) {
+        return agentChat(userMessage, accountId, null);
     }
 
     // ================================================================
@@ -657,6 +687,7 @@ public class GeminiService {
             case "PRODUCT_SUGGEST" -> "Cho tôi biết ngân sách để gợi ý sản phẩm phù hợp!";
             case "ORDER_PLACE"     -> "Bạn muốn mua sản phẩm gì? Hãy cho tôi biết tên sản phẩm và số lượng!";
             case "PAYMENT"         -> "Shop hỗ trợ thanh toán MoMo và COD. Bạn muốn chọn phương thức nào?";
+            case "HUMAN_SUPPORT"   -> "Bạn có cần hỗ trợ trực tiếp từ nhân viên FruitShop không?";
             case "REFUND"          -> "Bạn muốn yêu cầu hoàn trả đơn hàng nào? Hãy cho tôi biết mã đơn hàng!";
             default                -> "Tôi có thể tư vấn sản phẩm, tra cứu đơn hàng hoặc hỗ trợ đặt hàng. Bạn cần gì?";
         };

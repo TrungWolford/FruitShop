@@ -2,6 +2,7 @@ import axiosInstance from '../libs/axios';
 import type { AxiosResponse } from 'axios';
 import { API } from '../config/constants';
 import type { Account } from '../types/account';
+import { mockLogin } from '../apis/mockData';
 
 export interface LoginCredentials {
   email: string
@@ -17,18 +18,46 @@ export interface LoginResponse {
 // Real API login
 export const authService = {
   login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
+    // Kiểm tra environment flag để dùng mock hay real API
+    const useMockAuth = import.meta.env.VITE_USE_MOCK_AUTH === 'true';
+
+    if (useMockAuth) {
+      // Dùng mock data
+      console.log('🔄 Using mock authentication');
+      try {
+        const result = mockLogin(credentials.email, credentials.password);
+
+        if (result.success && result.account) {
+          // Save mock user data to localStorage
+          localStorage.setItem('user', JSON.stringify(result.account));
+          localStorage.setItem('isAuthenticated', 'true');
+
+          return {
+            success: true,
+            user: result.account
+          };
+        } else {
+          throw { message: result.message || 'Đăng nhập thất bại' };
+        }
+      } catch (error: any) {
+        throw { message: error.message || 'Đăng nhập thất bại' };
+      }
+    }
+
+    // Dùng real API
+    console.log('🌐 Using real API authentication');
     try {
       const response: AxiosResponse<Account> = await axiosInstance.post(API.ACCOUNT_LOGIN, {
         accountPhone: credentials.email, // Using email field as phone
         password: credentials.password
       });
-      
+
       // Save user data to localStorage
       if (response.data) {
         localStorage.setItem('user', JSON.stringify(response.data))
         localStorage.setItem('isAuthenticated', 'true')
       }
-      
+
       return {
         success: true,
         user: response.data
@@ -36,11 +65,11 @@ export const authService = {
     } catch (error: any) {
       // Parse error message from backend
       let errorMessage = 'Số điện thoại hoặc mật khẩu không đúng';
-      
+
       // Ưu tiên lấy message từ backend response
       if (typeof error.response?.data === 'string' && error.response.data.trim() !== '') {
         errorMessage = error.response.data;
-      } 
+      }
       // Nếu backend trả về object với message property
       else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
@@ -55,7 +84,7 @@ export const authService = {
       } else if (error.response?.status >= 500) {
         errorMessage = 'Lỗi hệ thống. Vui lòng thử lại sau';
       }
-      
+
       // Throw error để component có thể catch và xử lý
       throw {
         response: error.response,
@@ -72,7 +101,7 @@ export const authService = {
         return JSON.parse(userStr) as Account
       }
     } catch (error) {
-      // Silent error handling
+      console.error(error)
     }
     return null
   },
