@@ -2,90 +2,84 @@ import React, { useState, useEffect, useRef } from "react";
 import images from "@/assets";
 import { X, SendHorizontal } from "lucide-react";
 
-import { useSocket } from "@/hooks/useSockets"; 
+import { useStompChat } from "@/hooks/useStompChat";
 import { useAppSelector } from "@/hooks/redux";
 import { adminChatService } from "@/services/adminChatService/adminChatService";
 
-interface ChatMessageProps {
+interface ChatBoxProps {
   onClose: () => void;
   sessionId: string;
   customerName?: string;
-  className?: string
+  className?: string;
 }
+
 type DisplayMessage = { content: string; senderRole: 'CUSTOMER' | 'ADMIN' }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ onClose, sessionId, customerName, className }) => {
-  const roomId = sessionId;
+const ChatBox: React.FC<ChatBoxProps> = ({ onClose, sessionId, customerName, className }) => {
   const { user: adminUser } = useAppSelector((state) => state.adminAuth)
-
-  const { socket } = useSocket(roomId)
 
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState<DisplayMessage[]>([])
+  const [isSending, setIsSending] = useState(false)
   const messageEndRef = useRef<HTMLDivElement>(null)
 
-  // Load lịch sử chat theo session được chọn
+  // Load lịch sử chat theo session
   useEffect(() => {
     if (!sessionId) return;
-
     adminChatService.getTicketMessages(sessionId)
       .then(history => {
         const historyList = Array.isArray(history) ? history : [];
-        const mapped: DisplayMessage[] = historyList.map((msg: any) => ({
+        setMessages(historyList.map((msg: any) => ({
           content: msg.content,
           senderRole: msg.senderRole
-        }))
-        setMessages(mapped)
+        })))
       })
       .catch(console.error)
   }, [sessionId])
 
-  // Lắng nghe tin nhắn trả về
-  useEffect(() => {
-    if (!socket) return;
-
-    socket.on('receiveMessage', (newMessage: DisplayMessage) => {
-      // Tranh duplicate tin cua admin local: UI da optimistic append trong handleSend
+  // Lắng nghe tin nhắn mới từ customer qua STOMP
+  const { connected, disconnect } = useStompChat(
+    `/topic/session/${sessionId}`,
+    (newMessage: DisplayMessage) => {
+      // Tránh duplicate: tin ADMIN đã optimistic append trong handleSend
       if (newMessage.senderRole !== 'ADMIN') {
         setMessages(prev => [...prev, newMessage]);
       }
-    })
-
-    return () => {
-      socket.off('receiveMessage')
     }
-  }, [socket])
+  )
 
   const handleSend = async () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || isSending) return;
+    const content = inputValue.trim()
 
-    const newAdminMessage: DisplayMessage = { senderRole: 'ADMIN', content: inputValue.trim() }
+    const newAdminMessage: DisplayMessage = { senderRole: 'ADMIN', content }
     setMessages(prev => [...prev, newAdminMessage]);
     setInputValue("");
-
-    if (socket) {
-      socket.emit('sendMessage', {
-        roomId: roomId,
-        sessionId: sessionId,
-        message: newAdminMessage
-      });
-      return;
-    }
+    setIsSending(true)
 
     try {
       await adminChatService.replyTicket(sessionId, {
         senderId: adminUser?.accountId,
-        content: newAdminMessage.content,
+        content,
         messageType: 'TEXT'
       })
     } catch (error) {
-      console.error(error)
+      console.error("Lỗi gửi phản hồi:", error)
+    } finally {
+      setIsSending(false)
     }
   }
 
+  // Kết thúc hỗ trợ: trả session về chế độ bot trước khi đóng UI
+  const handleClose = async () => {
+    console.log('[ChatBox] Closing - disconnecting WebSocket for session:', sessionId)
+    disconnect() // Ngắt kết nối WebSocket trước khi đóng
+    await adminChatService.resolveTicket(sessionId)
+    onClose()
+  }
+
   const handleEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter')
-      handleSend()
+    if (e.key === 'Enter') handleSend()
   }
 
   useEffect(() => {
@@ -93,58 +87,54 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ onClose, sessionId, customerN
   }, [messages])
 
   return (
-    <div className={`flex flex-col w-[325px] h-[454px] bg-white rounded-t-md shadow-xl ${className ?? ''}`}>
-      {/* Header chatbot */}
-      <div className="h-[50px] shadow-sm p-2 border-b-2 flex relative bottom-0 rounded-t-lg">
-        <div className="w-full h-full flex items-center">
-          <img
-            src={images?.humanSupport}
-            className="w-10 h-10 rounded-full object-cover mr-2"
-          />
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold">{customerName || 'Khách hàng'}</span>
-            <span className="text-xs text-gray-500">Session: {sessionId}</span>
-          </div>
+    <div className={`flex flex-col w-full h-full bg-white ${className ?? ''}`}>
+      {/* Header */}
+      <div className="h-[56px] shrink-0 px-4 border-b flex items-center gap-3">
+        <img src={images?.humanSupport} className="w-9 h-9 rounded-full object-cover" />
+        <div className="flex flex-col flex-1 min-w-0">
+          <span className="text-sm font-semibold truncate">{customerName || 'Khách hàng'}</span>
+          <span className="text-xs text-gray-400 truncate">Session: {sessionId}</span>
         </div>
         <button
-          onClick={onClose}
-          className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[#F2F2F2]"
+          onClick={handleClose}
+          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
         >
-          <X />
+          <X className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Hiển thị thông tin chat */}
-      <div className="flex-1 p-3 overflow-y-auto space-y-3">
+      {/* Tin nhắn */}
+      <div className="flex-1 p-4 overflow-y-auto space-y-3">
         {messages.map((msg, index) => (
           <div key={index} className={`flex ${msg.senderRole === 'CUSTOMER' ? 'justify-start' : 'justify-end'}`}>
-            <span className={`max-w-[80%] rounded-lg px-3 py-2 ${msg.senderRole === 'CUSTOMER' ? 'bg-gray-200' : 'bg-[#FB923C] text-white'}`}>
+            <span className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${msg.senderRole === 'CUSTOMER' ? 'bg-gray-100 text-[#111113]' : 'bg-[#FB923C] text-white'}`}>
               {msg.content}
             </span>
           </div>
         ))}
-        <div ref={messageEndRef}></div>
+        <div ref={messageEndRef} />
       </div>
 
-      {/* Chat input */}
-      <div className="flex items-center gap-2 p-2 border-t h-[60px] bottom-0 text-[#FB923C]">
+      {/* Input */}
+      <div className="shrink-0 flex items-center gap-2 px-3 py-2 border-t text-[#FB923C]">
         <input
           onKeyDown={handleEnter}
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           placeholder="Nhập tin nhắn..."
-          className="flex-1 outline-none px-3 py-2 bg-gray-100 rounded-full text-[#111113] text-sm disabled:opacity-50"
+          className="flex-1 outline-none px-3 py-2 bg-gray-100 rounded-full text-[#111113] text-sm"
         />
         <button
-          className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[#F2F2F2] disabled:opacity-30 transition-opacity"
-          onClick={handleSend} disabled={ !inputValue}
+          className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 disabled:opacity-30 transition-opacity"
+          onClick={handleSend}
+          disabled={!inputValue.trim() || isSending}
         >
-          <SendHorizontal />
+          <SendHorizontal className="w-4 h-4" />
         </button>
       </div>
     </div>
   );
 };
 
-export default ChatMessage;
+export default ChatBox;

@@ -92,7 +92,15 @@ export const adminChatService = {
       await axiosInstance.patch(API.MARK_SESSION_AS_READ(sessionId));
     } catch (error) {
       console.error('Loi khi danh dau da doc session:', error);
-      throw error;
+    }
+  },
+
+  // Admin kết thúc hỗ trợ trực tiếp → trả session về chế độ bot (status=1)
+  resolveTicket: async (sessionId: string) => {
+    try {
+      await axiosInstance.put(API.UPDATE_SESSION(sessionId), { status: 1, resetUnread: false });
+    } catch (error) {
+      console.error('Loi khi resolve ticket:', error);
     }
   }
 };

@@ -18,6 +18,7 @@ import AdminPayment from '../pages/Admin/AdminPayment';
 import AdminRefund from '../pages/Admin/AdminRefund';
 import AdminShipping from '../pages/Admin/AdminShipping';
 import AdminRating from '../pages/Admin/AdminRating';
+import AdminMessages from '../pages/Admin/AdminMessages';
 import CheckoutPage from '../pages/Checkout/CheckoutPage';
 import ProductDetail from '../pages/ProductDetail/ProductDetail';
 import PaymentPage from '../pages/Payment/PaymentPage';
@@ -91,6 +92,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/admin/accounts" element={<AdminAccounts />} />
       <Route path="/admin/roles" element={<AdminRoles />} />
       <Route path="/admin/categories" element={<AdminCategory />} />
+      <Route path="/admin/messages" element={<AdminMessages />} />
 
       {/* Redirect old auth routes to home */}
       <Route path="/auth/login" element={<Navigate to="/" replace />} />

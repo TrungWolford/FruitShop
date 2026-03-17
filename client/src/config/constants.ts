@@ -153,7 +153,8 @@ export const API = {
   GET_PENDING_TICKETS: '/chat/admin/customer-care/tickets',
   GET_TICKET_MESSAGES: (sessionId: string) => `/chat/admin/customer-care/tickets/${sessionId}/messages`,
   REPLY_TICKET: (sessionId: string) => `/chat/admin/customer-care/tickets/${sessionId}/reply`,
-  MARK_SESSION_AS_READ: (sessionId: string) => `/chat/sessions/${sessionId}/read`
+  MARK_SESSION_AS_READ: (sessionId: string) => `/chat/sessions/${sessionId}/read`,
+  UPDATE_SESSION: (sessionId: string) => `/chat/sessions/${sessionId}`,
 
 } as const;
 
