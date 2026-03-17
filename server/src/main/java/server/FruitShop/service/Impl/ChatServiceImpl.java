@@ -167,6 +167,10 @@ public class ChatServiceImpl implements ChatService {
             sender = accountRepository.findById(request.getSenderId()).orElse(null);
         }
 
+        // Lấy lịch sử hội thoại TRƯỚC khi lưu tin nhắn hiện tại (để Gemini có context)
+        List<ChatMessage> conversationHistory = chatMessageRepository
+                .findByChatSession_SessionIdAndDeletedFalseOrderByCreatedAtAsc(session.getSessionId());
+
         ChatMessage userMessage = buildMessage(session, sender, request.getContent(),
                 request.getSenderRole() != null ? request.getSenderRole() : "CUSTOMER",
                 request.getMessageType() != null ? request.getMessageType() : "TEXT",
