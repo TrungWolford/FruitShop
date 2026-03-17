@@ -6,8 +6,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import server.FruitShop.dto.request.Order.CreateOrderRequest;
+import server.FruitShop.dto.request.Cart.CreateCartItemRequest;
+import server.FruitShop.dto.request.Refund.CreateRefundRequest;
+import server.FruitShop.dto.response.Cart.CartItemResponse;
+import server.FruitShop.dto.response.Momo.CreateMomoResponse;
 import server.FruitShop.dto.response.Order.OrderItemResponse;
 import server.FruitShop.dto.response.Order.OrderResponse;
+import server.FruitShop.dto.response.Refund.RefundResponse;
 import server.FruitShop.entity.Order;
 import server.FruitShop.entity.OrderItem;
 import server.FruitShop.entity.Product;
@@ -33,6 +38,9 @@ public class ChatToolService {
     private final ShippingRepository shippingRepository;
     private final AccountRepository accountRepository;
     private final OrderService orderService;
+    private final MomoService momoService;
+    private final RefundService refundService;
+    private final CartService cartService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
@@ -40,12 +48,18 @@ public class ChatToolService {
                            OrderRepository orderRepository,
                            ShippingRepository shippingRepository,
                            AccountRepository accountRepository,
-                           OrderService orderService) {
+                           OrderService orderService,
+                           MomoService momoService,
+                           RefundService refundService,
+                           CartService cartService) {
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
         this.shippingRepository = shippingRepository;
         this.accountRepository = accountRepository;
         this.orderService = orderService;
+        this.momoService = momoService;
+        this.refundService = refundService;
+        this.cartService = cartService;
     }
 
     // ================================================================
@@ -200,7 +214,7 @@ public class ChatToolService {
             Optional<Order> opt = orderRepository.findById(orderId);
             if (opt.isEmpty()) return errorJson("Không tìm thấy đơn hàng: " + orderId);
 
-            Order order = opt.get();
+            Order order = opt.get(); 
             Map<String, Object> detail = orderToMap(order);
 
             if (order.getOrderItems() != null) {
@@ -363,13 +377,41 @@ public class ChatToolService {
             if (accountId == null || accountId.isBlank()) {
                 return errorJson("Cần đăng nhập để đặt hàng.");
             }
+            // Nếu shippingId rỗng (Gemini gọi createOrderFromChat cùng round với createShippingAddress),
+            // fallback: lấy template mới nhất của account (order == null)
             if (shippingId == null || shippingId.isBlank()) {
-                return errorJson("Cần cung cấp địa chỉ giao hàng.");
+                List<Shipping> templates = shippingRepository.findByAccountAccountId(accountId)
+                        .stream()
+                        .filter(s -> s.getOrder() == null)
+                        .collect(Collectors.toList());
+                if (templates.size() == 1) {
+                    shippingId = templates.get(0).getShippingId();
+                } else if (!templates.isEmpty()) {
+                    // Nhiều template → lấy cái cuối trong list (thường là mới nhất)
+                    shippingId = templates.get(templates.size() - 1).getShippingId();
+                } else {
+                    return errorJson("Cần cung cấp địa chỉ giao hàng.");
+                }
             }
 
-            // Parse items JSON
-            List<Map<String, Object>> rawItems = objectMapper.readValue(
-                    itemsJson, new TypeReference<>() {});
+            // Nếu itemsJson rỗng → tự động đọc từ DB cart
+            List<Map<String, Object>> rawItems;
+            if (itemsJson == null || itemsJson.isBlank() || itemsJson.equals("[]")) {
+                List<CartItemResponse> cartItems = cartService.getCartItemsByAccountId(accountId);
+                if (cartItems.isEmpty()) {
+                    return errorJson("Giỏ hàng đang trống. Vui lòng thêm sản phẩm trước khi đặt hàng.");
+                }
+                rawItems = cartItems.stream()
+                        .map(ci -> {
+                            Map<String, Object> m = new java.util.HashMap<>();
+                            m.put("productId", ci.getProductId());
+                            m.put("quantity", ci.getQuantity());
+                            return m;
+                        })
+                        .collect(Collectors.toList());
+            } else {
+                rawItems = objectMapper.readValue(itemsJson, new TypeReference<>() {});
+            }
 
             List<CreateOrderRequest.OrderItemRequest> orderItems = rawItems.stream()
                     .map(item -> {
@@ -399,9 +441,276 @@ public class ChatToolService {
                 }
             });
 
+            // Xóa giỏ hàng sau khi đặt hàng thành công
+            try {
+                cartService.clearCart(accountId);
+            } catch (Exception e) {
+                System.err.println("⚠️ Could not clear cart after order: " + e.getMessage());
+            }
+
             return toJson(buildInvoiceMap(order));
         } catch (Exception e) {
             return errorJson("Không thể tạo đơn hàng: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // TOOL 9: Thêm sản phẩm vào giỏ hàng
+    // ================================================================
+
+    /**
+     * Tool: addToCart
+     * Gemini gọi sau khi user xác nhận sản phẩm và số lượng muốn mua.
+     * Ghi ngay vào DB cart → sản phẩm từ chat và website dùng chung 1 giỏ.
+     *
+     * @param accountId ID tài khoản user
+     * @param productId ID sản phẩm cần thêm
+     * @param quantity  Số lượng
+     * @return JSON string: {"cartItemId": "...", "productName": "...", "quantity": N, ...}
+     */
+    public String addToCart(String accountId, String productId, int quantity) {
+        try {
+            if (accountId == null || accountId.isBlank()) {
+                return errorJson("Cần đăng nhập để thêm vào giỏ hàng.");
+            }
+            if (productId == null || productId.isBlank()) {
+                return errorJson("Cần cung cấp productId.");
+            }
+            if (quantity <= 0) quantity = 1;
+
+            CreateCartItemRequest request = new CreateCartItemRequest();
+            request.setProductId(productId);
+            request.setQuantity(quantity);
+
+            CartItemResponse item = cartService.addCartItem(accountId, request);
+
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("cartItemId", item.getCartItemId());
+            result.put("productId", item.getProductId());
+            result.put("productName", item.getProductName());
+            result.put("productPrice", item.getProductPrice());
+            result.put("quantity", item.getQuantity());
+            result.put("totalPrice", item.getTotalPrice());
+            result.put("message", "Đã thêm \"" + item.getProductName() + "\" x" + item.getQuantity() + " vào giỏ hàng.");
+            return toJson(result);
+        } catch (Exception e) {
+            return errorJson("Không thể thêm vào giỏ hàng: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // TOOL 10: Xem giỏ hàng hiện tại
+    // ================================================================
+
+    /**
+     * Tool: getCartItems
+     * Gemini gọi để xem toàn bộ sản phẩm đang có trong giỏ hàng của user.
+     * Bao gồm cả sản phẩm được thêm qua chat lẫn qua website.
+     *
+     * @param accountId ID tài khoản user
+     * @return JSON string: {"items": [...], "total": N, "subtotal": N}
+     */
+    public String getCartItems(String accountId) {
+        try {
+            if (accountId == null || accountId.isBlank()) {
+                return errorJson("Cần đăng nhập để xem giỏ hàng.");
+            }
+
+            List<CartItemResponse> cartItems = cartService.getCartItemsByAccountId(accountId);
+            if (cartItems.isEmpty()) {
+                return toJson(Map.of("items", List.of(), "total", 0, "subtotal", 0,
+                        "message", "Giỏ hàng đang trống."));
+            }
+
+            List<Map<String, Object>> items = cartItems.stream()
+                    .map(ci -> {
+                        Map<String, Object> m = new LinkedHashMap<>();
+                        m.put("cartItemId", ci.getCartItemId());
+                        m.put("productId", ci.getProductId());
+                        m.put("productName", ci.getProductName());
+                        m.put("productPrice", ci.getProductPrice());
+                        m.put("quantity", ci.getQuantity());
+                        m.put("totalPrice", ci.getTotalPrice());
+                        return m;
+                    })
+                    .collect(Collectors.toList());
+
+            long subtotal = cartItems.stream().mapToLong(CartItemResponse::getTotalPrice).sum();
+            return toJson(Map.of("items", items, "total", items.size(), "subtotal", subtotal));
+        } catch (Exception e) {
+            return errorJson("Không thể lấy giỏ hàng: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // TOOL 11: Xóa sản phẩm khỏi giỏ hàng
+    // ================================================================
+
+    /**
+     * Tool: removeFromCart
+     * Gemini gọi khi user muốn bỏ 1 sản phẩm ra khỏi giỏ.
+     *
+     * @param cartItemId ID của CartItem cần xóa
+     * @return JSON string xác nhận đã xóa
+     */
+    public String removeFromCart(String cartItemId) {
+        try {
+            if (cartItemId == null || cartItemId.isBlank()) {
+                return errorJson("Cần cung cấp cartItemId để xóa.");
+            }
+            cartService.removeCartItem(cartItemId);
+            return toJson(Map.of("success", true, "message", "Đã xóa sản phẩm khỏi giỏ hàng."));
+        } catch (Exception e) {
+            return errorJson("Không thể xóa sản phẩm: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // TOOL 12: Tạo thanh toán MoMo cho đơn hàng
+    // ================================================================
+
+    /**
+     * Tool: createMomoPayment
+     * Gemini gọi SAU KHI createOrderFromChat thành công với paymentMethod=1.
+     * Trả về payUrl và qrCodeUrl để hiển thị cho user thanh toán.
+     *
+     * @param orderId Mã đơn hàng vừa tạo
+     * @return JSON string: {"payUrl": "...", "qrCodeUrl": "...", "deeplink": "..."}
+     */
+    public String createMomoPayment(String orderId) {
+        try {
+            if (orderId == null || orderId.isBlank()) {
+                return errorJson("Cần cung cấp orderId để tạo thanh toán MoMo.");
+            }
+
+            Optional<Order> orderOpt = orderRepository.findById(orderId);
+            if (orderOpt.isEmpty()) {
+                return errorJson("Không tìm thấy đơn hàng: " + orderId);
+            }
+
+            Order order = orderOpt.get();
+            if (order.getStatus() == 0) {
+                return errorJson("Đơn hàng đã bị hủy, không thể tạo thanh toán.");
+            }
+
+            long amount = order.getTotalAmount();
+            String orderInfo = "Thanh toán đơn hàng #" + orderId;
+
+            CreateMomoResponse response = momoService.createQR(orderId, amount, orderInfo);
+
+            if (response.isSuccess()) {
+                Map<String, Object> result = new LinkedHashMap<>();
+                result.put("success", true);
+                result.put("orderId", orderId);
+                result.put("amount", amount);
+                result.put("payUrl", response.getPayUrl());
+                result.put("qrCodeUrl", response.getQrCodeUrl());
+                result.put("deeplink", response.getDeeplink());
+                result.put("message", "Tạo thanh toán MoMo thành công. Vui lòng quét QR hoặc nhấn link để thanh toán.");
+                return toJson(result);
+            } else {
+                return errorJson("Tạo thanh toán MoMo thất bại: " + response.getErrorMessage());
+            }
+        } catch (Exception e) {
+            return errorJson("Không thể tạo thanh toán MoMo: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // TOOL 10: Lấy danh sách yêu cầu hoàn trả theo đơn hàng
+    // ================================================================
+
+    /**
+     * Tool: getRefundsByOrder
+     * Gemini gọi để kiểm tra đơn hàng đã có yêu cầu hoàn trả chưa.
+     *
+     * @param orderId Mã đơn hàng cần kiểm tra
+     * @return JSON string: {"refunds": [...], "total": N}
+     */
+    public String getRefundsByOrder(String orderId) {
+        try {
+            if (orderId == null || orderId.isBlank()) {
+                return errorJson("Cần cung cấp orderId để tra cứu hoàn trả.");
+            }
+
+            List<RefundResponse> refunds = refundService.getRefundsByOrderId(orderId);
+
+            List<Map<String, Object>> result = refunds.stream()
+                    .map(r -> {
+                        Map<String, Object> m = new LinkedHashMap<>();
+                        m.put("refundId", r.getRefundId());
+                        m.put("reason", r.getReason());
+                        m.put("refundAmount", r.getRefundAmount());
+                        m.put("refundStatus", r.getRefundStatus());
+                        m.put("requestedAt", r.getRequestedAt() != null ? r.getRequestedAt().toString() : null);
+                        return m;
+                    })
+                    .collect(Collectors.toList());
+
+            return toJson(Map.of("refunds", result, "total", result.size()));
+        } catch (Exception e) {
+            return errorJson("Không thể tra cứu yêu cầu hoàn trả: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // TOOL 11: Tạo yêu cầu hoàn trả từ chat
+    // ================================================================
+
+    /**
+     * Tool: createRefundFromChat
+     * Gemini gọi sau khi thu thập đủ thông tin để tạo yêu cầu hoàn trả.
+     *
+     * @param accountId    ID tài khoản user (để xác minh đơn thuộc về user)
+     * @param orderId      Mã đơn hàng cần hoàn trả
+     * @param reason       Lý do hoàn trả
+     * @param refundAmount Số tiền hoàn trả (0 = hoàn toàn bộ)
+     * @return JSON string kết quả yêu cầu hoàn trả
+     */
+    public String createRefundFromChat(String accountId, String orderId,
+                                       String reason, long refundAmount) {
+        try {
+            if (accountId == null || accountId.isBlank()) {
+                return errorJson("Cần đăng nhập để yêu cầu hoàn trả.");
+            }
+            if (orderId == null || orderId.isBlank()) {
+                return errorJson("Cần cung cấp mã đơn hàng để yêu cầu hoàn trả.");
+            }
+            if (reason == null || reason.isBlank()) {
+                return errorJson("Cần cung cấp lý do hoàn trả.");
+            }
+
+            // Kiểm tra đơn hàng tồn tại và thuộc về user
+            Optional<Order> orderOpt = orderRepository.findById(orderId);
+            if (orderOpt.isEmpty()) {
+                return errorJson("Không tìm thấy đơn hàng: " + orderId);
+            }
+            Order order = orderOpt.get();
+            if (order.getAccount() == null || !accountId.equals(order.getAccount().getAccountId())) {
+                return errorJson("Đơn hàng không thuộc về tài khoản của bạn.");
+            }
+
+            // Nếu refundAmount = 0 thì hoàn toàn bộ giá trị đơn hàng
+            long amount = refundAmount > 0 ? refundAmount : order.getTotalAmount();
+
+            CreateRefundRequest request = new CreateRefundRequest();
+            request.setOrderId(orderId);
+            request.setReason(reason);
+            request.setRefundAmount(amount);
+
+            RefundResponse refund = refundService.createRefund(request);
+
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("refundId", refund.getRefundId());
+            result.put("orderId", orderId);
+            result.put("reason", refund.getReason());
+            result.put("refundAmount", refund.getRefundAmount());
+            result.put("refundStatus", refund.getRefundStatus());
+            result.put("requestedAt", refund.getRequestedAt() != null ? refund.getRequestedAt().toString() : null);
+            result.put("message", "Yêu cầu hoàn trả đã được gửi thành công. Shop sẽ xem xét và phản hồi trong thời gian sớm nhất.");
+            return toJson(result);
+        } catch (Exception e) {
+            return errorJson("Không thể tạo yêu cầu hoàn trả: " + e.getMessage());
         }
     }
 

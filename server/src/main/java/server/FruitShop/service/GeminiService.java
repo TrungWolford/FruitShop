@@ -104,6 +104,7 @@ public class GeminiService {
                 - PRODUCT_SUGGEST  : nhờ gợi ý sản phẩm phù hợp
                 - ORDER_PLACE      : muốn đặt hàng / mua sản phẩm
                 - PAYMENT          : hỏi về thanh toán, phương thức thanh toán
+                - REFUND           : yêu cầu hoàn trả / trả hàng / hoàn tiền
                 - GENERAL          : câu hỏi khác / chào hỏi / không liên quan
                 Tin nhắn: "%s"
                 Trả về đúng 1 nhãn:""".formatted(userMessage);
@@ -114,7 +115,7 @@ public class GeminiService {
         String cleaned = result.trim().toUpperCase().split("\\s+")[0];
         List<String> validIntents = List.of(
                 "PRODUCT_ADVICE", "PRODUCT_COMPARE", "ORDER_LOOKUP",
-                "PRODUCT_SUGGEST", "ORDER_PLACE", "PAYMENT", "GENERAL");
+                "PRODUCT_SUGGEST", "ORDER_PLACE", "PAYMENT", "REFUND", "GENERAL");
         return validIntents.contains(cleaned) ? cleaned : "GENERAL";
     }
 
@@ -167,14 +168,31 @@ public class GeminiService {
                     accountId của user hiện tại: %s
                     
                     QUY TRÌNH ĐẶT HÀNG QUA CHAT (đúng thứ tự sau):
-                    Bước 1. Gọi searchProducts để tìm sản phẩm → xác nhận sản phẩm và số lượng.
-                    Bước 2. Gọi getUserShippingAddresses để kiểm tra địa chỉ:
+                    Bước 1. Tìm sản phẩm và thêm vào giỏ hàng:
+                       - Gọi searchProducts để tìm sản phẩm → xác nhận tên và số lượng với user.
+                       - Sau khi user xác nhận: gọi NGAY addToCart(accountId, productId, quantity).
+                       - Hỏi "Bạn có muốn thêm sản phẩm nào khác không?"
+                       - Nếu có → tiếp tục tìm và addToCart cho từng sản phẩm.
+                       - Nếu không → tiến hành bước 2.
+                    Bước 2. Gọi getCartItems(accountId) để hiển thị lại toàn bộ giỏ hàng (cả sản phẩm từ chat lẫn website).
+                    Bước 3. Gọi getUserShippingAddresses để kiểm tra địa chỉ:
                        - Có địa chỉ → cho user chọn hoặc nhập mới.
                        - Chưa có → hỏi: Tên người nhận, SĐT, Địa chỉ, Tỉnh/TP.
-                    Bước 3. **BắT BUỘC**: Khi user cung cấp thông tin địa chỉ, PHẢI gọi createShippingAddress ngay.
-                    Bước 4. Hỏi phương thức thanh toán (COD hoặc chuyển khoản).
-                    Bước 5. Tóm tắt đơn hàng → hỏi xác nhận.
-                    Bước 6. User đồng ý → gọi createOrderFromChat.
+                    Bước 4. **BắT BUỘC**: Khi user cung cấp thông tin địa chỉ, PHẢI gọi createShippingAddress ngay.
+                       **QUAN TRỌNG**: Sau khi gọi createShippingAddress, PHẢI đợi nhận kết quả (shippingId) trước.
+                       TUYỆT ĐỐI KHÔNG gọi createOrderFromChat trong cùng lượt với createShippingAddress.
+                       createOrderFromChat chỉ được gọi ở lượt TIẾP THEO sau khi đã có shippingId.
+                    Bước 5. Hỏi phương thức thanh toán (COD hoặc chuyển khoản).
+                    Bước 6. Tóm tắt đơn hàng → hỏi xác nhận lần cuối.
+                    Bước 7. User đồng ý → gọi createOrderFromChat với itemsJson=[] (tự động dùng giỏ hàng).
+                    Bước 8. Nếu paymentMethod=1 → gọi createMomoPayment(orderId) → gửi link/QR cho user.
+
+                    QUY TRÌNH HOÀN TRẢ ĐƠN HÀNG:
+                    Bước 1. Gọi getOrdersByAccount để hiển thị đơn hàng gần đây cho user chọn.
+                    Bước 2. Gọi getRefundsByOrder(orderId) để kiểm tra đơn đã có yêu cầu hoàn trả chưa.
+                       - Đã có và đang "Chờ xác nhận" → thông báo đã gửi yêu cầu, không tạo thêm.
+                    Bước 3. Hỏi lý do hoàn trả (hàng lỗi, không đúng mô tả, v.v.).
+                    Bước 4. Xác nhận thông tin → gọi createRefundFromChat(accountId, orderId, reason, refundAmount=0).
                     """.formatted(accountId != null ? accountId : "không có (khách vãng lai)"));
             ObjectNode sysContent = objectMapper.createObjectNode();
             sysContent.set("parts", objectMapper.createArrayNode().add(sysPart));
@@ -447,13 +465,55 @@ public class GeminiService {
 
         fnDeclarations.add(buildFn("createOrderFromChat",
                 "Tạo đơn hàng sau khi user xác nhận mua. Trả về hóa đơn chi tiết. " +
-                "Chỉ gọi sau khi đã có đủ: danh sách sản phẩm, địa chỉ giao hàng (shippingId), phương thức thanh toán.",
+                "Chỉ gọi sau khi đã có đủ: địa chỉ giao hàng (shippingId), phương thức thanh toán. " +
+                "itemsJson để trống nếu muốn dùng giỏ hàng hiện tại.",
                 Map.of(
                         "accountId",     Map.of("type", "STRING",  "description", "ID tài khoản của user"),
-                        "itemsJson",     Map.of("type", "STRING",  "description", "JSON string danh sách sản phẩm, VD: [{\"productId\":\"abc\",\"quantity\":2}]"),
+                        "itemsJson",     Map.of("type", "STRING",  "description", "JSON string danh sách sản phẩm. Để trống [] để tự động dùng giỏ hàng."),
                         "shippingId",    Map.of("type", "STRING",  "description", "ID địa chỉ giao hàng đã chọn"),
                         "paymentMethod", Map.of("type", "INTEGER", "description", "0=COD (tiền mặt), 1=Chuyển khoản")
-                ), List.of("accountId", "itemsJson", "shippingId")));
+                ), List.of("accountId", "shippingId")));
+
+        fnDeclarations.add(buildFn("addToCart",
+                "Thêm sản phẩm vào giỏ hàng DB. Gọi ngay sau khi user xác nhận chọn sản phẩm và số lượng. " +
+                "Giỏ hàng này dùng chung với website, nên khi checkout sẽ có đầy đủ tất cả sản phẩm.",
+                Map.of(
+                        "accountId", Map.of("type", "STRING",  "description", "ID tài khoản user"),
+                        "productId", Map.of("type", "STRING",  "description", "ID sản phẩm cần thêm"),
+                        "quantity",  Map.of("type", "INTEGER", "description", "Số lượng muốn mua")
+                ), List.of("accountId", "productId", "quantity")));
+
+        fnDeclarations.add(buildFn("getCartItems",
+                "Lấy toàn bộ sản phẩm trong giỏ hàng của user (bao gồm cả sản phẩm thêm qua chat và website). " +
+                "Gọi trước khi checkout để xem lại giỏ hàng đầy đủ.",
+                Map.of("accountId", Map.of("type", "STRING", "description", "ID tài khoản user")),
+                List.of("accountId")));
+
+        fnDeclarations.add(buildFn("removeFromCart",
+                "Xóa 1 sản phẩm khỏi giỏ hàng. Gọi khi user muốn bỏ bớt món nào đó.",
+                Map.of("cartItemId", Map.of("type", "STRING", "description", "ID của cartItem cần xóa")),
+                List.of("cartItemId")));
+
+        fnDeclarations.add(buildFn("createMomoPayment",
+                "Tạo thanh toán MoMo cho đơn hàng. Gọi NGAY SAU createOrderFromChat nếu paymentMethod=1 (chuyển khoản). " +
+                "Trả về payUrl và qrCodeUrl để user quét mã hoặc nhấn link thanh toán.",
+                Map.of("orderId", Map.of("type", "STRING", "description", "Mã đơn hàng vừa được tạo")),
+                List.of("orderId")));
+
+        fnDeclarations.add(buildFn("getRefundsByOrder",
+                "Lấy danh sách yêu cầu hoàn trả của 1 đơn hàng. Gọi để kiểm tra đơn đã có yêu cầu hoàn trả chưa.",
+                Map.of("orderId", Map.of("type", "STRING", "description", "Mã đơn hàng cần kiểm tra")),
+                List.of("orderId")));
+
+        fnDeclarations.add(buildFn("createRefundFromChat",
+                "Tạo yêu cầu hoàn trả đơn hàng. Gọi sau khi đã thu thập: mã đơn hàng, lý do hoàn trả và user xác nhận. " +
+                "Chỉ tạo được khi đơn hàng thuộc về user hiện tại.",
+                Map.of(
+                        "accountId",    Map.of("type", "STRING",  "description", "ID tài khoản user"),
+                        "orderId",      Map.of("type", "STRING",  "description", "Mã đơn hàng cần hoàn trả"),
+                        "reason",       Map.of("type", "STRING",  "description", "Lý do hoàn trả (hàng lỗi, không đúng mô tả, v.v.)"),
+                        "refundAmount", Map.of("type", "INTEGER", "description", "Số tiền hoàn trả (VND), 0 = hoàn toàn bộ giá trị đơn")
+                ), List.of("accountId", "orderId", "reason")));
 
         toolWrapper.set("functionDeclarations", fnDeclarations);
         tools.add(toolWrapper);
@@ -525,6 +585,30 @@ public class GeminiService {
                 int paymentMethod = args.path("paymentMethod").asInt(0);
                 yield chatToolService.createOrderFromChat(id, itemsJson, shippingId, paymentMethod);
             }
+            case "addToCart" -> {
+                String id = args.has("accountId") ? args.path("accountId").asText() : contextAccountId;
+                yield chatToolService.addToCart(id,
+                        args.path("productId").asText(""),
+                        args.path("quantity").asInt(1));
+            }
+            case "getCartItems" -> {
+                String id = args.has("accountId") ? args.path("accountId").asText() : contextAccountId;
+                yield chatToolService.getCartItems(id);
+            }
+            case "removeFromCart" -> chatToolService.removeFromCart(
+                    args.path("cartItemId").asText(""));
+            case "createMomoPayment" -> chatToolService.createMomoPayment(
+                    args.path("orderId").asText(""));
+            case "getRefundsByOrder" -> chatToolService.getRefundsByOrder(
+                    args.path("orderId").asText(""));
+            case "createRefundFromChat" -> {
+                String id = args.has("accountId") ? args.path("accountId").asText() : contextAccountId;
+                yield chatToolService.createRefundFromChat(
+                        id,
+                        args.path("orderId").asText(""),
+                        args.path("reason").asText(""),
+                        args.path("refundAmount").asLong(0));
+            }
             default -> "{\"error\":\"Unknown tool: " + toolName + "\"}";
         };
     }
@@ -540,6 +624,12 @@ public class GeminiService {
             case "getUserShippingAddresses"-> "SHIPPING_ADDRESSES";
             case "createShippingAddress"   -> "SHIPPING_CREATED";
             case "createOrderFromChat"     -> "ORDER_INVOICE";
+            case "addToCart"               -> "CART_ITEM_ADDED";
+            case "getCartItems"            -> "CART_ITEMS";
+            case "removeFromCart"          -> "CART_ITEM_REMOVED";
+            case "createMomoPayment"       -> "MOMO_PAYMENT";
+            case "getRefundsByOrder"        -> "REFUND_LIST";
+            case "createRefundFromChat"     -> "REFUND_CREATED";
             default                        -> "DATA";
         };
         return "{\"type\":\"" + type + "\",\"data\":" + toolResult + "}";
@@ -551,6 +641,9 @@ public class GeminiService {
             case "suggestProducts"                             -> "PRODUCT_SUGGEST";
             case "getOrdersByAccount", "getOrderDetail"        -> "ORDER_LOOKUP";
             case "getUserShippingAddresses", "createShippingAddress", "createOrderFromChat" -> "ORDER_PLACE";
+            case "addToCart", "getCartItems", "removeFromCart"                              -> "ORDER_PLACE";
+            case "createMomoPayment"                                                        -> "PAYMENT";
+            case "getRefundsByOrder", "createRefundFromChat"                                -> "REFUND";
             default                                            -> "GENERAL";
         };
     }
@@ -564,6 +657,7 @@ public class GeminiService {
             case "PRODUCT_SUGGEST" -> "Cho tôi biết ngân sách để gợi ý sản phẩm phù hợp!";
             case "ORDER_PLACE"     -> "Bạn muốn mua sản phẩm gì? Hãy cho tôi biết tên sản phẩm và số lượng!";
             case "PAYMENT"         -> "Shop hỗ trợ thanh toán MoMo và COD. Bạn muốn chọn phương thức nào?";
+            case "REFUND"          -> "Bạn muốn yêu cầu hoàn trả đơn hàng nào? Hãy cho tôi biết mã đơn hàng!";
             default                -> "Tôi có thể tư vấn sản phẩm, tra cứu đơn hàng hoặc hỗ trợ đặt hàng. Bạn cần gì?";
         };
     }

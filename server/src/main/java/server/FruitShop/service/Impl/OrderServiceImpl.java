@@ -101,6 +101,18 @@ public class OrderServiceImpl implements OrderService {
         // (Don't update the template - it may be used by other orders or as saved address)
         Shipping shipping = null;
         Optional<Shipping> shippingTemplateOptional = shippingRepository.findById(request.getShippingId());
+        // Fallback: nếu shippingId sai/không tìm thấy, thử lấy template mới nhất của account (order == null)
+        if (shippingTemplateOptional.isEmpty() && request.getAccountId() != null) {
+            System.err.println("⚠️ Shipping template not found with id: " + request.getShippingId() + " — trying account fallback");
+            List<server.FruitShop.entity.Shipping> templates = shippingRepository.findByAccountAccountId(request.getAccountId())
+                    .stream()
+                    .filter(s -> s.getOrder() == null)
+                    .collect(Collectors.toList());
+            if (!templates.isEmpty()) {
+                shippingTemplateOptional = Optional.of(templates.get(templates.size() - 1));
+                System.out.println("✅ Fallback shipping template found: " + shippingTemplateOptional.get().getShippingId());
+            }
+        }
         if (shippingTemplateOptional.isPresent()) {
             Shipping template = shippingTemplateOptional.get();
             
