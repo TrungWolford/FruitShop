@@ -1,4 +1,4 @@
-package server.FruitShop.service;
+package server.FruitShop.service.ChatBot;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,7 +40,7 @@ public class GeminiService {
     @Autowired
     public GeminiService(
             @Value("${gemini.api-key}") String apiKey,
-            @Value("${gemini.model:gemini-2.0-flash}") String model,
+            @Value("${gemini.model:gemini-1.5-flash}") String model,
             @Value("${gemini.max-output-tokens:1024}") int maxOutputTokens,
             @Value("${gemini.temperature:0.7}") float temperature,
             ChatToolService chatToolService) {
@@ -103,6 +103,7 @@ public class GeminiService {
                 - PRODUCT_SUGGEST  : nhờ gợi ý sản phẩm phù hợp
                 - ORDER_PLACE      : muốn đặt hàng / mua sản phẩm
                 - PAYMENT          : hỏi về thanh toán, phương thức thanh toán
+                - HUMAN_SUPPORT    : yêu cầu liên hệ/ nhắn tin trao đổi trực tiếp với nhân viên bán hàng
                 - GENERAL          : câu hỏi khác / chào hỏi / không liên quan
                 Tin nhắn: "%s"
                 Trả về đúng 1 nhãn:""".formatted(userMessage);
@@ -113,7 +114,7 @@ public class GeminiService {
         String cleaned = result.trim().toUpperCase().split("\\s+")[0];
         List<String> validIntents = List.of(
                 "PRODUCT_ADVICE", "PRODUCT_COMPARE", "ORDER_LOOKUP",
-                "PRODUCT_SUGGEST", "ORDER_PLACE", "PAYMENT", "GENERAL");
+                "PRODUCT_SUGGEST", "ORDER_PLACE", "PAYMENT", "HUMAN_SUPPORT", "GENERAL");
         return validIntents.contains(cleaned) ? cleaned : "GENERAL";
     }
 
@@ -448,6 +449,7 @@ public class GeminiService {
             case "PRODUCT_SUGGEST" -> "Cho tôi biết ngân sách để gợi ý sản phẩm phù hợp!";
             case "ORDER_PLACE"     -> "Bạn muốn mua sản phẩm gì? Tôi sẽ hỗ trợ đặt hàng ngay!";
             case "PAYMENT"         -> "Shop hỗ trợ thanh toán MoMo và COD. Bạn muốn chọn phương thức nào?";
+            case "HUMAN_SUPPORT"   -> "Bạn có cần hỗ trợ trực tiếp từ nhân viên FruitShop không?";
             default                -> "Tôi có thể tư vấn sản phẩm, tra cứu đơn hàng hoặc hỗ trợ đặt hàng. Bạn cần gì?";
         };
     }

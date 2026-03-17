@@ -1,4 +1,4 @@
-package server.FruitShop.service;
+package server.FruitShop.service.ChatBot;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
