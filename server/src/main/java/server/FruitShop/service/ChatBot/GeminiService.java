@@ -154,7 +154,7 @@ public class GeminiService {
      * Hỗ trợ multi-turn conversation với context history.
      */
     public GeminiAgentResult agentChat(String userMessage, String accountId,
-                                       List<ChatMessage> conversationHistory, List<server.FruitShop.entity.ChatMessage> conversationHistory) {
+                                       List<ChatMessage> conversationHistory) {
         try {
             String url = BASE_URL.formatted(model, apiKey);
 
