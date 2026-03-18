@@ -22,6 +22,9 @@ import server.FruitShop.repository.OrderRepository;
 import server.FruitShop.repository.ProductRepository;
 import server.FruitShop.repository.ShippingRepository;
 import server.FruitShop.service.OrderService;
+import server.FruitShop.service.MomoService;
+import server.FruitShop.service.Impl.RefundServiceImpl;
+import server.FruitShop.service.Impl.CartServiceImpl;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -39,8 +42,8 @@ public class ChatToolService {
     private final AccountRepository accountRepository;
     private final OrderService orderService;
     private final MomoService momoService;
-    private final RefundService refundService;
-    private final CartService cartService;
+    private final RefundServiceImpl refundService;
+    private final CartServiceImpl cartService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
@@ -50,8 +53,8 @@ public class ChatToolService {
                            AccountRepository accountRepository,
                            OrderService orderService,
                            MomoService momoService,
-                           RefundService refundService,
-                           CartService cartService) {
+                           RefundServiceImpl refundService,
+                           CartServiceImpl cartService) {
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
         this.shippingRepository = shippingRepository;
