@@ -15,9 +15,9 @@ type DisplayMessage = { content: string; senderRole: 'CUSTOMER' | 'ADMIN' | 'SYS
 const mapToDisplayMessages = (history: any[]): DisplayMessage[] =>
   history.map((msg) => ({ content: msg.content, senderRole: msg.senderRole }))
 
-// Key lưu sessionId theo từng user (hoặc guest)
+// Key lưu sessionId theo từng user (hoặc guest) - HUMAN CHAT dùng key riêng
 const getSessionKey = (accountId?: string | null) =>
-  `chat_session_${accountId || 'guest'}`
+  `chat_session_human_${accountId || 'guest'}`
 
 const ChatMessageHuman: React.FC<ChatMessageProps> = ({ onClose }) => {
   const { user } = useAppSelector(state => state.auth);
@@ -27,9 +27,30 @@ const ChatMessageHuman: React.FC<ChatMessageProps> = ({ onClose }) => {
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [isSending, setIsSending] = useState(false)
   const messageEndRef = useRef<HTMLDivElement>(null)
+  const hasInitialized = useRef(false) // Chặn duplicate init - KHÔNG reset trong cleanup
+  const currentUserIdRef = useRef<string | null>(null) // Track user ID để detect thay đổi
 
   // Khởi tạo session: ưu tiên reuse session cũ từ localStorage để tránh mất liên lạc với admin
+  // HUMAN CHAT dùng key riêng: chat_session_human_{accountId}
   useEffect(() => {
+    const currentUserId = user?.accountId ?? null;
+
+    // Nếu user thay đổi (login/logout), reset state và cho phép init lại
+    if (currentUserIdRef.current !== currentUserId) {
+      console.log('[ChatMessageHuman] User changed, resetting...', { from: currentUserIdRef.current, to: currentUserId });
+      currentUserIdRef.current = currentUserId;
+      hasInitialized.current = false;
+      setSessionId(null);
+      setMessages([]);
+    }
+
+    // Kiểm tra xem đã init chưa, hoặc đã có sessionId rồi
+    if (hasInitialized.current || sessionId !== null) {
+      console.log('[ChatMessageHuman] Already initialized, skipping...', { hasInitialized: hasInitialized.current, sessionId });
+      return;
+    }
+    hasInitialized.current = true;
+    console.log('[ChatMessageHuman] Starting initialization...');
     const initSession = async () => {
       try {
         const sessionKey = getSessionKey(user?.accountId)
@@ -48,17 +69,33 @@ const ChatMessageHuman: React.FC<ChatMessageProps> = ({ onClose }) => {
           }
         }
 
+        // Tạo session mới cho Human chat
         const data = await messageService.createSession(user?.accountId ?? null)
         setSessionId(data.sessionId)
         localStorage.setItem(sessionKey, data.sessionId)
+
+        // Gửi tin tự động để kích hoạt Human Support mode ngay lập tức
+        // Backend sẽ phản hồi với bot-ack: "Nhân viên FruitShop sẽ sớm liên hệ..."
+        await messageService.sendMessage({
+          sessionId: data.sessionId,
+          senderId: user?.accountId ?? null,
+          content: 'Tôi cần hỗ trợ từ nhân viên',
+          senderRole: 'CUSTOMER',
+          messageType: 'TEXT',
+          intent: 'HUMAN_SUPPORT'
+        })
+
+        // Load lịch sử sau khi gửi tin tự động (sẽ có tin user + bot-ack)
         const history = await messageService.getHistoryChat(data.sessionId)
         setMessages(mapToDisplayMessages(history))
+        console.log('[ChatMessageHuman] Initialization completed, sessionId:', data.sessionId)
       } catch (error) {
-        console.error(error)
+        console.error('[ChatMessageHuman] Initialization failed:', error)
+        hasInitialized.current = false // Cho phép retry nếu lỗi
       }
     }
     void initSession()
-  }, [user?.accountId])
+  }, [user?.accountId, sessionId]) // Thêm sessionId vào dependency
 
   // Lắng nghe tin nhắn push từ BE qua STOMP (ADMIN + SYSTEM)
   const { connected, disconnect } = useStompChat(
@@ -139,9 +176,35 @@ const ChatMessageHuman: React.FC<ChatMessageProps> = ({ onClose }) => {
     if (e.key === 'Enter') handleSend()
   }
 
-  const handleClose = () => {
+  const handleClose = async () => {
     console.log('[ChatMessageHuman] Closing - disconnecting WebSocket for session:', sessionId)
     disconnect() // Ngắt kết nối WebSocket trước khi đóng
+
+    // ✅ Chỉ đóng session nếu user đã thực sự chat (không tính tin nhắn tự động)
+    // Tin nhắn tự động: "Tôi cần hỗ trợ từ nhân viên" được gửi khi tạo session mới
+    const userMessages = messages.filter(msg => msg.senderRole === 'CUSTOMER')
+    const hasRealUserMessages = userMessages.length > 1 ||
+      (userMessages.length === 1 && userMessages[0].content !== 'Tôi cần hỗ trợ từ nhân viên')
+
+    if (sessionId && hasRealUserMessages) {
+      try {
+        console.log('[ChatMessageHuman] Closing session:', sessionId)
+        // Không cần await - fire and forget
+        fetch(`http://localhost:8080/api/chat/sessions/${sessionId}/close`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' }
+        }).catch(err => console.warn('[ChatMessageHuman] Failed to close session:', err))
+
+        // Xóa sessionId khỏi localStorage
+        const sessionKey = getSessionKey(user?.accountId)
+        localStorage.removeItem(sessionKey)
+      } catch (error) {
+        console.warn('[ChatMessageHuman] Error closing session:', error)
+      }
+    } else if (sessionId && !hasRealUserMessages) {
+      console.log('[ChatMessageHuman] Session not closed - no real user messages:', sessionId)
+    }
+
     onClose()
   }
 
