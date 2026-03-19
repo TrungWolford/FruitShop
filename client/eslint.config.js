@@ -30,7 +30,12 @@ export default tseslint.config([
     //Common rules
     // 'no-console': 'warn',
     'no-lonely-if': 'warn',
-    'no-useless-catch': 'off',
+    // 'no-useless-catch': 'off',
+    'keyword-spacing': 1,
+    'object-curly-spacing': [1, 'always'],
+    'indent': ['warn', 2],
+    'comma-spacing': 1,
+    'arrow-spacing': 1,
     // 'no-unused-vars': 'warn',
   }
   },

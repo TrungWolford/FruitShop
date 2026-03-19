@@ -135,8 +135,7 @@ const HistoryReceipt: React.FC = () => {
           ratings.forEach(rating => {
             if (rating.orderItemId) {
               ratedMap.set(rating.orderItemId, true);
-            } else {
-            }
+            } 
           });
         }
       } catch (error) {
@@ -179,6 +178,7 @@ const HistoryReceipt: React.FC = () => {
           refundsMap.set(orderDetailId, refund);
         }
       } catch (error) {
+        console.error(error)
       }
     }
 
@@ -200,89 +200,70 @@ const HistoryReceipt: React.FC = () => {
 
   const getStatusColor = (status: number) => {
     switch (status) {
-      case 0:
-        return 'bg-red-600 text-white border-red-600'; // Đã hủy
-      case 1:
-        return 'bg-yellow-600 text-white border-yellow-600'; // Chờ xác nhận
-      case 2:
-        return 'bg-blue-600 text-white border-blue-600'; // Đã xác nhận
-      case 3:
-        return 'bg-purple-600 text-white border-purple-600'; // Đang giao
-      case 4:
-        return 'bg-green-600 text-white border-green-600'; // Đã giao (hoàn thành)
-      default:
-        return 'bg-gray-600 text-white border-gray-600';
+    case 0:
+      return 'bg-red-600 text-white border-red-600'; // Đã hủy
+    case 1:
+      return 'bg-yellow-600 text-white border-yellow-600'; // Chờ xác nhận
+    case 2:
+      return 'bg-blue-600 text-white border-blue-600'; // Đã xác nhận
+    case 3:
+      return 'bg-purple-600 text-white border-purple-600'; // Đang giao
+    case 4:
+      return 'bg-green-600 text-white border-green-600'; // Đã giao (hoàn thành)
+    default:
+      return 'bg-gray-600 text-white border-gray-600';
     }
   };
 
   const getStatusText = (status: number) => {
     switch (status) {
-      case 0:
-        return 'Đã hủy';
-      case 1:
-        return 'Chờ xác nhận';
-      case 2:
-        return 'Đã xác nhận';
-      case 3:
-        return 'Đang giao';
-      case 4:
-        return 'Đã giao';
-      default:
-        return 'Không xác định';
+    case 0:
+      return 'Đã hủy';
+    case 1:
+      return 'Chờ xác nhận';
+    case 2:
+      return 'Đã xác nhận';
+    case 3:
+      return 'Đang giao';
+    case 4:
+      return 'Đã giao';
+    default:
+      return 'Không xác định';
     }
   };
 
   const getPaymentMethodText = (paymentMethod: number) => {
     switch (paymentMethod) {
-      case 0:
-        return 'Tiền mặt (COD)';
-      case 1:
-        return 'Chuyển khoản';
-      default:
-        return 'Không xác định';
+    case 0:
+      return 'Tiền mặt (COD)';
+    case 1:
+      return 'Chuyển khoản';
+    default:
+      return 'Không xác định';
     }
   };
 
   const getProgressStep = (status: number) => {
     // Map order status to progress step (1-4)
     switch (status) {
-      case 0:
-        return 0; // Đã hủy - không hiển thị progress
-      case 1:
-        return 1; // Chờ xác nhận - step 1
-      case 2:
-        return 2; // Đã xác nhận - step 2
-      case 3:
-        return 3; // Đang giao - step 3
-      case 4:
-        return 4; // Đã giao (hoàn thành) - step 4
-      default:
-        return 0;
+    case 0:
+      return 0; // Đã hủy - không hiển thị progress
+    case 1:
+      return 1; // Chờ xác nhận - step 1
+    case 2:
+      return 2; // Đã xác nhận - step 2
+    case 3:
+      return 3; // Đang giao - step 3
+    case 4:
+      return 4; // Đã giao (hoàn thành) - step 4
+    default:
+      return 0;
     }
   };
 
   const getProgressColor = (currentStep: number, targetStep: number) => {
     if (currentStep >= targetStep) {
       switch (targetStep) {
-        case 1:
-          return 'bg-yellow-500'; // Chờ xác nhận
-        case 2:
-          return 'bg-blue-500'; // Đã xác nhận
-        case 3:
-          return 'bg-purple-500'; // Đang giao
-        case 4:
-          return 'bg-green-500'; // Đã giao
-        default:
-          return 'bg-green-500';
-      }
-    }
-    return 'bg-gray-300';
-  };
-
-  const getCurrentStatusColor = (status: number) => {
-    switch (status) {
-      case 0:
-        return 'bg-red-500'; // Đã hủy
       case 1:
         return 'bg-yellow-500'; // Chờ xác nhận
       case 2:
@@ -292,78 +273,97 @@ const HistoryReceipt: React.FC = () => {
       case 4:
         return 'bg-green-500'; // Đã giao
       default:
-        return 'bg-gray-500';
+        return 'bg-green-500';
+      }
+    }
+    return 'bg-gray-300';
+  };
+
+  const getCurrentStatusColor = (status: number) => {
+    switch (status) {
+    case 0:
+      return 'bg-red-500'; // Đã hủy
+    case 1:
+      return 'bg-yellow-500'; // Chờ xác nhận
+    case 2:
+      return 'bg-blue-500'; // Đã xác nhận
+    case 3:
+      return 'bg-purple-500'; // Đang giao
+    case 4:
+      return 'bg-green-500'; // Đã giao
+    default:
+      return 'bg-gray-500';
     }
   };
 
   const getRefundStatusText = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'pending':
-      case 'chờ xác nhận':
-        return 'Chờ xác nhận';
-      case 'approved':
-      case 'đã duyệt':
-        return 'Đã duyệt';
-      case 'rejected':
-      case 'từ chối':
-        return 'Từ chối';
-      case 'completed':
-      case 'hoàn thành':
-        return 'Hoàn thành';
-      default:
-        return status;
+    case 'pending':
+    case 'chờ xác nhận':
+      return 'Chờ xác nhận';
+    case 'approved':
+    case 'đã duyệt':
+      return 'Đã duyệt';
+    case 'rejected':
+    case 'từ chối':
+      return 'Từ chối';
+    case 'completed':
+    case 'hoàn thành':
+      return 'Hoàn thành';
+    default:
+      return status;
     }
   };
 
   const getRefundStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'pending':
-      case 'chờ xác nhận':
-        return 'bg-yellow-600 text-white border-yellow-600';
-      case 'approved':
-      case 'đã duyệt':
-        return 'bg-blue-600 text-white border-blue-600';
-      case 'rejected':
-      case 'từ chối':
-        return 'bg-red-600 text-white border-red-600';
-      case 'completed':
-      case 'hoàn thành':
-        return 'bg-green-600 text-white border-green-600';
-      default:
-        return 'bg-gray-600 text-white border-gray-600';
+    case 'pending':
+    case 'chờ xác nhận':
+      return 'bg-yellow-600 text-white border-yellow-600';
+    case 'approved':
+    case 'đã duyệt':
+      return 'bg-blue-600 text-white border-blue-600';
+    case 'rejected':
+    case 'từ chối':
+      return 'bg-red-600 text-white border-red-600';
+    case 'completed':
+    case 'hoàn thành':
+      return 'bg-green-600 text-white border-green-600';
+    default:
+      return 'bg-gray-600 text-white border-gray-600';
     }
   };
 
   const getRefundProgressStep = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'pending':
-      case 'chờ xác nhận':
-        return 1;
-      case 'approved':
-      case 'đã duyệt':
-        return 2;
-      case 'rejected':
-      case 'từ chối':
-        return 0;
-      case 'completed':
-      case 'hoàn thành':
-        return 3;
-      default:
-        return 0;
+    case 'pending':
+    case 'chờ xác nhận':
+      return 1;
+    case 'approved':
+    case 'đã duyệt':
+      return 2;
+    case 'rejected':
+    case 'từ chối':
+      return 0;
+    case 'completed':
+    case 'hoàn thành':
+      return 3;
+    default:
+      return 0;
     }
   };
 
   const getRefundProgressColor = (currentStep: number, targetStep: number) => {
     if (currentStep >= targetStep) {
       switch (targetStep) {
-        case 1:
-          return 'bg-yellow-500';
-        case 2:
-          return 'bg-blue-500';
-        case 3:
-          return 'bg-green-500';
-        default:
-          return 'bg-green-500';
+      case 1:
+        return 'bg-yellow-500';
+      case 2:
+        return 'bg-blue-500';
+      case 3:
+        return 'bg-green-500';
+      default:
+        return 'bg-green-500';
       }
     }
     return 'bg-gray-300';
@@ -371,20 +371,20 @@ const HistoryReceipt: React.FC = () => {
 
   const getCurrentRefundStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'pending':
-      case 'chờ xác nhận':
-        return 'bg-yellow-500';
-      case 'approved':
-      case 'đã duyệt':
-        return 'bg-blue-500';
-      case 'rejected':
-      case 'từ chối':
-        return 'bg-red-500';
-      case 'completed':
-      case 'hoàn thành':
-        return 'bg-green-500';
-      default:
-        return 'bg-gray-500';
+    case 'pending':
+    case 'chờ xác nhận':
+      return 'bg-yellow-500';
+    case 'approved':
+    case 'đã duyệt':
+      return 'bg-blue-500';
+    case 'rejected':
+    case 'từ chối':
+      return 'bg-red-500';
+    case 'completed':
+    case 'hoàn thành':
+      return 'bg-green-500';
+    default:
+      return 'bg-gray-500';
     }
   };
 
@@ -394,14 +394,14 @@ const HistoryReceipt: React.FC = () => {
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
-      minute: '2-digit',
+      minute: '2-digit'
     });
   };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
-      currency: 'VND',
+      currency: 'VND'
     }).format(price);
   };
 
@@ -632,9 +632,10 @@ const HistoryReceipt: React.FC = () => {
         newImages.forEach((img, _idx) => {
           // Test if URL is valid
           if (!img.url || img.url === '') {
+            return;
           } else if (!img.url.startsWith('http')) {
-          } else {
-          }
+            console.log('hello');
+          } 
         });
         setReturnImages(prev => {
           const updated = [...prev, ...newImages];
@@ -720,7 +721,7 @@ const HistoryReceipt: React.FC = () => {
     return () => {
       window.removeEventListener('orderCreated', handleOrderCreated);
     };
-  }, []);
+  }, [fetchOrders]);
 
   if (!user) {
     return null;
@@ -893,7 +894,7 @@ const HistoryReceipt: React.FC = () => {
                                   className={`h-full transition-all duration-500 ${currentStep >= 1
                                     ? getCurrentStatusColor(order.status)
                                     : 'bg-gray-300'
-                                    }`}
+                                  }`}
                                   style={{
                                     width: `${Math.max(
                                       0,
@@ -930,7 +931,7 @@ const HistoryReceipt: React.FC = () => {
                                     ? getProgressColor(currentStep, 2) +
                                     ' text-white'
                                     : 'bg-gray-300 text-gray-600'
-                                    }`}
+                                  }`}
                                 >
                                   {currentStep >= 2 ? (
                                     <CheckCircle className="w-4 h-4" />
@@ -966,7 +967,7 @@ const HistoryReceipt: React.FC = () => {
                                     ? getProgressColor(currentStep, 4) +
                                     ' text-white'
                                     : 'bg-gray-300 text-gray-600'
-                                    }`}
+                                  }`}
                                 >
                                   {currentStep >= 4 ? (
                                     <CheckCircle className="w-4 h-4" />
@@ -1025,7 +1026,7 @@ const HistoryReceipt: React.FC = () => {
                                       className={`w-6 h-6 flex items-center justify-center text-xs font-medium ${refundStep >= 1
                                         ? getRefundProgressColor(refundStep, 1) + ' text-white'
                                         : 'bg-gray-300 text-gray-600'
-                                        }`}
+                                      }`}
                                     >
                                       {refundStep >= 1 ? <CheckCircle className="w-4 h-4" /> : '1'}
                                     </div>
@@ -1038,7 +1039,7 @@ const HistoryReceipt: React.FC = () => {
                                       className={`w-6 h-6 flex items-center justify-center text-xs font-medium ${refundStep >= 2
                                         ? getRefundProgressColor(refundStep, 2) + ' text-white'
                                         : 'bg-gray-300 text-gray-600'
-                                        }`}
+                                      }`}
                                     >
                                       {refundStep >= 2 ? <CheckCircle className="w-4 h-4" /> : '2'}
                                     </div>
@@ -1051,7 +1052,7 @@ const HistoryReceipt: React.FC = () => {
                                       className={`w-6 h-6 flex items-center justify-center text-xs font-medium ${refundStep >= 3
                                         ? getRefundProgressColor(refundStep, 3) + ' text-white'
                                         : 'bg-gray-300 text-gray-600'
-                                        }`}
+                                      }`}
                                     >
                                       {refundStep >= 3 ? <CheckCircle className="w-4 h-4" /> : '3'}
                                     </div>
@@ -1100,51 +1101,51 @@ const HistoryReceipt: React.FC = () => {
                                         {detail &&
                                           detail.productImages &&
                                           detail.productImages.length > 0 ? (
-                                          <>
-                                            <img
-                                              src={getImageUrl(
-                                                detail.productImages[0],
-                                              )}
-                                              alt={detail.productName}
-                                              className="w-full h-full object-cover transition-opacity duration-200"
-                                              onError={(e) => {
-                                                console.log(
-                                                  '❌ Image failed to load:',
-                                                  getImageUrl(
-                                                    detail
-                                                      .productImages[0],
-                                                  ),
-                                                );
-                                                const target =
-                                                  e.target as HTMLImageElement;
-                                                const fallback =
-                                                  target.nextElementSibling as HTMLElement;
-                                                target.style.display =
-                                                  'none';
-                                                if (fallback)
-                                                  fallback.classList.remove(
-                                                    'hidden',
+                                            <>
+                                              <img
+                                                src={getImageUrl(
+                                                  detail.productImages[0],
+                                                )}
+                                                alt={detail.productName}
+                                                className="w-full h-full object-cover transition-opacity duration-200"
+                                                onError={(e) => {
+                                                  console.log(
+                                                    '❌ Image failed to load:',
+                                                    getImageUrl(
+                                                      detail
+                                                        .productImages[0],
+                                                    ),
                                                   );
-                                              }}
-                                              onLoad={() => {
-                                                console.log(
-                                                  '✅ Image loaded successfully:',
-                                                  getImageUrl(
-                                                    detail
-                                                      .productImages[0],
-                                                  ),
-                                                );
-                                              }}
-                                            />
-                                            <div className="hidden absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-100 to-blue-200">
+                                                  const target =
+                                                    e.target as HTMLImageElement;
+                                                  const fallback =
+                                                    target.nextElementSibling as HTMLElement;
+                                                  target.style.display =
+                                                    'none';
+                                                  if (fallback)
+                                                    fallback.classList.remove(
+                                                      'hidden',
+                                                    );
+                                                }}
+                                                onLoad={() => {
+                                                  console.log(
+                                                    '✅ Image loaded successfully:',
+                                                    getImageUrl(
+                                                      detail
+                                                        .productImages[0],
+                                                    ),
+                                                  );
+                                                }}
+                                              />
+                                              <div className="hidden absolute inset-0 items-center justify-center bg-gradient-to-br from-blue-100 to-blue-200">
+                                                <Package className="w-6 h-6 text-blue-500" />
+                                              </div>
+                                            </>
+                                          ) : (
+                                            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-100 to-blue-200">
                                               <Package className="w-6 h-6 text-blue-500" />
                                             </div>
-                                          </>
-                                        ) : (
-                                          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-100 to-blue-200">
-                                            <Package className="w-6 h-6 text-blue-500" />
-                                          </div>
-                                        )}
+                                          )}
                                       </div>
                                       <div className="flex-1">
                                         <h4 className="font-medium text-gray-900 text-sm">
@@ -1166,7 +1167,7 @@ const HistoryReceipt: React.FC = () => {
                                               : detail.status === 'returning'
                                                 ? 'bg-orange-100 text-orange-700 border-orange-300'
                                                 : 'bg-gray-100 text-gray-700 border-gray-300'
-                                              }`}>
+                                            }`}>
                                               {detail.status === 'returned' && '✓ Đã trả hàng'}
                                               {detail.status === 'returning' && '⏳ Đang xử lý trả hàng'}
                                               {!['returned', 'returning'].includes(detail.status) && detail.status}
@@ -1251,7 +1252,7 @@ const HistoryReceipt: React.FC = () => {
                                             <Badge className={`text-xs ${getRefundStatusColor(
                                               orderItemRefunds.get(detail.orderDetailId)?.refundStatus || ''
                                             )
-                                              }`}>
+                                            }`}>
                                               {getRefundStatusText(
                                                 orderItemRefunds.get(detail.orderDetailId)?.refundStatus || ''
                                               )}
@@ -1485,7 +1486,7 @@ const HistoryReceipt: React.FC = () => {
                                 );
                               }}
                             />
-                            <div className="hidden absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-100 to-blue-200">
+                            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-100 to-blue-200">
                               <Package className="w-8 h-8 text-blue-500" />
                             </div>
                           </>
@@ -1547,7 +1548,7 @@ const HistoryReceipt: React.FC = () => {
                             <Badge className={`text-xs ${getRefundStatusColor(
                               orderItemRefunds.get(detail.orderDetailId)?.refundStatus || ''
                             )
-                              }`}>
+                            }`}>
                               {getRefundStatusText(
                                 orderItemRefunds.get(detail.orderDetailId)?.refundStatus || ''
                               )}
@@ -1747,7 +1748,7 @@ const HistoryReceipt: React.FC = () => {
               <div className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${isUploadingImages || returnImages.length >= 5
                 ? 'border-gray-200 bg-gray-50 cursor-not-allowed'
                 : 'border-gray-300 hover:border-orange-500 cursor-pointer'
-                }`}>
+              }`}>
                 <input
                   type="file"
                   accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
@@ -1762,7 +1763,7 @@ const HistoryReceipt: React.FC = () => {
                   className={`flex flex-col items-center ${isUploadingImages || returnImages.length >= 5
                     ? 'cursor-not-allowed opacity-50'
                     : 'cursor-pointer'
-                    }`}
+                  }`}
                 >
                   <Upload className="w-8 h-8 text-gray-400 mb-2" />
                   <span className="text-sm text-gray-600">

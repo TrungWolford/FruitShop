@@ -1,34 +1,29 @@
 import React from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useAppSelector, useAppDispatch } from '../../../hooks/redux'
-import { adminLogout } from '../../../store/slices/adminAuthSlice'
 import {
   LayoutDashboard,
   Package,
   Tags,
   Users,
   Shield,
-  LogOut,
-  User,
   Home,
   ShoppingBag,
   ShoppingCart,
   Truck,
   Star,
   RefreshCcw,
-  CreditCard
+  CreditCard,
+  MessageSquare
 } from 'lucide-react'
 
-const LeftTaskbar: React.FC = () => {
+interface LeftTaskbar {
+  className?: string
+}
+
+const LeftTaskbar: React.FC<LeftTaskbar> = ({ className }) => {
   const navigate = useNavigate()
   const location = useLocation()
-  const dispatch = useAppDispatch()
-  const { user } = useAppSelector((state) => state.adminAuth)
 
-  const handleLogout = () => {
-    dispatch(adminLogout())
-    navigate('/')
-  }
 
   const menuItems = [
     {
@@ -77,6 +72,11 @@ const LeftTaskbar: React.FC = () => {
       path: '/admin/ratings'
     },
     {
+      icon: MessageSquare,
+      label: 'Tin nhắn',
+      path: '/admin/messages'
+    },
+    {
       icon: Users,
       label: 'Account',
       path: '/admin/accounts'
@@ -96,22 +96,10 @@ const LeftTaskbar: React.FC = () => {
   // if (!user) return null
 
   return (
-    <div className="fixed left-4 top-4 bottom-4 w-56 bg-slate-800 text-white flex flex-col rounded-xl shadow-2xl z-50">
-      {/* Header */}
-      <div className="p-4 border-b border-slate-700">
-        <div className="flex items-center gap-3">
-          <div className="bg-amber-500 p-2 rounded-full">
-            <User className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-white text-sm">{user?.accountName || 'Admin'}</h3>
-            <p className="text-xs text-slate-300">{user?.roles?.[0]?.roleName || 'ADMIN'}</p>
-          </div>
-        </div>
-      </div>
+    <div className={`fixed h-[calc(100vh-60px)] left-0 top-0 w-[260px] text-[#7B756C] flex flex-col shadow-2xl ${className ?? ''}`}>
 
       {/* Body - Menu Items */}
-      <div className="flex-1 py-3">
+      <div className="flex-1 py-3 overflow-y-auto">
         <nav className="space-y-1 px-3">
           {menuItems.map((item) => {
             const Icon = item.icon
@@ -121,10 +109,10 @@ const LeftTaskbar: React.FC = () => {
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-colors ${isActive
-                    ? 'bg-amber-500 text-white shadow-lg'
-                    : 'text-slate-300 hover:bg-slate-700 hover:text-white'
-                  }`}
+                className={`w-full flex items-center gap-3 px-3 py-3 rounded-md text-left ${isActive
+                  ? 'bg-amber-500 text-white shadow-lg'
+                  : ' hover:bg-[#F5E8D3] hover:text-[#1A1A1A]'
+                }`}
               >
                 <Icon className="w-5 h-5" />
                 <span className="font-medium">{item.label}</span>
@@ -135,23 +123,17 @@ const LeftTaskbar: React.FC = () => {
       </div>
 
       {/* Footer - Customer Page & Logout */}
-      <div className="p-3 border-t border-slate-700 space-y-2">
+      <div className="h-[60px] shrink-0 p-3 border-t border-slate-300 space-y-2">
         <button
           onClick={() => navigate('/')}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-slate-300 hover:bg-blue-600 hover:text-white rounded-lg transition-colors text-sm"
+          className="w-full flex justify-start gap-2 px-3 py-2  hover:bg-blue-600 hover:text-white rounded-lg transition-colors text-sm"
         >
           <Home className="w-4 h-4" />
           <span className="font-medium">Về trang khách hàng</span>
         </button>
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-slate-300 hover:bg-red-600 hover:text-white rounded-lg transition-colors text-sm"
-        >
-          <LogOut className="w-4 h-4" />
-          <span className="font-medium">Đăng xuất</span>
-        </button>
       </div>
     </div>
+
   )
 }
 

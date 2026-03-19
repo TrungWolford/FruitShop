@@ -3,6 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../hooks/redux';
 import { toast } from 'sonner';
 import LeftTaskbar from '../../components/Admin/LeftTaskbar/LeftTaskbar';
+import Header from '@/components/Admin/Header';
+import Container from '@/components/Admin/Container';
+
+const TASKBAR_MARGIN_TOP = 'mt-[60px]';
+
 import { Button } from '../../components/ui/Button/Button';
 import { Input } from '../../components/ui/input';
 import { Badge } from '../../components/ui/badge';
@@ -260,9 +265,12 @@ const AdminPayment: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <LeftTaskbar />
+      {/* Header */}
+      <Header />
+      <LeftTaskbar className={`${TASKBAR_MARGIN_TOP}`} />
 
-      <div className="ml-64 p-4">
+      {/* body */}
+      <Container className="">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between">
@@ -476,7 +484,7 @@ const AdminPayment: React.FC = () => {
             </div>
           )}
         </div>
-      </div>
+      </Container>
 
       {/* View Payment Dialog */}
       {selectedPayment && (

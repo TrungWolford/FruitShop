@@ -1,18 +1,18 @@
 // src/pages/Home/Home.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopNavigation from '../../components/layout/Header/Header';
 import MainBanner from './Banner/MainBanner';
 import ProductGrid from '../../components/Product/ProductGrid';
 import CategoryMainPage from '../../components/Category/CategoryMainPage';
 import Footer from '../../components/layout/Footer/Footer';
-import AgentChatBot from '@/components/AiAgentic';
+import AgentChatBot from '@/components/ChatMessage/AiAgentic';
+import HumanSupport from '@/components/ChatMessage/HumanSupport';
 
-
+type activeChat = 'ai' | 'human' | null
 const Home: React.FC = () => {
   const navigate = useNavigate();
-
-
+  const [activeChat, setActiveChat] = useState<activeChat>(null)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -34,7 +34,20 @@ const Home: React.FC = () => {
 
       {/* Featured Products */}
       <section className="container mx-auto px-36 py-8">
-        <AgentChatBot />
+        <div className="flex flex-col items-center fixed z-50 bottom-0 right-5">
+          <AgentChatBot
+            className={`${activeChat === 'human' ? 'hidden' : ''}`}
+            isOpen={activeChat === 'ai'}
+            onOpen={() => setActiveChat('ai')}
+            onClose={() => setActiveChat(null)}
+          />
+          <HumanSupport
+            className={` ${activeChat === 'ai' ? 'hidden' : ''}`}
+            isOpen={activeChat === 'human'}
+            onOpen={() => setActiveChat('human')}
+            onClose={() => setActiveChat(null)}
+          />
+        </div>
         <ProductGrid
           title="Sản phẩm nổi bật"
           limit={10}
@@ -50,7 +63,6 @@ const Home: React.FC = () => {
           </button>
         </div>
       </section>
-
 
 
       <Footer />

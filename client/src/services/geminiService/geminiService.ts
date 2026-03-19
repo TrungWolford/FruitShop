@@ -1,5 +1,6 @@
 import axiosInstance from '@/libs/axios';
-import { API, CONFIG } from '@/config/constants';
+import { API } from '@/config/constants';
+import { messageService } from '../socketService/messageService';
 
 export interface Message {
   sessionId: string,
@@ -9,23 +10,8 @@ export interface Message {
   senderId: string | null,
 }
 
-export async function createSession() {
-  const fullUrl = CONFIG.API_GATEWAY + API.SESSION;
-  // #region agent log
-  fetch('http://127.0.0.1:7556/ingest/00f57398-5cb8-4674-bcf1-2065b03c60ae',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'268d8b'},body:JSON.stringify({sessionId:'268d8b',location:'geminiService.ts:createSession',message:'createSession request',data:{fullUrl,baseUrl:CONFIG.API_GATEWAY,path:API.SESSION},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
-  // #endregion
-  try {
-    const response = await axiosInstance.post(API.SESSION, {
-      accoundId: null,
-      title: null,
-    });
-    return response.data;
-  } catch (error: unknown) {
-    console.error('Lỗi khi tạo session chatbot:', error)
-    throw error
-  }
-}
-
+// Dùng chung createSession từ messageService, không duplicate nữa
+export const createSession = messageService.createSession;
 
 export async function chatMessageAi(message: Message) {
   try {
@@ -35,7 +21,4 @@ export async function chatMessageAi(message: Message) {
     console.error('Lỗi khi gọi Chatbot từ Server:', error)
     throw error
   }
-};
-
-
-
+}

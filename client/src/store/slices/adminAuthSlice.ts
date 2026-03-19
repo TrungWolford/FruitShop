@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import type { PayloadAction } from '@reduxjs/toolkit'
 import type { Account } from '../../types/account'
+import { STORAGE_KEYS } from '../../config/constants'
 import { authService, type LoginCredentials, type LoginResponse } from '../../services/authService'
 
 interface AdminAuthState {
@@ -78,9 +79,12 @@ const adminAuthSlice = createSlice({
       state.user = null
       state.loading = false
       state.error = null
-      // Xóa khỏi localStorage (chỉ xóa admin keys)
+      // Xóa khỏi localStorage (admin keys + shared token keys)
       localStorage.removeItem('admin_user')
       localStorage.removeItem('admin_isAuthenticated')
+      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN)
+      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
+      localStorage.removeItem(STORAGE_KEYS.USER_PROFILE)
     },
     loadAdminUserFromStorage: (state, action: PayloadAction<Account>) => {
       state.isAuthenticated = true

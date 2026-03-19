@@ -3,6 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../hooks/redux';
 import { toast } from 'sonner';
 import LeftTaskbar from '../../components/Admin/LeftTaskbar/LeftTaskbar';
+import Header from '@/components/Admin/Header';
+import Container from '@/components/Admin/Container';
+
+const TASKBAR_MARGIN_TOP = 'mt-[60px]';
+
 import { ratingService } from '../../services/ratingService';
 import type { Rating } from '../../types/rating';
 import { Button } from '../../components/ui/Button/Button';
@@ -247,9 +252,12 @@ const AdminRating: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <LeftTaskbar />
+      {/* Header */}
+      <Header />
+      <LeftTaskbar className={`${TASKBAR_MARGIN_TOP}`} />
 
-      <div className="ml-64 p-4">
+      {/* body */}
+      <Container className="">
         {/* Header */}
         <div className="mb-3">
           <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -607,101 +615,101 @@ const AdminRating: React.FC = () => {
             </div>
           )}
         </div>
+      </Container>
 
-        {/* View Rating Dialog */}
-        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                <Star className="w-5 h-5 text-amber-500" />
-                Chi tiết đánh giá
-              </DialogTitle>
-              <DialogDescription className="text-gray-600">
-                Thông tin chi tiết về đánh giá sản phẩm
-              </DialogDescription>
-            </DialogHeader>
-            {selectedRating && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700">Mã đánh giá</label>
-                    <p className="text-gray-900">#{selectedRating.ratingId}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700">Ngày tạo</label>
-                    <p className="text-gray-900">{formatDate(selectedRating.createdAt)}</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700">Khách hàng</label>
-                    <p className="text-gray-900">{selectedRating.account?.accountName || 'N/A'}</p>
-                    {selectedRating.account?.accountPhone && (
-                      <p className="text-sm text-gray-600">
-                        {selectedRating.account.accountPhone}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700">Sản phẩm</label>
-                    <p className="text-gray-900">{selectedRating.product?.productName || 'N/A'}</p>
-                  </div>
+      {/* View Rating Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              <Star className="w-5 h-5 text-amber-500" />
+              Chi tiết đánh giá
+            </DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Thông tin chi tiết về đánh giá sản phẩm
+            </DialogDescription>
+          </DialogHeader>
+          {selectedRating && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-semibold text-gray-700">Mã đánh giá</label>
+                  <p className="text-gray-900">#{selectedRating.ratingId}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-semibold text-gray-700">Đánh giá</label>
-                  <div className="flex items-center gap-2 mt-1">
-                    {renderStars(selectedRating.ratingStar)}
-                    <span className="text-gray-700 font-medium">
-                      {selectedRating.ratingStar}/5
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-gray-700">Nhận xét</label>
-                  <p className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-md whitespace-pre-wrap">
-                    {selectedRating.comment || 'Không có nhận xét'}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-gray-700">Trạng thái</label>
-                  <div className="mt-1">
-                    <Badge
-                      variant={selectedRating.status === 1 ? 'default' : 'secondary'}
-                      className={`px-3 py-1 text-sm font-medium text-white ${selectedRating.status === 1
-                        ? 'bg-green-700 border-green-700'
-                        : 'bg-red-700 border-red-700'
-                        }`}
-                    >
-                      {selectedRating.status === 1 ? 'Đang hiển thị' : 'Đã ẩn'}
-                    </Badge>
-                  </div>
-                </div>
-                <div className="flex gap-2 pt-4">
-                  <Button
-                    onClick={() => {
-                      handleToggleStatus(selectedRating);
-                      setIsViewDialogOpen(false);
-                    }}
-                    className={`flex-1 ${selectedRating.status === 1
-                      ? 'bg-red-600 hover:bg-red-700'
-                      : 'bg-green-600 hover:bg-green-700'
-                      } text-white`}
-                  >
-                    {selectedRating.status === 1 ? 'Ẩn đánh giá' : 'Hiển thị đánh giá'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsViewDialogOpen(false)}
-                    className="flex-1"
-                  >
-                    Đóng
-                  </Button>
+                  <label className="text-sm font-semibold text-gray-700">Ngày tạo</label>
+                  <p className="text-gray-900">{formatDate(selectedRating.createdAt)}</p>
                 </div>
               </div>
-            )}
-          </DialogContent>
-        </Dialog>
-      </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-semibold text-gray-700">Khách hàng</label>
+                  <p className="text-gray-900">{selectedRating.account?.accountName || 'N/A'}</p>
+                  {selectedRating.account?.accountPhone && (
+                    <p className="text-sm text-gray-600">
+                      {selectedRating.account.accountPhone}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-gray-700">Sản phẩm</label>
+                  <p className="text-gray-900">{selectedRating.product?.productName || 'N/A'}</p>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-gray-700">Đánh giá</label>
+                <div className="flex items-center gap-2 mt-1">
+                  {renderStars(selectedRating.ratingStar)}
+                  <span className="text-gray-700 font-medium">
+                    {selectedRating.ratingStar}/5
+                  </span>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-gray-700">Nhận xét</label>
+                <p className="text-gray-900 mt-1 p-3 bg-gray-50 rounded-md whitespace-pre-wrap">
+                  {selectedRating.comment || 'Không có nhận xét'}
+                </p>
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-gray-700">Trạng thái</label>
+                <div className="mt-1">
+                  <Badge
+                    variant={selectedRating.status === 1 ? 'default' : 'secondary'}
+                    className={`px-3 py-1 text-sm font-medium text-white ${selectedRating.status === 1
+                      ? 'bg-green-700 border-green-700'
+                      : 'bg-red-700 border-red-700'
+                      }`}
+                  >
+                    {selectedRating.status === 1 ? 'Đang hiển thị' : 'Đã ẩn'}
+                  </Badge>
+                </div>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button
+                  onClick={() => {
+                    handleToggleStatus(selectedRating);
+                    setIsViewDialogOpen(false);
+                  }}
+                  className={`flex-1 ${selectedRating.status === 1
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : 'bg-green-600 hover:bg-green-700'
+                    } text-white`}
+                >
+                  {selectedRating.status === 1 ? 'Ẩn đánh giá' : 'Hiển thị đánh giá'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsViewDialogOpen(false)}
+                  className="flex-1"
+                >
+                  Đóng
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
