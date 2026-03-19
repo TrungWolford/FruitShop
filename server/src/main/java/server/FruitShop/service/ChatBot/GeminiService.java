@@ -116,7 +116,8 @@ public class GeminiService {
         String cleaned = result.trim().toUpperCase().split("\\s+")[0];
         List<String> validIntents = List.of(
                 "PRODUCT_ADVICE", "PRODUCT_COMPARE", "ORDER_LOOKUP",
-                "PRODUCT_SUGGEST", "ORDER_PLACE", "PAYMENT", "GENERAL");
+                "PRODUCT_SUGGEST", "ORDER_PLACE", "PAYMENT",
+                "HUMAN_SUPPORT", "REFUND", "GENERAL");
         return validIntents.contains(cleaned) ? cleaned : "GENERAL";
     }
 

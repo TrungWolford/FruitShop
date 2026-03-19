@@ -60,6 +60,21 @@ public class ChatServiceImpl implements ChatService {
     @Override
     @Transactional
     public ChatSessionResponse createSession(CreateSessionRequest request) {
+        log.info("Creating new chat session for accountId: {}", request.getAccountId());
+
+        // Đóng tất cả session cũ status=2 (pending) của user này TRƯỚC KHI tạo session mới
+        // Để tránh race condition khi 2 createSession requests chạy song song
+        if (request.getAccountId() != null) {
+            List<ChatSession> oldPendingSessions = chatSessionRepository
+                    .findByAccount_AccountIdAndStatusOrderByUpdatedAtDesc(request.getAccountId(), 2);
+            for (ChatSession oldSession : oldPendingSessions) {
+                oldSession.setStatus(0); // Đóng session cũ
+                chatSessionRepository.save(oldSession);
+                log.info("Auto-closed old pending session {} before creating new session for account {}",
+                        oldSession.getSessionId(), request.getAccountId());
+            }
+        }
+
         ChatSession session = new ChatSession();
 
         // Gắn account nếu không phải guest
@@ -77,6 +92,7 @@ public class ChatServiceImpl implements ChatService {
         session.setStatus(1); // 1 = Đang mở
 
         chatSessionRepository.save(session);
+        log.info("Created new session: {}", session.getSessionId());
         return ChatSessionResponse.fromEntity(session);
     }
 
@@ -148,6 +164,26 @@ public class ChatServiceImpl implements ChatService {
         if (request.getSessionId() != null) {
             session = chatSessionRepository.findById(request.getSessionId())
                     .orElseThrow(() -> new ResourceNotFoundException("Chat session not found: " + request.getSessionId()));
+
+            // ✅ Update account nếu session chưa có owner nhưng request có senderId
+            // Trường hợp: guest chat → login → reuse session → cần gắn account
+            if (session.getAccount() == null && request.getSenderId() != null) {
+                Account account = accountRepository.findById(request.getSenderId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Account not found: " + request.getSenderId()));
+                session.setAccount(account);
+                chatSessionRepository.save(session);
+                log.info("Updated session {} with account {}", session.getSessionId(), request.getSenderId());
+            }
+
+            // ✅ Cảnh báo nếu session thuộc user khác (bảo mật)
+            if (session.getAccount() != null && request.getSenderId() != null &&
+                    !session.getAccount().getAccountId().equals(request.getSenderId())) {
+                log.warn("Session {} belongs to account {} but request from {}",
+                        session.getSessionId(),
+                        session.getAccount().getAccountId(),
+                        request.getSenderId());
+                throw new IllegalArgumentException("Session does not belong to this user");
+            }
         } else {
             // Tự tạo session mới
             session = new ChatSession();
@@ -194,15 +230,61 @@ public class ChatServiceImpl implements ChatService {
             return response;
         }
 
-        // Gemini tự nhận diện intent từ nội dung tin nhắn (không tin vào frontend)
+        // Gemini tự nhận diện intent từ nội dung tin nhắn
+        // NHƯNG nếu frontend đã gửi intent=HUMAN_SUPPORT → tin tưởng nó (đây là Human chat component)
         if ("CUSTOMER".equalsIgnoreCase(senderRole)) {
-            String detectedUserIntent = geminiService.detectIntent(request.getContent());
-            if ("HUMAN_SUPPORT".equals(detectedUserIntent)) {
+            String userIntent = request.getIntent(); // Lấy intent từ frontend
+
+            // Nếu frontend không gửi intent hoặc gửi giá trị khác HUMAN_SUPPORT → tự detect
+            if (userIntent == null || userIntent.isBlank()) {
+                userIntent = geminiService.detectIntent(request.getContent());
+            }
+
+            if ("HUMAN_SUPPORT".equals(userIntent)) {
                 // Cập nhật intent cho tin nhắn user đã lưu
                 userMessage.setIntent("HUMAN_SUPPORT");
                 chatMessageRepository.save(userMessage);
 
-                // Chuyển session sang chờ nhân viên phản hồi
+                // Đóng các session cũ (status=2) để tránh duplicate tickets cho admin
+                if (session.getAccount() != null) {
+                    // User đã đăng nhập: đóng tất cả session cũ của account này
+                    String accountId = session.getAccount().getAccountId();
+                    List<ChatSession> oldPendingSessions = chatSessionRepository
+                            .findByAccount_AccountIdAndStatusOrderByUpdatedAtDesc(accountId, 2);
+                    for (ChatSession oldSession : oldPendingSessions) {
+                        if (!oldSession.getSessionId().equals(session.getSessionId())) {
+                            oldSession.setStatus(0); // Đóng session cũ
+                            chatSessionRepository.save(oldSession);
+                            log.info("Auto-closed old pending session {} for account {}",
+                                    oldSession.getSessionId(), accountId);
+                        }
+                    }
+                } else {
+                    // Guest user (chưa đăng nhập): chỉ đóng session guest quá cũ (>30 phút)
+                    // để tránh ảnh hưởng đến các guest khác đang chat
+                    List<ChatSession> guestPendingSessions = chatSessionRepository
+                            .findByStatusOrderByUpdatedAtDesc(2)
+                            .stream()
+                            .filter(s -> s.getAccount() == null)
+                            .filter(s -> !s.getSessionId().equals(session.getSessionId()))
+                            .filter(s -> {
+                                // Chỉ đóng session > 30 phút
+                                java.time.Duration duration = java.time.Duration.between(
+                                    s.getUpdatedAt(), java.time.LocalDateTime.now()
+                                );
+                                return duration.toMinutes() > 30;
+                            })
+                            .collect(java.util.stream.Collectors.toList());
+
+                    for (ChatSession oldSession : guestPendingSessions) {
+                        oldSession.setStatus(0); // Đóng session guest cũ
+                        chatSessionRepository.save(oldSession);
+                        log.info("Auto-closed stale guest pending session {} (>30min)",
+                                oldSession.getSessionId());
+                    }
+                }
+
+                // Chuyển session hiện tại sang chờ nhân viên phản hồi
                 session.setStatus(2); // 2 = Pending admin
                 session.setLastMessage(request.getContent());
                 session.setLastIntent("HUMAN_SUPPORT");
