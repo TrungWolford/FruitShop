@@ -35,17 +35,14 @@ public class RatingDetailResponse {
         response.setRatingId(rating.getRatingId());
 
         AccountInfo accountInfo = new AccountInfo();
-        accountInfo.setAccountId(rating.getAccount().getAccountId());
-        accountInfo.setAccountName(rating.getAccount().getAccountName());
-        accountInfo.setAccountPhone(rating.getAccount().getAccountPhone());
+        accountInfo.setAccountId(rating.getAccountId());
         response.setAccount(accountInfo);
 
         ProductInfo productInfo = new ProductInfo();
-        productInfo.setProductId(rating.getProduct().getProductId());
-        productInfo.setProductName(rating.getProduct().getProductName());
+        productInfo.setProductId(rating.getProductId());
         response.setProduct(productInfo);
 
-        response.setOrderItemId(rating.getOrderItem() != null ? rating.getOrderItem().getOrderDetailId() : null);
+        response.setOrderItemId(rating.getOrderItemId());
         response.setComment(rating.getComment());
         response.setStatus(rating.getStatus());
         response.setRatingStar(rating.getRatingStar());

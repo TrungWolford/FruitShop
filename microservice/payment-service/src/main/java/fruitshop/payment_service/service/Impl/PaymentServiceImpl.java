@@ -9,6 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 import fruitshop.payment_service.dto.request.Payment.PaymentRequest;
 import fruitshop.payment_service.dto.response.Payment.PaymentResponse;
 import fruitshop.payment_service.entity.Payment;
+import fruitshop.payment_service.exception.DownstreamServiceException;
+import fruitshop.payment_service.feign.OrderClient;
+import fruitshop.payment_service.feign.dto.OrderSummaryDto;
 import fruitshop.payment_service.exception.ResourceNotFoundException;
 import fruitshop.payment_service.repository.PaymentRepository;
 import fruitshop.payment_service.service.PaymentService;
@@ -21,6 +24,7 @@ import java.util.Date;
 public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
+    private final OrderClient orderClient;
 
     @Override
     public Page<PaymentResponse> getAllPayment(Pageable pageable) {
@@ -38,6 +42,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public PaymentResponse createPayment(PaymentRequest request) {
         validatePaymentRequest(request);
+        validateOrderIfPresent(request.getOrderId());
 
         Payment payment = new Payment();
         payment.setPaymentMethod(request.getPaymentMethod());
@@ -45,6 +50,7 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setPaymentDate(request.getPaymentDate() != null ? request.getPaymentDate() : new Date());
         payment.setAmount(request.getAmount());
         payment.setTransactionId(request.getTransactionId());
+        payment.setOrderId(request.getOrderId());
 
         return PaymentResponse.fromEntity(paymentRepository.save(payment));
     }
@@ -62,6 +68,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .orElseThrow(() -> new RuntimeException("Payment not found with ID: " + paymentId));
 
         validatePaymentRequest(request);
+        validateOrderIfPresent(request.getOrderId());
 
         if (request.getPaymentMethod() != null) {
             payment.setPaymentMethod(request.getPaymentMethod());
@@ -70,6 +77,7 @@ public class PaymentServiceImpl implements PaymentService {
         if (request.getPaymentDate() != null) payment.setPaymentDate(request.getPaymentDate());
         if (request.getAmount() != null) payment.setAmount(request.getAmount());
         if (request.getTransactionId() != null) payment.setTransactionId(request.getTransactionId());
+        payment.setOrderId(request.getOrderId());
 
         return PaymentResponse.fromEntity(paymentRepository.save(payment));
     }
@@ -111,6 +119,23 @@ public class PaymentServiceImpl implements PaymentService {
         }
         if (request.getPaymentStatus() < 0 || request.getPaymentStatus() > 3) {
             throw new IllegalArgumentException("Payment status must be between 0 and 3");
+        }
+    }
+
+    private void validateOrderIfPresent(String orderId) {
+        if (orderId == null || orderId.isBlank()) {
+            return;
+        }
+
+        try {
+            OrderSummaryDto order = orderClient.getById(orderId);
+            if (order == null || order.getOrderId() == null) {
+                throw new ResourceNotFoundException("Order not found with ID: " + orderId);
+            }
+        } catch (ResourceNotFoundException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new DownstreamServiceException("Order service unavailable while validating orderId: " + orderId);
         }
     }
 }

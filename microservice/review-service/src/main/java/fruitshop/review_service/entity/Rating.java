@@ -15,17 +15,13 @@ public class Rating {
     @Id
     private String ratingId;
 
-    @ManyToOne
-    @JoinColumn(name = "account_id")
-    private Account account;
+    @Column(nullable = false)
+    private String accountId;
 
-    @ManyToOne
-    @JoinColumn(name = "product_id")
-    private Product product;
+    @Column(nullable = false)
+    private String productId;
 
-    @ManyToOne
-    @JoinColumn(name = "order_item_id")
-    private OrderItem orderItem;
+    private String orderItemId;
 
     private String comment;
     private double ratingStar;

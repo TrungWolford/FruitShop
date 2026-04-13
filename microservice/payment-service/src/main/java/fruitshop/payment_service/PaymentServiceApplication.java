@@ -5,7 +5,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @SpringBootApplication
-@EnableFeignClients(basePackages = "fruitshop.payment_service.momo")
+@EnableFeignClients(basePackages = {
+	"fruitshop.payment_service.momo",
+	"fruitshop.payment_service.feign"
+})
 public class PaymentServiceApplication {
 
 	public static void main(String[] args) {

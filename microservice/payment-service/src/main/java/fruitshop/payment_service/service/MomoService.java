@@ -22,22 +22,22 @@ public class MomoService {
 
     private final MomoApi momoApi;
 
-    @Value("${momo.partner-code}")
+    @Value("${momo.partner-code:}")
     private String PARTNER_CODE;
 
-    @Value("${momo.access-key}")
+    @Value("${momo.access-key:}")
     private String ACCESS_KEY;
 
-    @Value("${momo.secret-key}")
+    @Value("${momo.secret-key:}")
     private String SECRET_KEY;
 
-    @Value("${momo.return-url}")
+    @Value("${momo.return-url:http://localhost:8080/payment/return}")
     private String RETURN_URL;
 
-    @Value("${momo.ipn-url}")
+    @Value("${momo.ipn-url:http://localhost:8080/payment/ipn}")
     private String IPN_URL;
 
-    @Value("${momo.request-type}")
+    @Value("${momo.request-type:captureWallet}")
     private String REQUEST_TYPE;
 
     public CreateMomoResponse createQR(String orderId, long amount, String orderInfo) {

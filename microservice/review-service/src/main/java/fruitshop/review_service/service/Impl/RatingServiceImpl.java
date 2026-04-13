@@ -4,19 +4,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import fruitshop.review_service.feign.AccountClient;
+import fruitshop.review_service.feign.ProductClient;
+import fruitshop.review_service.feign.dto.AccountSummaryDto;
+import fruitshop.review_service.feign.dto.ProductSummaryDto;
 import fruitshop.review_service.dto.request.Rating.CreateRatingRequest;
 import fruitshop.review_service.dto.request.Rating.UpdateRatingRequest;
 import fruitshop.review_service.dto.response.Rating.RatingResponse;
 import fruitshop.review_service.dto.response.Rating.RatingDetailResponse;
-import fruitshop.review_service.entity.Account;
-import fruitshop.review_service.entity.OrderItem;
-import fruitshop.review_service.entity.Product;
 import fruitshop.review_service.entity.Rating;
-import fruitshop.review_service.repository.AccountRepository;
-import fruitshop.review_service.repository.OrderItemRepository;
-import fruitshop.review_service.repository.ProductRepository;
 import fruitshop.review_service.repository.RatingRepository;
 import fruitshop.review_service.service.RatingService;
+import fruitshop.review_service.exception.DownstreamServiceException;
 import fruitshop.review_service.exception.ResourceNotFoundException;
 
 import java.util.List;
@@ -28,13 +27,10 @@ public class RatingServiceImpl implements RatingService {
     private RatingRepository ratingRepository;
 
     @Autowired
-    private AccountRepository accountRepository;
+    private AccountClient accountClient;
 
     @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private OrderItemRepository orderItemRepository;
+    private ProductClient productClient;
 
     @Override
     public Page<RatingResponse> getAllRating(Pageable pageable) {
@@ -58,7 +54,7 @@ public class RatingServiceImpl implements RatingService {
             if (ratingsPage == null || ratingsPage.isEmpty()) {
                 return Page.empty(pageable);
             }
-            return ratingsPage.map(RatingDetailResponse::fromEntity);
+            return ratingsPage.map(this::toDetailResponse);
         } catch (Exception e) {
             System.err.println("Error fetching all detailed ratings: " + e.getMessage());
             e.printStackTrace();
@@ -69,14 +65,13 @@ public class RatingServiceImpl implements RatingService {
     @Override
     public Page<RatingDetailResponse> getRatingsByAccountId(String accountId, Pageable pageable) {
         try {
-            accountRepository.findById(accountId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Account not found with id: " + accountId));
+            ensureAccountExists(accountId);
 
-            Page<Rating> ratingsPage = ratingRepository.findByAccountAccountId(pageable, accountId);
+            Page<Rating> ratingsPage = ratingRepository.findByAccountId(accountId, pageable);
             if (ratingsPage == null || ratingsPage.isEmpty()) {
                 return Page.empty(pageable);
             }
-            return ratingsPage.map(RatingDetailResponse::fromEntity);
+            return ratingsPage.map(this::toDetailResponse);
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
@@ -89,14 +84,13 @@ public class RatingServiceImpl implements RatingService {
     @Override
     public Page<RatingDetailResponse> getRatingsByProductId(String productId, Pageable pageable) {
         try {
-            productRepository.findById(productId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
+            ensureProductExists(productId);
 
-            Page<Rating> ratingsPage = ratingRepository.findByProductProductIdAndStatus(productId, 1, pageable);
+            Page<Rating> ratingsPage = ratingRepository.findByProductIdAndStatus(productId, 1, pageable);
             if (ratingsPage == null || ratingsPage.isEmpty()) {
                 return Page.empty(pageable);
             }
-            return ratingsPage.map(RatingDetailResponse::fromEntity);
+            return ratingsPage.map(this::toDetailResponse);
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
@@ -109,16 +103,14 @@ public class RatingServiceImpl implements RatingService {
     @Override
     public List<RatingDetailResponse> getRatingsByAccountIdAndProductId(String accountId, String productId) {
         try {
-            accountRepository.findById(accountId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Account not found with id: " + accountId));
-            productRepository.findById(productId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
+            ensureAccountExists(accountId);
+            ensureProductExists(productId);
 
-            List<Rating> ratings = ratingRepository.findByAccountAccountIdAndProductProductId(accountId, productId);
+            List<Rating> ratings = ratingRepository.findByAccountIdAndProductId(accountId, productId);
             if (ratings == null || ratings.isEmpty()) {
                 return List.of();
             }
-            return ratings.stream().map(RatingDetailResponse::fromEntity).toList();
+            return ratings.stream().map(this::toDetailResponse).toList();
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
@@ -131,34 +123,19 @@ public class RatingServiceImpl implements RatingService {
     @Override
     public RatingResponse createRating(CreateRatingRequest request) {
         try {
-            Account account = accountRepository.findById(request.getAccountId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Account not found with id: " + request.getAccountId()));
+            ensureAccountExists(request.getAccountId());
+            ensureProductExists(request.getProductId());
 
-            Product product = productRepository.findById(request.getProductId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + request.getProductId()));
-
-            OrderItem orderItem = null;
             if (request.getOrderItemId() != null && !request.getOrderItemId().isEmpty()) {
-                orderItem = orderItemRepository.findById(request.getOrderItemId())
-                        .orElseThrow(() -> new ResourceNotFoundException("OrderItem not found with id: " + request.getOrderItemId()));
-
-                if (!orderItem.getOrder().getAccount().getAccountId().equals(request.getAccountId())) {
-                    throw new RuntimeException("OrderItem does not belong to this account");
-                }
-
-                if (!orderItem.getProduct().getProductId().equals(request.getProductId())) {
-                    throw new RuntimeException("OrderItem is not for this product");
-                }
-
-                if (ratingRepository.findByOrderItemOrderDetailId(request.getOrderItemId()).isPresent()) {
+                if (ratingRepository.findByOrderItemId(request.getOrderItemId()).isPresent()) {
                     throw new RuntimeException("This order item has already been rated");
                 }
             }
 
             Rating rating = new Rating();
-            rating.setAccount(account);
-            rating.setProduct(product);
-            rating.setOrderItem(orderItem);
+            rating.setAccountId(request.getAccountId());
+            rating.setProductId(request.getProductId());
+            rating.setOrderItemId(request.getOrderItemId());
             rating.setComment(request.getComment());
             rating.setRatingStar(request.getRatingStar());
             rating.setStatus(1);
@@ -205,10 +182,9 @@ public class RatingServiceImpl implements RatingService {
     @Override
     public double calculateRatingStarByProductId(String productId) {
         try {
-            productRepository.findById(productId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
+            ensureProductExists(productId);
 
-            List<Rating> ratings = ratingRepository.findByProductProductId(productId);
+            List<Rating> ratings = ratingRepository.findByProductId(productId);
             if (ratings == null || ratings.isEmpty()) {
                 return 0.0;
             }
@@ -231,5 +207,56 @@ public class RatingServiceImpl implements RatingService {
             e.printStackTrace();
             return 0.0;
         }
+    }
+
+    private void ensureAccountExists(String accountId) {
+        try {
+            AccountSummaryDto account = accountClient.getAccountById(accountId);
+            if (account == null || account.getAccountId() == null) {
+                throw new ResourceNotFoundException("Account not found with id: " + accountId);
+            }
+        } catch (ResourceNotFoundException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new DownstreamServiceException("Account service unavailable while validating accountId: " + accountId);
+        }
+    }
+
+    private void ensureProductExists(String productId) {
+        try {
+            ProductSummaryDto product = productClient.getProductById(productId);
+            if (product == null || product.getProductId() == null) {
+                throw new ResourceNotFoundException("Product not found with id: " + productId);
+            }
+        } catch (ResourceNotFoundException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new DownstreamServiceException("Catalog service unavailable while validating productId: " + productId);
+        }
+    }
+
+    private RatingDetailResponse toDetailResponse(Rating rating) {
+        RatingDetailResponse response = RatingDetailResponse.fromEntity(rating);
+
+        try {
+            AccountSummaryDto account = accountClient.getAccountById(rating.getAccountId());
+            if (account != null && response.getAccount() != null) {
+                response.getAccount().setAccountName(account.getAccountName());
+                response.getAccount().setAccountPhone(account.getAccountPhone());
+            }
+        } catch (Exception ignored) {
+            // Keep response resilient even when account-service is unavailable.
+        }
+
+        try {
+            ProductSummaryDto product = productClient.getProductById(rating.getProductId());
+            if (product != null && response.getProduct() != null) {
+                response.getProduct().setProductName(product.getProductName());
+            }
+        } catch (Exception ignored) {
+            // Keep response resilient even when catalog-service is unavailable.
+        }
+
+        return response;
     }
 }

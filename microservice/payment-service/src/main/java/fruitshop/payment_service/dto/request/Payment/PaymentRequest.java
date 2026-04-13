@@ -7,6 +7,7 @@ import java.util.Date;
 
 @Data
 public class PaymentRequest {
+    private String orderId;
     private String paymentMethod;
     private int paymentStatus;
     private Date paymentDate;

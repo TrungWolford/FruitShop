@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import fruitshop.payment_service.dto.request.Momo.CreateMomoRequest;
 import fruitshop.payment_service.dto.response.Momo.CreateMomoResponse;
 
-@FeignClient(name = "momo", url = "${momo.endpoint}")
+@FeignClient(name = "momo", url = "${momo.endpoint:http://localhost:8999}")
 public interface MomoApi {
     @PostMapping("/create")
     CreateMomoResponse createMomoQR(@RequestBody CreateMomoRequest request);

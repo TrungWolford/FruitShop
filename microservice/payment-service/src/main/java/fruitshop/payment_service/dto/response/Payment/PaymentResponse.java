@@ -14,6 +14,7 @@ public class PaymentResponse {
     private Date paymentDate;
     private BigDecimal amount;
     private String transactionId;
+    private String orderId;
 
     public static PaymentResponse fromEntity(Payment payment) {
         PaymentResponse response = new PaymentResponse();
@@ -23,6 +24,7 @@ public class PaymentResponse {
         response.setPaymentDate(payment.getPaymentDate());
         response.setAmount(payment.getAmount());
         response.setTransactionId(payment.getTransactionId());
+        response.setOrderId(payment.getOrderId());
         return response;
     }
 }
