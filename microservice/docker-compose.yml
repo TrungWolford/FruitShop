@@ -1,6 +1,6 @@
 services:
   postgres-account:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     container_name: fruitshop-account-db
     command: ["postgres", "-p", "5436"]
     environment:
@@ -13,6 +13,69 @@ services:
       - account_postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -h localhost -p 5436 -U postgres -d account_service"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - fruitshop-micro-network
+
+  postgres-payment:
+    image: postgres:17-alpine
+    container_name: fruitshop-payment-db
+    command: ["postgres", "-p", "5437"]
+    environment:
+      POSTGRES_DB: payment_service
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5437:5437"
+    volumes:
+      - payment_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 5437 -U postgres -d payment_service"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - fruitshop-micro-network
+
+  postgres-review:
+    image: postgres:17-alpine
+    container_name: fruitshop-review-db
+    command: ["postgres", "-p", "5438"]
+    environment:
+      POSTGRES_DB: review_service
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5438:5438"
+    volumes:
+      - review_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 5438 -U postgres -d review_service"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - fruitshop-micro-network
+
+  postgres-ai:
+    image: postgres:17-alpine
+    container_name: fruitshop-ai-db
+    command: ["postgres", "-p", "5439"]
+    environment:
+      POSTGRES_DB: ai_service
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5439:5439"
+    volumes:
+      - ai_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 5439 -U postgres -d ai_service"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -104,6 +167,9 @@ services:
 
 volumes:
   account_postgres_data:
+  payment_postgres_data:
+  review_postgres_data:
+  ai_postgres_data:
 
 networks:
   fruitshop-micro-network:
