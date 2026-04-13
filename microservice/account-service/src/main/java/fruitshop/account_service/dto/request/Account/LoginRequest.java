@@ -1,0 +1,9 @@
+package fruitshop.account_service.dto.request.Account;
+
+import lombok.Data;
+
+@Data
+public class LoginRequest {
+    private String accountPhone;
+    private String password;
+}
