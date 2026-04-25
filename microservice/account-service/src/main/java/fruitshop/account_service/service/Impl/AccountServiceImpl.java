@@ -8,8 +8,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import fruitshop.account_service.dto.request.Account.CreateAccountRequest;
+import fruitshop.account_service.dto.request.Account.RefreshTokenRequest;
 import fruitshop.account_service.dto.request.Account.UpdateAccountRequest;
 import fruitshop.account_service.dto.response.Account.AccountResponse;
+import fruitshop.account_service.dto.response.Account.LoginResponse;
+import fruitshop.account_service.dto.response.Account.RefreshTokenResponse;
 import fruitshop.account_service.entity.Account;
 import fruitshop.account_service.entity.Role;
 import fruitshop.account_service.repository.AccountRepository;
@@ -17,6 +20,7 @@ import fruitshop.account_service.repository.RoleRepository;
 import fruitshop.account_service.service.AccountService;
 import fruitshop.account_service.exception.ResourceNotFoundException;
 import fruitshop.account_service.exception.DuplicateResourceException;
+import fruitshop.account_service.security.JwtService;
 
 import java.util.HashSet;
 import java.util.List;
@@ -32,6 +36,9 @@ public class AccountServiceImpl implements AccountService {
 
     @Autowired
     private RoleRepository roleRepository;
+
+    @Autowired
+    private JwtService jwtService;
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -157,7 +164,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public AccountResponse authenticateAccount(String accountPhone, String password) {
+    public LoginResponse authenticateAccount(String accountPhone, String password) {
         // Tìm account theo phone
         Account account = accountRepository.findByAccountPhone(accountPhone)
                 .orElseThrow(() -> new ResourceNotFoundException("Invalid phone or password"));
@@ -171,8 +178,54 @@ public class AccountServiceImpl implements AccountService {
         if (account.getStatus() != 1) {
             throw new ResourceNotFoundException("Account is deactivated");
         }
-        
-        return AccountResponse.fromEntity(account);
+
+        List<String> roleNames = account.getRoles().stream()
+                .map(Role::getRoleName)
+                .toList();
+
+        String accessToken = jwtService.generateAccessToken(account.getAccountId(), roleNames);
+        String refreshToken = jwtService.generateRefreshToken(account.getAccountId());
+
+        return LoginResponse.builder()
+                .tokenType("Bearer")
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .expiresIn(jwtService.getAccessTokenExpirationMs() / 1000)
+                .account(AccountResponse.fromEntity(account))
+                .build();
+    }
+
+    @Override
+    public RefreshTokenResponse refreshAccessToken(RefreshTokenRequest request) {
+        if (request == null || request.getRefreshToken() == null || request.getRefreshToken().isBlank()) {
+            throw new ResourceNotFoundException("Refresh token is required");
+        }
+
+        String refreshToken = request.getRefreshToken().trim();
+
+        if (!jwtService.isRefreshToken(refreshToken)) {
+            throw new ResourceNotFoundException("Invalid refresh token");
+        }
+
+        String accountId = jwtService.extractSubject(refreshToken);
+        Account account = accountRepository.findByIdWithRoles(accountId)
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+
+        if (account.getStatus() != 1) {
+            throw new ResourceNotFoundException("Account is deactivated");
+        }
+
+        List<String> roleNames = account.getRoles().stream()
+                .map(Role::getRoleName)
+                .toList();
+
+        String newAccessToken = jwtService.generateAccessToken(account.getAccountId(), roleNames);
+
+        return RefreshTokenResponse.builder()
+                .tokenType("Bearer")
+                .accessToken(newAccessToken)
+                .expiresIn(jwtService.getAccessTokenExpirationMs() / 1000)
+                .build();
     }
 
     @Override
