@@ -57,6 +57,7 @@ public class ChatMessage {
     // "ORDER_PLACE"      = đặt hàng qua chat
     // "PAYMENT"          = hỏi về thanh toán
     // "GENERAL"          = hỏi thông thường
+    // "HUMAN_SUPPORT"   = yêu cầu gặp nhân viên (chuyển ticket sang trạng thái pending)
     // null               = tin nhắn của ADMIN hoặc CUSTOMER (không phải bot)
     private String intent;
 
