@@ -30,6 +30,9 @@ public class Payment {
     @Column(name = "transactionId")
     private String transactionId;
 
+    @Column(name = "orderId")
+    private String orderId;
+
     @PrePersist
     public void generateId() {
         if (this.paymentId == null) {

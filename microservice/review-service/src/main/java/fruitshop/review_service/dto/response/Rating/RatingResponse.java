@@ -20,9 +20,9 @@ public class RatingResponse {
     public static RatingResponse fromEntity(Rating rating){
         RatingResponse response = new RatingResponse();
         response.setRatingId(rating.getRatingId());
-        response.setAccountId(rating.getAccount().getAccountId());
-        response.setProductId(rating.getProduct().getProductId());
-        response.setOrderItemId(rating.getOrderItem() != null ? rating.getOrderItem().getOrderDetailId() : null);
+        response.setAccountId(rating.getAccountId());
+        response.setProductId(rating.getProductId());
+        response.setOrderItemId(rating.getOrderItemId());
         response.setComment(rating.getComment());
         response.setStatus(rating.getStatus());
         response.setRatingStar(rating.getRatingStar());

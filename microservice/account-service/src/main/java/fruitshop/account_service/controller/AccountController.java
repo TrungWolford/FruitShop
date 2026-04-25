@@ -10,8 +10,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import fruitshop.account_service.dto.request.Account.CreateAccountRequest;
 import fruitshop.account_service.dto.request.Account.LoginRequest;
+import fruitshop.account_service.dto.request.Account.RefreshTokenRequest;
 import fruitshop.account_service.dto.request.Account.UpdateAccountRequest;
 import fruitshop.account_service.dto.response.Account.AccountResponse;
+import fruitshop.account_service.dto.response.Account.LoginResponse;
+import fruitshop.account_service.dto.response.Account.RefreshTokenResponse;
 import fruitshop.account_service.exception.DuplicateResourceException;
 import fruitshop.account_service.service.AccountService;
 
@@ -113,14 +116,24 @@ public class AccountController {
                 return ResponseEntity.badRequest().body("Mật khẩu phải có ít nhất 6 ký tự");
             }
 
-            AccountResponse account = accountService.authenticateAccount(request.getAccountPhone(), request.getPassword());
-            return ResponseEntity.ok(account);
+            LoginResponse loginResponse = accountService.authenticateAccount(request.getAccountPhone(), request.getPassword());
+            return ResponseEntity.ok(loginResponse);
         } catch (RuntimeException e) {
             // Kiểm tra nếu là tài khoản bị vô hiệu hóa
             if (e.getMessage() != null && e.getMessage().contains("deactivated")) {
                 return ResponseEntity.status(403).body("Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.");
             }
             return ResponseEntity.status(401).body("Tài khoản hoặc mật khẩu không đúng");
+        }
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenRequest request) {
+        try {
+            RefreshTokenResponse response = accountService.refreshAccessToken(request);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(401).body("Refresh token không hợp lệ hoặc đã hết hạn");
         }
     }
 }

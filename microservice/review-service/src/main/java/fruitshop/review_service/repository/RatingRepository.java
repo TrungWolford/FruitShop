@@ -12,10 +12,10 @@ import java.util.Optional;
 @Repository
 public interface RatingRepository extends JpaRepository<Rating, String> {
     Page<Rating> findAll(Pageable pageable);
-    Page<Rating> findByAccountAccountId(Pageable pageable, String accountId);
-    Page<Rating> findByProductProductId(Pageable pageable, String productId);
-    Page<Rating> findByProductProductIdAndStatus(String productId, Integer status, Pageable pageable);
-    List<Rating> findByAccountAccountIdAndProductProductId(String accountId, String productId);
-    List<Rating> findByProductProductId(String productId);
-    Optional<Rating> findByOrderItemOrderDetailId(String orderDetailId);
+    Page<Rating> findByAccountId(String accountId, Pageable pageable);
+    Page<Rating> findByProductId(String productId, Pageable pageable);
+    Page<Rating> findByProductIdAndStatus(String productId, Integer status, Pageable pageable);
+    List<Rating> findByAccountIdAndProductId(String accountId, String productId);
+    List<Rating> findByProductId(String productId);
+    Optional<Rating> findByOrderItemId(String orderItemId);
 }

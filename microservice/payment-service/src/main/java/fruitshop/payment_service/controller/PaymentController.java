@@ -28,112 +28,60 @@ public class PaymentController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "paymentDate") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
 
-        try {
-            Sort sort = sortDir.equalsIgnoreCase("asc")
-                    ? Sort.by(sortBy).ascending()
-                    : Sort.by(sortBy).descending();
-
-            Pageable pageable = PageRequest.of(page, size, sort);
-            Page<PaymentResponse> payments = paymentService.getAllPayment(pageable);
-            return ResponseEntity.ok(payments);
-        } catch (Exception e) {
-            log.error("Error getting all payments: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<PaymentResponse> payments = paymentService.getAllPayment(pageable);
+        return ResponseEntity.ok(payments);
     }
 
     @GetMapping("/{paymentId}")
-    public ResponseEntity<?> getPaymentById(@PathVariable String paymentId) {
-        try {
-            PaymentResponse payment = paymentService.getByPaymentId(paymentId);
-            return ResponseEntity.ok(payment);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Payment not found with ID: " + paymentId);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error retrieving payment: " + e.getMessage());
-        }
+    public ResponseEntity<PaymentResponse> getPaymentById(@PathVariable String paymentId) {
+        PaymentResponse payment = paymentService.getByPaymentId(paymentId);
+        return ResponseEntity.ok(payment);
     }
 
     @PostMapping
-    public ResponseEntity<?> createPayment(@RequestBody PaymentRequest request) {
-        try {
-            PaymentResponse payment = paymentService.createPayment(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(payment);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Validation error: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error creating payment: " + e.getMessage());
-        }
+    public ResponseEntity<PaymentResponse> createPayment(@RequestBody PaymentRequest request) {
+        PaymentResponse payment = paymentService.createPayment(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(payment);
     }
 
     @PutMapping("/{paymentId}")
-    public ResponseEntity<?> updatePayment(
+    public ResponseEntity<PaymentResponse> updatePayment(
             @PathVariable String paymentId,
             @RequestBody PaymentRequest request) {
-
-        try {
-            PaymentResponse payment = paymentService.updatePayment(paymentId, request);
-            return ResponseEntity.ok(payment);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Validation error: " + e.getMessage());
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Payment not found with ID: " + paymentId);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error updating payment: " + e.getMessage());
-        }
+        PaymentResponse payment = paymentService.updatePayment(paymentId, request);
+        return ResponseEntity.ok(payment);
     }
 
     @GetMapping("/status/{status}")
-    public ResponseEntity<?> getPaymentsByStatus(
+    public ResponseEntity<Page<PaymentResponse>> getPaymentsByStatus(
             @PathVariable int status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
+        validatePaymentStatus(status);
 
-        try {
-            if (status < 0 || status > 3) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("Invalid payment status. Must be between 0 and 3");
-            }
-
-            Pageable pageable = PageRequest.of(page, size, Sort.by("paymentDate").descending());
-            Page<PaymentResponse> payments = paymentService.getPaymentsByStatus(status, pageable);
-            return ResponseEntity.ok(payments);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error retrieving payments: " + e.getMessage());
-        }
+        Pageable pageable = PageRequest.of(page, size, Sort.by("paymentDate").descending());
+        Page<PaymentResponse> payments = paymentService.getPaymentsByStatus(status, pageable);
+        return ResponseEntity.ok(payments);
     }
 
     @PutMapping("/{paymentId}/status")
-    public ResponseEntity<?> updatePaymentStatus(
+    public ResponseEntity<PaymentResponse> updatePaymentStatus(
             @PathVariable String paymentId,
             @RequestParam int status) {
+        validatePaymentStatus(status);
 
-        try {
-            if (status < 0 || status > 3) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("Invalid payment status. Must be between 0 and 3");
-            }
+        PaymentResponse payment = paymentService.updatePaymentStatus(paymentId, status);
+        return ResponseEntity.ok(payment);
+    }
 
-            PaymentResponse payment = paymentService.updatePaymentStatus(paymentId, status);
-            return ResponseEntity.ok(payment);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Validation error: " + e.getMessage());
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Payment not found with ID: " + paymentId);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error updating payment status: " + e.getMessage());
+    private void validatePaymentStatus(int status) {
+        if (status < 0 || status > 3) {
+            throw new IllegalArgumentException("Invalid payment status. Must be between 0 and 3");
         }
     }
 }
