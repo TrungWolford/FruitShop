@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
 import { loginStart, loginSuccess, loginFailure, clearAuthError } from '../../store/slices/authSlice'
 import { authService } from '../../services/authService'
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle, 
-  Button, 
-  Input, 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  Button,
+  Input,
   Label,
   Checkbox
 } from '../../components/ui'
@@ -93,31 +93,29 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
     }
     setIsSubmitting(true)
     dispatch(loginStart())
-    
+
     try {
       const response = await authService.login({
         email: formData.username, // Using username field as phone number
         password: formData.password
       })
-      
+
       console.log('🔐 Login response:', response)
-      
+
       // Kiểm tra response có hợp lệ không (phải có user object với accountId)
       if (response.success && response.user && response.user.accountId) {
         // Dispatch loginSuccess TRƯỚC để Redux state được cập nhật ngay
         dispatch(loginSuccess(response.user))
-        
+
         // Trigger event để các component khác biết auth đã cập nhật
         window.dispatchEvent(new CustomEvent('authUpdated'))
-        
+
         // Check for intended route (from checkout button)
         const intendedRoute = sessionStorage.getItem('intendedRoute')
         if (intendedRoute) {
           sessionStorage.removeItem('intendedRoute')
           toast.success('Đăng nhập thành công!')
-          console.log('🔐 localStorage user:', localStorage.getItem('user'))
-          console.log('🔐 localStorage isAuthenticated:', localStorage.getItem('isAuthenticated'))
-          
+
           // Đóng dialog trước khi navigate
           onClose()
           setTimeout(() => {
@@ -128,24 +126,24 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
             })
             dispatch(clearAuthError())
           }, 300)
-          
+
           // Navigate sau một khoảng delay nhỏ
           setTimeout(() => {
             navigate(intendedRoute)
           }, 100)
           return
         }
-        
+
         // Check user roles
         const userRoles = response.user.roles || []
         const isCustomer = userRoles.some(role => role.roleName === 'CUSTOMER')
-        
+
         if (isCustomer) {
           toast.success('Đăng nhập thành công! Chào mừng bạn trở lại.')
         } else {
           toast.success('Đăng nhập thành công!')
         }
-        
+
         // Đóng dialog SAU khi đã dispatch success để UI kịp cập nhật
         setTimeout(() => {
           onClose()
@@ -165,7 +163,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
     } catch (error: any) {
       // Sử dụng error message đã được parse từ authService
       const errorMessage = error.message || 'Số điện thoại hoặc mật khẩu không đúng'
-      
+
       // Kiểm tra nếu là tài khoản bị vô hiệu hóa
       if (errorMessage.toLowerCase().includes('deactivated') || errorMessage.includes('vô hiệu hóa') || errorMessage.includes('tạm ngưng')) {
         dispatch(loginFailure('Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.'))
@@ -176,7 +174,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
         dispatch(loginFailure(errorMessage))
         toast.error(errorMessage)
       }
-      
+
       // KHÔNG redirect khi login failed - giữ user ở trang login
     } finally {
       setIsSubmitting(false)
@@ -191,7 +189,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent 
+      <DialogContent
         className="sm:max-w-[500px] p-0 overflow-hidden rounded-lg"
         onInteractOutside={(e) => {
           // Ngăn đóng dialog khi click ra ngoài trong lúc đang submit hoặc có lỗi
@@ -277,7 +275,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
                 id="rememberMe"
                 name="rememberMe"
                 checked={formData.rememberMe}
-                onCheckedChange={(checked) => 
+                onCheckedChange={(checked) =>
                   setFormData(prev => ({ ...prev, rememberMe: checked as boolean }))
                 }
               />
@@ -294,8 +292,8 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
             )}
 
             {/* Submit Button */}
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={loading || !formData.username || !formData.password}
               className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2.5 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -329,10 +327,10 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-200" />
-              </div>  
+              </div>
             </div>
-            
-           
+
+
           </div>
         </div>
       </DialogContent>

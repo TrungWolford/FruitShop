@@ -2,7 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ErrorBoundary from '@/components/ui/ErrorBoundary/ErrorBoundary'
 import Home from '../pages/Home/Home';
-import Register from '../pages/Mainpage/Register';
+import Register from '../pages/Auth/Register';
 import ProfileCustomer from '../pages/Customer/ProfileCustomer';
 import HistoryReceipt from '../pages/Customer/HistoryOrder';
 import ProductPage from '../pages/Customer/Product';

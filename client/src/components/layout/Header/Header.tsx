@@ -15,7 +15,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '../../ui/dropdown
 
 import { useAppSelector, useAppDispatch } from '@/hooks/redux';
 import { logout } from '@/store/slices/authSlice';
-import LoginDialog from '@/pages/Mainpage/Login';
+import LoginDialog from '@/pages/Auth/Login';
 import Cart from '../../Cart/Cart';
 import { cartService } from '@/services/cartService';
 import { productService } from '@/services/productService';
@@ -487,7 +487,7 @@ const TopNavigation: React.FC = () => {
                   className={`flex items-center group ${isAuthenticated && user && cartStatus !== null && cartStatus !== 1
                     ? 'cursor-not-allowed opacity-60'
                     : 'cursor-pointer'
-                  }`}
+                    }`}
                   onClick={handleCartClick}
                   onMouseEnter={() => {
                     // Chỉ fetch hover cart nếu cart không bị khóa

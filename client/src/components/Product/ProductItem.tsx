@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, ShoppingBag } from 'lucide-react';
@@ -110,12 +111,12 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
       if (isAuthenticated && user) {
         // User đã đăng nhập → kiểm tra số lượng trong giỏ trước
         const cartResponse = await cartService.getCartItems(user.accountId);
-        
+
         if (cartResponse.success && cartResponse.data) {
           const cartData = cartResponse.data as { items?: Array<{ product: { productId: string }, quantity: number }> };
           const existingItem = cartData.items?.find(item => item.product.productId === product.productId);
           const currentQuantityInCart = existingItem ? existingItem.quantity : 0;
-          
+
           // Kiểm tra nếu số lượng trong giỏ + 1 vượt quá tồn kho
           if (product.stock !== undefined && currentQuantityInCart + 1 > product.stock) {
             toast.error(`Sản phẩm này chỉ còn ${product.stock} sản phẩm trong kho. Bạn đã có ${currentQuantityInCart} trong giỏ hàng`);
@@ -148,7 +149,7 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
         const localCartItems = localStorageCartService.getCartItems();
         const existingItem = localCartItems.find((item: any) => item.productId === product.productId);
         const currentQuantityInCart = existingItem ? existingItem.quantity : 0;
-        
+
         // Kiểm tra nếu số lượng trong giỏ + 1 vượt quá tồn kho
         if (product.stock !== undefined && currentQuantityInCart + 1 > product.stock) {
           toast.error(`Sản phẩm này chỉ còn ${product.stock} sản phẩm trong kho. Bạn đã có ${currentQuantityInCart} trong giỏ hàng`);
@@ -180,7 +181,6 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
 
         // Event đã được dispatch tự động trong localStorageCartService.addToCart()
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast.error(error.response?.data?.message || error.message || 'Đã xảy ra lỗi khi thêm vào giỏ hàng');
     } finally {
@@ -189,137 +189,136 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, onAddToCart, onAddTo
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
-      {/* Product Image */}
-      <div
-        className="relative aspect-[3/4] bg-gray-100 overflow-hidden cursor-pointer"
-        onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => setIsHovering(false)}
-        onClick={handleProductClick}
-      >
-        {product.images && product.images.length > 0 ? (
-          <div className="image-slide-container">
-            {product.images.map((image, index) => {
-              const imageUrl = typeof image === 'string' ? image : image.imageUrl;
-              return (
-                <img
-                  key={index}
-                  src={getImageUrl(imageUrl)}
-                  alt={product.productName}
-                  className={`image-slide-item object-cover ${
-                    index === currentImageIndex ? 'active' : index < currentImageIndex ? 'prev' : 'next'
-                  }`}
-                  onError={(e) => {
-                    // Thay thế bằng placeholder khi ảnh lỗi
-                    e.currentTarget.src = '/placeholder-image.svg';
-                  }}
-                />
-              );
-            })}
-            {/* Hiển thị số thứ tự hình ảnh */}
-            {product.images.length > 1 && (
-              <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded z-10">
-                {currentImageIndex + 1}/{product.images.length}
-              </div>
-            )}
-          </div>
-        ) : product.imageUrl ? (
-          <img
-            src={getImageUrl(product.imageUrl)}
-            alt={product.productName}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              // Thay thế bằng placeholder khi ảnh lỗi
-              e.currentTarget.src = '/placeholder-image.svg';
-            }}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-200">
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-2 bg-gray-300 rounded-full flex items-center justify-center">
-                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <span className="text-gray-400 text-sm">Không có ảnh</span>
+    <div className="group h-full">
+      <div className="delay-150 ease-in-out group-hover:-translate-y-2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200 h-full">
+        {/* Product Image */}
+        <div
+          className="relative aspect-[3/4] bg-gray-100 overflow-hidden cursor-pointer"
+          onMouseEnter={() => setIsHovering(true)}
+          onMouseLeave={() => setIsHovering(false)}
+          onClick={handleProductClick}
+        >
+          {product.images && product.images.length > 0 ? (
+            <div className="image-slide-container">
+              {product.images.map((image, index) => {
+                const imageUrl = typeof image === 'string' ? image : image.imageUrl;
+                return (
+                  <img
+                    key={index}
+                    src={getImageUrl(imageUrl)}
+                    alt={product.productName}
+                    className={`image-slide-item object-cover ${index === currentImageIndex ? 'active' : index < currentImageIndex ? 'prev' : 'next'
+                      }`}
+                    onError={(e) => {
+                      // Thay thế bằng placeholder khi ảnh lỗi
+                      e.currentTarget.src = '/placeholder-image.svg';
+                    }}
+                  />
+                );
+              })}
+              {/* Hiển thị số thứ tự hình ảnh */}
+              {product.images.length > 1 && (
+                <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded z-10">
+                  {currentImageIndex + 1}/{product.images.length}
+                </div>
+              )}
             </div>
-          </div>
-        )}
-
-        {/* Discount Badge */}
-        {product.discount && (
-          <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-            -{product.discount}%
-          </div>
-        )}
-
-        {/* Wishlist Button */}
-        <button
-          onClick={onAddToWishlist}
-          className="absolute top-2 right-2 w-8 h-8 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
-        >
-          <Heart className="w-4 h-4 text-gray-600 hover:text-red-500" />
-        </button>
-      </div>
-
-      {/* Product Info */}
-      <div className="p-4">
-        {/* Category */}
-        <div className="flex items-center justify-between mb-1">
-          <div className="text-xs text-gray-500 uppercase font-medium h-8 line-clamp-2">{product.category || 'Không phân loại'}</div>
-          {product.categoryCount && product.categoryCount > 1 && (
-            <div className="text-xs text-blue-600 font-medium">+{product.categoryCount - 1}</div>
-          )}
-        </div>
-
-        {/* Product Name */}
-        <div className="mb-1 h-12 text-sm overflow-hidden font-normal text-lower">
-          <h3
-            className="text-sm font-semibold text-gray-900  line-clamp-2 hover:text-blue-600 transition-colors cursor-pointer"
-            onClick={handleProductClick}
-            title={product.productName}
-          >
-            {product.productName}
-          </h3>
-        </div>
-
-        {/* Price */}
-        <div className="flex items-center gap-2 mb-3 h-5">
-          {product.discount ? (
-            <>
-              <span className="text-lg font-bold text-red-600">
-                {formatDiscountPrice(product.price, product.discount)}
-              </span>
-              <span className="text-sm text-gray-500 line-through">{formatPrice(product.price)}</span>
-            </>
+          ) : product.imageUrl ? (
+            <img
+              src={getImageUrl(product.imageUrl)}
+              alt={product.productName}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                // Thay thế bằng placeholder khi ảnh lỗi
+                e.currentTarget.src = '/placeholder-image.svg';
+              }}
+            />
           ) : (
-            <span className="text-lg font-bold text-gray-900">{formatPrice(product.price)}</span>
+            <div className="w-full h-full flex items-center justify-center bg-gray-200">
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-2 bg-gray-300 rounded-full flex items-center justify-center">
+                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <span className="text-gray-400 text-sm">Không có ảnh</span>
+              </div>
+            </div>
           )}
+
+          {/* Discount Badge */}
+          {product.discount && (
+            <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+              -{product.discount}%
+            </div>
+          )}
+
+          {/* Wishlist Button */}
+          <button
+            onClick={onAddToWishlist}
+            className="absolute top-2 right-2 w-8 h-8 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
+          >
+            <Heart className="w-4 h-4 text-gray-600 hover:text-red-500" />
+          </button>
         </div>
 
-        {/* Add to Cart Button */}
-        <button
-          onClick={handleAddToCart}
-          disabled={isAddingToCart}
-          className={`w-full bg-white hover:bg-orange-500 text-black hover:text-white text-sm font-semibold py-2 px-2 rounded-2xl hover:rounded-3xl flex items-center justify-center transition-all duration-200 whitespace-nowrap ${
-            isAddingToCart ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
-        >
-          <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center mr-1 flex-shrink-0 ${
-              isAddingToCart ? 'bg-gray-400' : 'bg-primary'
-            }`}
-          >
-            {isAddingToCart ? (
-              <div className="w-4 h-4 border-2 mx-1 border-white border-t-transparent rounded-full animate-spin"></div>
-            ) : (
-              <ShoppingBag className="w-4 h-4 text-white" />
+        {/* Product Info */}
+        <div className="p-4">
+          {/* Category */}
+          <div className="flex items-center justify-between mb-1">
+            <div className="text-xs text-gray-500 uppercase font-medium h-8 line-clamp-2">{product.category || 'Không phân loại'}</div>
+            {product.categoryCount && product.categoryCount > 1 && (
+              <div className="text-xs text-blue-600 font-medium">+{product.categoryCount - 1}</div>
             )}
           </div>
-          <span className="inline-block">
-            {isAddingToCart ? 'ĐANG THÊM...' : 'THÊM VÀO GIỎ HÀNG'}
-          </span>
-        </button>
+
+          {/* Product Name */}
+          <div className="mb-1 h-12 text-sm overflow-hidden font-normal text-lower">
+            <h3
+              className="text-sm font-semibold text-gray-900  line-clamp-2 hover:text-blue-600 transition-colors cursor-pointer"
+              onClick={handleProductClick}
+              title={product.productName}
+            >
+              {product.productName}
+            </h3>
+          </div>
+
+          {/* Price */}
+          <div className="flex items-center gap-2 mb-3 h-5">
+            {product.discount ? (
+              <>
+                <span className="text-lg font-bold text-red-600">
+                  {formatDiscountPrice(product.price, product.discount)}
+                </span>
+                <span className="text-sm text-gray-500 line-through">{formatPrice(product.price)}</span>
+              </>
+            ) : (
+              <span className="text-lg font-bold text-gray-900">{formatPrice(product.price)}</span>
+            )}
+          </div>
+
+          {/* Add to Cart Button */}
+          <button
+            onClick={handleAddToCart}
+            disabled={isAddingToCart}
+            className={`w-full border rounded-xl border-orange-500 bg-[#FFF5F1] hover:bg-orange-500 text-black hover:text-white text-sm font-semibold py-2 px-2  hover:rounded-xl flex items-center justify-center transition-all duration-200 whitespace-nowrap ${isAddingToCart ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+          >
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center mr-1 flex-shrink-0 ${isAddingToCart ? 'bg-gray-400' : 'bg-primary'
+                }`}
+            >
+              {isAddingToCart ? (
+                <div className="w-4 h-4 border-2 mx-1 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <ShoppingBag className="w-4 h-4 text-white" />
+              )}
+            </div>
+            <span className="inline-block">
+              {isAddingToCart ? 'ĐANG THÊM...' : 'THÊM VÀO GIỎ HÀNG'}
+            </span>
+          </button>
+        </div>
       </div>
     </div>
   );

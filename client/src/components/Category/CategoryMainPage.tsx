@@ -32,6 +32,7 @@ const CategoryMainPage: React.FC = () => {
       } else {
         setCategories([]);
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       toast.error('Không thể tải danh mục sản phẩm');
       // fallback to empty list
@@ -87,7 +88,7 @@ const CategoryMainPage: React.FC = () => {
           >
             {/* Blue accent bar on hover */}
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
-            
+
             <div className="flex items-center justify-between">
               <span className="text-gray-700 text-sm font-medium group-hover:text-primary transition-colors duration-200 line-clamp-1">
                 {category.categoryName}
@@ -101,7 +102,7 @@ const CategoryMainPage: React.FC = () => {
       {/* See More Footer */}
       {categories.length > 12 && (
         <div className="bg-gray-50 border-t border-gray-100">
-          <div 
+          <div
             className="px-4 py-3 flex items-center gap-2 text-primary hover:text-primary-dark cursor-pointer transition-colors duration-200"
             onClick={() => navigate('/categories')}
           >

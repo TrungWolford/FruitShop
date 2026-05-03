@@ -41,12 +41,12 @@ const Home: React.FC = () => {
             onOpen={() => setActiveChat('ai')}
             onClose={() => setActiveChat(null)}
           />
-          <HumanSupport
+          {/* <HumanSupport
             className={` ${activeChat === 'ai' ? 'hidden' : ''}`}
             isOpen={activeChat === 'human'}
             onOpen={() => setActiveChat('human')}
             onClose={() => setActiveChat(null)}
-          />
+          /> */}
         </div>
         <ProductGrid
           title="Sản phẩm nổi bật"
