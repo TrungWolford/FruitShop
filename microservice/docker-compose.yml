@@ -1,0 +1,360 @@
+services:
+  postgres-db:
+    image: postgres:17-alpine
+    container_name: fruitshop-postgres-db
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres_db_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 5432 -U postgres -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - fruitshop-micro-network
+
+  discovery-server:
+    build:
+      context: ./discovery-server
+      dockerfile: Dockerfile
+    container_name: fruitshop-discovery-server
+    ports:
+      - "8761:8761"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_REGISTER_WITH_EUREKA: "false"
+      EUREKA_CLIENT_FETCH_REGISTRY: "false"
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8761/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - fruitshop-micro-network
+
+  flyway-account:
+    image: flyway/flyway:11-alpine
+    container_name: fruitshop-flyway-account
+    command:
+      - -url=jdbc:postgresql://postgres-db:5432/account_service
+      - -user=postgres
+      - -password=postgres
+      - -connectRetries=30
+      - -locations=filesystem:/flyway/sql
+      - migrate
+    volumes:
+      - ./account-service/src/main/resources/db/migration:/flyway/sql:ro
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - fruitshop-micro-network
+
+  account-service:
+    build:
+      context: ./account-service
+      dockerfile: Dockerfile
+    container_name: fruitshop-account-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/account_service
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      EUREKA_DEFAULT_ZONE: http://discovery-server:8761/eureka/
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8081/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      flyway-account:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    networks:
+      - fruitshop-micro-network
+
+  flyway-catalog:
+    image: flyway/flyway:11-alpine
+    container_name: fruitshop-flyway-catalog
+    command:
+      - -url=jdbc:postgresql://postgres-db:5432/catalog_service
+      - -user=postgres
+      - -password=postgres
+      - -connectRetries=30
+      - -locations=filesystem:/flyway/sql
+      - migrate
+    volumes:
+      - ./catalog-service/src/main/resources/db/migration:/flyway/sql:ro
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - fruitshop-micro-network
+
+  catalog-service:
+    build:
+      context: ./catalog-service
+      dockerfile: Dockerfile
+    container_name: fruitshop-catalog-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/catalog_service
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      EUREKA_DEFAULT_ZONE: http://discovery-server:8761/eureka/
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8082/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      flyway-catalog:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    networks:
+      - fruitshop-micro-network
+
+  flyway-cart:
+    image: flyway/flyway:11-alpine
+    container_name: fruitshop-flyway-cart
+    command:
+      - -url=jdbc:postgresql://postgres-db:5432/cart_service
+      - -user=postgres
+      - -password=postgres
+      - -connectRetries=30
+      - -locations=filesystem:/flyway/sql
+      - migrate
+    volumes:
+      - ./cart-service/src/main/resources/db/migration:/flyway/sql:ro
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - fruitshop-micro-network
+
+  cart-service:
+    build:
+      context: ./cart-service
+      dockerfile: Dockerfile
+    container_name: fruitshop-cart-service
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/cart_service
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      EUREKA_DEFAULT_ZONE: http://discovery-server:8761/eureka/
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8083/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      flyway-cart:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    networks:
+      - fruitshop-micro-network
+
+  flyway-order:
+    image: flyway/flyway:11-alpine
+    container_name: fruitshop-flyway-order
+    command:
+      - -url=jdbc:postgresql://postgres-db:5432/order_service
+      - -user=postgres
+      - -password=postgres
+      - -connectRetries=30
+      - -locations=filesystem:/flyway/sql
+      - migrate
+    volumes:
+      - ./order-service/src/main/resources/db/migration:/flyway/sql:ro
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - fruitshop-micro-network
+
+  order-service:
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile
+    container_name: fruitshop-order-service
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/order_service
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      EUREKA_DEFAULT_ZONE: http://discovery-server:8761/eureka/
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8084/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      flyway-order:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    networks:
+      - fruitshop-micro-network
+
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: fruitshop-payment-service
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8085
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/payment_service
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      EUREKA_DEFAULT_ZONE: http://discovery-server:8761/eureka/
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8085/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - fruitshop-micro-network
+
+  review-service:
+    build:
+      context: ./review-service
+      dockerfile: Dockerfile
+    container_name: fruitshop-review-service
+    ports:
+      - "8087:8087"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8087
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/review_service
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      EUREKA_DEFAULT_ZONE: http://discovery-server:8761/eureka/
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8087/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - fruitshop-micro-network
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: fruitshop-ai-service
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8086
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/ai_service
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      EUREKA_DEFAULT_ZONE: http://discovery-server:8761/eureka/
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8086/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - fruitshop-micro-network
+
+  apigateway-server:
+    build:
+      context: ./apigateway-server
+      dockerfile: Dockerfile
+    container_name: fruitshop-apigateway-server
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      account-service:
+        condition: service_healthy
+      catalog-service:
+        condition: service_healthy
+      cart-service:
+        condition: service_healthy
+      order-service:
+        condition: service_healthy
+      payment-service:
+        condition: service_healthy
+      review-service:
+        condition: service_healthy
+      ai-service:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - fruitshop-micro-network
+
+volumes:
+  postgres_db_data:
+
+networks:
+  fruitshop-micro-network:
+    driver: bridge
