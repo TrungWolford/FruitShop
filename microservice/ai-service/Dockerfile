@@ -7,7 +7,7 @@ COPY mvnw mvnw
 COPY mvnw.cmd mvnw.cmd
 COPY src src
 
-RUN mvn -Dmaven.test.skip=true clean package
+RUN mvn -Dmaven.test.skip=true -Dorg.slf4j.simpleLogger.defaultLogLevel=warn -DskipTests -Dmaven.wagon.http.retryHandler.count=5 -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 clean package
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app

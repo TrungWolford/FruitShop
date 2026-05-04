@@ -1,7 +1,6 @@
 package fruitshop.cart_service.service;
 
 import fruitshop.cart_service.entity.Cart;
-import fruitshop.cart_service.entity.CartItem;
 
 public interface CartService {
     Cart getOrCreateCart(String accountId);

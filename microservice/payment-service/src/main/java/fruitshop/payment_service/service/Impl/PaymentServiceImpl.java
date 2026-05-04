@@ -15,6 +15,8 @@ import fruitshop.payment_service.feign.dto.OrderSummaryDto;
 import fruitshop.payment_service.exception.ResourceNotFoundException;
 import fruitshop.payment_service.repository.PaymentRepository;
 import fruitshop.payment_service.service.PaymentService;
+import org.springframework.cloud.stream.function.StreamBridge;
+import fruitshop.payment_service.event.PaymentCompletedEvent;
 
 import java.util.Date;
 
@@ -25,6 +27,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final OrderClient orderClient;
+    private final StreamBridge streamBridge;
 
     @Override
     public Page<PaymentResponse> getAllPayment(Pageable pageable) {
@@ -100,7 +103,21 @@ public class PaymentServiceImpl implements PaymentService {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment not found with ID: " + paymentId));
         payment.setPaymentStatus(status);
-        return PaymentResponse.fromEntity(paymentRepository.save(payment));
+        Payment savedPayment = paymentRepository.save(payment);
+
+        if (status == 1) { // Assuming 1 = COMPLETED
+            PaymentCompletedEvent event = new PaymentCompletedEvent(
+                    savedPayment.getPaymentId(),
+                    savedPayment.getOrderId(),
+                    savedPayment.getAmount(),
+                    savedPayment.getTransactionId(),
+                    new Date()
+            );
+            streamBridge.send("paymentCompletedSupplier-out-0", event);
+            log.info("Published PaymentCompletedEvent for paymentId: {}", savedPayment.getPaymentId());
+        }
+
+        return PaymentResponse.fromEntity(savedPayment);
     }
 
     @Override

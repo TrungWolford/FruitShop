@@ -27,4 +27,12 @@ public class RefundController {
     ) {
         return ResponseEntity.ok(refundService.create(orderId, orderItemId, refund));
     }
+
+    @PutMapping("/{refundId}/approve")
+    public ResponseEntity<Refund> approveRefund(
+            @PathVariable String orderId,
+            @PathVariable String refundId,
+            @RequestParam String approverName) {
+        return ResponseEntity.ok(refundService.approveRefund(orderId, refundId, approverName));
+    }
 }

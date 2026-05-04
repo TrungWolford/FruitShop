@@ -15,8 +15,11 @@ import fruitshop.review_service.dto.response.Rating.RatingDetailResponse;
 import fruitshop.review_service.entity.Rating;
 import fruitshop.review_service.repository.RatingRepository;
 import fruitshop.review_service.service.RatingService;
+import fruitshop.review_service.event.RatingCreatedEvent;
+import fruitshop.review_service.event.RatingUpdatedEvent;
 import fruitshop.review_service.exception.DownstreamServiceException;
 import fruitshop.review_service.exception.ResourceNotFoundException;
+import org.springframework.cloud.stream.function.StreamBridge;
 
 import java.util.List;
 
@@ -31,6 +34,9 @@ public class RatingServiceImpl implements RatingService {
 
     @Autowired
     private ProductClient productClient;
+
+    @Autowired
+    private StreamBridge streamBridge;
 
     @Override
     public Page<RatingResponse> getAllRating(Pageable pageable) {
@@ -141,6 +147,16 @@ public class RatingServiceImpl implements RatingService {
             rating.setStatus(1);
 
             Rating savedRating = ratingRepository.save(rating);
+            
+            // Publish Event
+            RatingCreatedEvent event = new RatingCreatedEvent(
+                    savedRating.getRatingId(),
+                    savedRating.getProductId(),
+                    savedRating.getRatingStar(),
+                    savedRating.getComment()
+            );
+            streamBridge.send("ratingCreatedSupplier-out-0", event);
+            
             return RatingResponse.fromEntity(savedRating);
         } catch (RuntimeException e) {
             throw e;
@@ -165,6 +181,14 @@ public class RatingServiceImpl implements RatingService {
         rating.setStatus(request.getStatus());
 
         Rating updatedRating = ratingRepository.save(rating);
+
+        streamBridge.send("ratingUpdatedSupplier-out-0", new RatingUpdatedEvent(
+                updatedRating.getRatingId(),
+                updatedRating.getProductId(),
+                updatedRating.getRatingStar(),
+                updatedRating.getStatus()
+        ));
+
         return RatingResponse.fromEntity(updatedRating);
     }
 
@@ -176,6 +200,14 @@ public class RatingServiceImpl implements RatingService {
         rating.setStatus(rating.getStatus() == 1 ? 0 : 1);
 
         Rating updatedRating = ratingRepository.save(rating);
+
+        streamBridge.send("ratingUpdatedSupplier-out-0", new RatingUpdatedEvent(
+                updatedRating.getRatingId(),
+                updatedRating.getProductId(),
+                updatedRating.getRatingStar(),
+                updatedRating.getStatus()
+        ));
+
         return RatingResponse.fromEntity(updatedRating);
     }
 

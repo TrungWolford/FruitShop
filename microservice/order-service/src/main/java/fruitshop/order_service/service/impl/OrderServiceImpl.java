@@ -14,6 +14,9 @@ import fruitshop.order_service.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cloud.stream.function.StreamBridge;
+import fruitshop.order_service.event.OrderCreatedEvent;
+import java.util.stream.Collectors;
 
 import java.util.List;
 
@@ -24,6 +27,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderItemRepository orderItemRepository;
     private final AccountClient accountClient;
     private final ProductClient productClient;
+    private final StreamBridge streamBridge;
 
     @Override
     public List<Order> findByAccountId(String accountId) {
@@ -39,7 +43,22 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Order create(Order order) {
         ensureAccountExists(order.getAccountId());
-        return orderRepository.save(order);
+        order.setStatus(1); // Set initial status (PENDING)
+        Order savedOrder = orderRepository.save(order);
+
+        List<OrderCreatedEvent.OrderItemDto> itemDtos = (savedOrder.getOrderItems() == null) ? List.of() :
+                savedOrder.getOrderItems().stream().map(i -> new OrderCreatedEvent.OrderItemDto(i.getProductId(), i.getQuantity(), i.getUnitPrice())).collect(Collectors.toList());
+
+        OrderCreatedEvent event = new OrderCreatedEvent(
+                savedOrder.getOrderId(),
+                savedOrder.getAccountId(),
+                savedOrder.getTotalAmount(),
+                itemDtos,
+                savedOrder.getCreatedAt()
+        );
+        streamBridge.send("orderCreatedSupplier-out-0", event);
+
+        return savedOrder;
     }
 
     @Override

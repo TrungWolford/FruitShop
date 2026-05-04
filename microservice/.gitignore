@@ -1,0 +1,60 @@
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# IDEs
+.idea
+*.iws
+*.iml
+*.ipr
+.vscode/
+.settings/
+.classpath
+.project
+
+# Logs
+*.log
+
+# Temp files
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Environment variables & Secrets
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+*.jks
+*.p12
+
+# Bỏ qua các file cấu hình chứa thông tin nhạy cảm
+# Bạn có thể bỏ comment dòng dưới nếu muốn ignore TOÀN BỘ file properties
+# *.properties
+# Hoặc chỉ ignore các file properties phân quyền (dev, prod, secret, ...)
+application-dev.properties
+application-prod.properties
+application-secret.properties
+application.properties
+*secret*.yaml
+*secret*.yml

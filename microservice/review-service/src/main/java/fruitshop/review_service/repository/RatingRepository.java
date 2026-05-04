@@ -13,6 +13,7 @@ import java.util.Optional;
 public interface RatingRepository extends JpaRepository<Rating, String> {
     Page<Rating> findAll(Pageable pageable);
     Page<Rating> findByAccountId(String accountId, Pageable pageable);
+    List<Rating> findByAccountId(String accountId);
     Page<Rating> findByProductId(String productId, Pageable pageable);
     Page<Rating> findByProductIdAndStatus(String productId, Integer status, Pageable pageable);
     List<Rating> findByAccountIdAndProductId(String accountId, String productId);

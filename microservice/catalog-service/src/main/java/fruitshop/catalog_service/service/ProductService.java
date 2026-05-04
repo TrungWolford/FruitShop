@@ -14,4 +14,6 @@ public interface ProductService {
     Product update(String productId, Product product, List<String> categoryIds);
 
     void delete(String productId);
+    
+    void updateAverageRatingFromReviewService(String productId);
 }
