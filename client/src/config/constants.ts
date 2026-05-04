@@ -8,7 +8,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL ||
   (import.meta.env.PROD ? PRODUCTION_API_URL : DEV_API_URL);
 
 export const CONFIG = {
-  API_GATEWAY: BASE_URL + "/api",
+  API_GATEWAY: BASE_URL,
   WS_ENDPOINT: import.meta.env.VITE_WS_URL || BASE_URL.replace('https', 'wss').replace('http', 'ws') + "/ws",
 };
 
@@ -16,73 +16,73 @@ export const API_URL = import.meta.env.VITE_API_URL || BASE_URL;
 
 export const API = {
   // Accounts - Theo AccountController.java
-  GET_ALL_ACCOUNTS: '/account', // GET /api/account?page=0&size=10
-  GET_ACCOUNT_BY_ID: (accountId: string) => `/account/${accountId}`, // GET /api/account/{accountId}
-  CREATE_ACCOUNT: '/account', // POST /api/account
-  UPDATE_ACCOUNT: (accountId: string) => `/account/${accountId}`, // PUT /api/account/{accountId}
-  DELETE_ACCOUNT: (accountId: string) => `/account/${accountId}`, // DELETE /api/account/{accountId}
-  GET_ACCOUNTS_BY_STATUS: (status: number) => `/account/status/${status}`, // GET /api/account/status/{status}?page=0&size=10
-  GET_ACCOUNT_BY_PHONE: (accountPhone: string) => `/account/phone/${accountPhone}`, // GET /api/account/phone/{accountPhone}
-  SEARCH_ACCOUNTS: '/account/search', // GET /api/account/search?accountName=xxx&page=0&size=10
-  ACCOUNT_LOGIN: '/account/login', // POST /api/account/login
+  GET_ALL_ACCOUNTS: '/account-service/api/account', // GET /api/account?page=0&size=10
+  GET_ACCOUNT_BY_ID: (accountId: string) => `/account-service/api/account/${accountId}`, // GET /api/account/{accountId}
+  CREATE_ACCOUNT: '/account-service/api/account', // POST /api/account
+  UPDATE_ACCOUNT: (accountId: string) => `/account-service/api/account/${accountId}`, // PUT /api/account/{accountId}
+  DELETE_ACCOUNT: (accountId: string) => `/account-service/api/account/${accountId}`, // DELETE /api/account/{accountId}
+  GET_ACCOUNTS_BY_STATUS: (status: number) => `/account-service/api/account/status/${status}`, // GET /api/account/status/{status}?page=0&size=10
+  GET_ACCOUNT_BY_PHONE: (accountPhone: string) => `/account-service/api/account/phone/${accountPhone}`, // GET /api/account/phone/{accountPhone}
+  SEARCH_ACCOUNTS: '/account-service/api/account/search', // GET /api/account/search?accountName=xxx&page=0&size=10
+  ACCOUNT_LOGIN: '/account-service/api/account/login', // POST /api/account/login
 
   // Products - Theo ProductController.java
-  GET_ALL_PRODUCTS: '/product', // GET /api/product?page=0&size=10
-  GET_PRODUCT_BY_ID: (productId: string) => `/product/${productId}`, // GET /api/product/{productId}
-  CREATE_PRODUCT: '/product', // POST /api/product (Admin only)
-  UPDATE_PRODUCT: (productId: string) => `/product/${productId}`, // PUT /api/product/{productId} (Admin only)
-  DELETE_PRODUCT: (productId: string) => `/product/${productId}`, // DELETE /api/product/{productId} (Admin only)
-  FILTER_PRODUCTS: '/product/filter', // GET /api/product/filter?categoryId=xxx&status=1&minPrice=0&maxPrice=999999999&page=0&size=10
-  SEARCH_PRODUCTS: '/product/search', // GET /api/product/search?keywords=xxx&page=0&size=10
+  GET_ALL_PRODUCTS: '/catalog-service/api/catalog/products', // GET /api/catalog/products
+  GET_PRODUCT_BY_ID: (productId: string) => `/catalog-service/api/catalog/products/${productId}`, // GET /api/catalog/products/{productId}
+  CREATE_PRODUCT: '/catalog-service/api/catalog/products', // POST /api/catalog/products (Admin only)
+  UPDATE_PRODUCT: (productId: string) => `/catalog-service/api/catalog/products/${productId}`, // PUT /api/catalog/products/{productId} (Admin only)
+  DELETE_PRODUCT: (productId: string) => `/catalog-service/api/catalog/products/${productId}`, // DELETE /api/catalog/products/{productId} (Admin only)
+  FILTER_PRODUCTS: '/catalog-service/api/catalog/products/filter', // GET /api/catalog/products/filter?...
+  SEARCH_PRODUCTS: '/catalog-service/api/catalog/products/search', // GET /api/catalog/products/search?...
 
   // File Upload - Cloudinary
-  UPLOAD_IMAGE: '/upload/image', // POST /api/upload/image
-  UPLOAD_FILE: '/upload/file', // POST /api/upload/file  
-  GET_FILE_INFO: '/upload/info', // GET /api/upload/info?publicId=xxx
-  DELETE_FILE: '/upload/delete', // DELETE /api/upload/delete/{publicId}
-  OPTIMIZE_URL: '/upload/optimize', // POST /api/upload/optimize
+  UPLOAD_IMAGE: '/catalog-service/api/upload/image', // POST /api/upload/image
+  UPLOAD_FILE: '/catalog-service/api/upload/file', // POST /api/upload/file  
+  GET_FILE_INFO: '/catalog-service/api/upload/info', // GET /api/upload/info?publicId=xxx
+  DELETE_FILE: '/catalog-service/api/upload/delete', // DELETE /api/upload/delete/{publicId}
+  OPTIMIZE_URL: '/catalog-service/api/upload/optimize', // POST /api/upload/optimize
 
   // Categories - Theo CategoryController.java
-  GET_ALL_CATEGORIES: '/category', // GET /api/category?page=0&size=10
-  GET_CATEGORY_BY_ID: (categoryId: string) => `/category/${categoryId}`, // GET /api/category/{categoryId}
-  CREATE_CATEGORY: '/category', // POST /api/category (Admin only)
-  UPDATE_CATEGORY: (categoryId: string) => `/category/${categoryId}`, // PUT /api/category/{categoryId} (Admin only)
-  DELETE_CATEGORY: (categoryId: string) => `/category/${categoryId}`, // DELETE /api/category/{categoryId} (Admin only)
-  SEARCH_CATEGORIES: '/category/search', // GET /api/category/search?keyword=xxx&page=0&size=10
+  GET_ALL_CATEGORIES: '/catalog-service/api/catalog/categories', // GET /api/catalog/categories
+  GET_CATEGORY_BY_ID: (categoryId: string) => `/catalog-service/api/catalog/categories/${categoryId}`, // GET /api/catalog/categories/{categoryId}
+  CREATE_CATEGORY: '/catalog-service/api/catalog/categories', // POST /api/catalog/categories (Admin only)
+  UPDATE_CATEGORY: (categoryId: string) => `/catalog-service/api/catalog/categories/${categoryId}`, // PUT /api/catalog/categories/{categoryId} (Admin only)
+  DELETE_CATEGORY: (categoryId: string) => `/catalog-service/api/catalog/categories/${categoryId}`, // DELETE /api/catalog/categories/{categoryId} (Admin only)
+  SEARCH_CATEGORIES: '/catalog-service/api/catalog/categories/search', // GET /api/catalog/categories/search?keyword=...
 
   // Orders - Theo OrderController.java
-  GET_ALL_ORDERS: '/order', // GET /api/order (Admin only)
-  GET_ORDER_BY_ID: (orderId: string) => `/order/${orderId}`, // GET /api/order/{orderId}
-  CREATE_ORDER: '/order', // POST /api/order (Customer only)
-  UPDATE_ORDER: (orderId: string) => `/order/${orderId}`, // PUT /api/order/{orderId} (Admin only)
-  DELETE_ORDER: (orderId: string) => `/order/${orderId}`, // DELETE /api/order/{orderId} (Admin only)
-  GET_ORDERS_BY_ACCOUNT: (accountId: string) => `/order/account/${accountId}`, // GET /api/order/account/{accountId} (Customer only)
-  CANCEL_ORDER: (orderId: string) => `/order/${orderId}/cancel`, // PUT /api/order/{orderId}/cancel (Customer only)
-  COMPLETE_ORDER: (orderId: string) => `/order/${orderId}/complete`, // PUT /api/order/{orderId}/complete (Customer confirms delivery)
-  CONFIRM_ORDER: (orderId: string) => `/order/${orderId}/confirm`, // PUT /api/order/{orderId}/confirm (Admin confirms order)
-  START_DELIVERY: (orderId: string) => `/order/${orderId}/start-delivery`, // PUT /api/order/{orderId}/start-delivery (Admin starts delivery)
-  UPDATE_ORDER_STATUS: (orderId: string) => `/order/${orderId}/update-status`, // PUT /api/order/{orderId}/update-status?status=xxx (Admin only)
-  GET_ORDER_DETAILS: (orderId: string) => `/order/${orderId}/details`, // GET /api/order/{orderId}/details
-  FILTER_ORDERS_BY_STATUS: '/order/status', // GET /api/order/status?status=xxx&page=0&size=10 (Admin only)
-  FILTER_ORDERS_BY_DATE: '/order/date-range', // GET /api/order/date-range?startDate=xxx&endDate=xxx&page=0&size=10 (Admin only)
-  SEARCH_ORDERS: '/order/search', // GET /api/order/search?keyword=xxx&page=0&size=10 (Admin only)
-  FILTER_ORDERS: '/order/filter', // GET /api/order/filter?status=xxx&page=0&size=10 (Admin only)
-  SEARCH_AND_FILTER_ORDERS: '/order/search-filter', // GET /api/order/search-filter?keyword=xxx&status=xxx&page=0&size=10 (Admin only)
+  GET_ALL_ORDERS: '/order-service/api/order', // GET /api/order (Admin only)
+  GET_ORDER_BY_ID: (orderId: string) => `/order-service/api/order/${orderId}`, // GET /api/order/{orderId}
+  CREATE_ORDER: '/order-service/api/order', // POST /api/order (Customer only)
+  UPDATE_ORDER: (orderId: string) => `/order-service/api/order/${orderId}`, // PUT /api/order/{orderId} (Admin only)
+  DELETE_ORDER: (orderId: string) => `/order-service/api/order/${orderId}`, // DELETE /api/order/{orderId} (Admin only)
+  GET_ORDERS_BY_ACCOUNT: (accountId: string) => `/order-service/api/order/account/${accountId}`, // GET /api/order/account/{accountId} (Customer only)
+  CANCEL_ORDER: (orderId: string) => `/order-service/api/order/${orderId}/cancel`, // PUT /api/order/{orderId}/cancel (Customer only)
+  COMPLETE_ORDER: (orderId: string) => `/order-service/api/order/${orderId}/complete`, // PUT /api/order/{orderId}/complete (Customer confirms delivery)
+  CONFIRM_ORDER: (orderId: string) => `/order-service/api/order/${orderId}/confirm`, // PUT /api/order/{orderId}/confirm (Admin confirms order)
+  START_DELIVERY: (orderId: string) => `/order-service/api/order/${orderId}/start-delivery`, // PUT /api/order/{orderId}/start-delivery (Admin starts delivery)
+  UPDATE_ORDER_STATUS: (orderId: string) => `/order-service/api/order/${orderId}/update-status`, // PUT /api/order/{orderId}/update-status?status=xxx (Admin only)
+  GET_ORDER_DETAILS: (orderId: string) => `/order-service/api/order/${orderId}/details`, // GET /api/order/{orderId}/details
+  FILTER_ORDERS_BY_STATUS: '/order-service/api/order/status', // GET /api/order/status?status=xxx&page=0&size=10 (Admin only)
+  FILTER_ORDERS_BY_DATE: '/order-service/api/order/date-range', // GET /api/order/date-range?startDate=xxx&endDate=xxx&page=0&size=10 (Admin only)
+  SEARCH_ORDERS: '/order-service/api/order/search', // GET /api/order/search?keyword=xxx&page=0&size=10 (Admin only)
+  FILTER_ORDERS: '/order-service/api/order/filter', // GET /api/order/filter?status=xxx&page=0&size=10 (Admin only)
+  SEARCH_AND_FILTER_ORDERS: '/order-service/api/order/search-filter', // GET /api/order/search-filter?keyword=xxx&status=xxx&page=0&size=10 (Admin only)
 
   // Cart - Theo CartController.java
-  GET_ALL_CARTS: '/cart', // GET /api/cart?page=0&size=10 (Admin only)
-  GET_CART_BY_ID: (cartId: string) => `/cart/${cartId}`, // GET /api/cart/{cartId} (Admin only)
-  GET_CART_BY_ACCOUNT: (accountId: string) => `/cart/account/${accountId}`, // GET /api/cart/account/{accountId}
-  CREATE_CART: (accountId: string) => `/cart/account/${accountId}`, // POST /api/cart/account/{accountId}
-  DELETE_CART: (cartId: string) => `/cart/${cartId}`, // DELETE /api/cart/{cartId}
-  ADD_ITEM_TO_CART: (accountId: string) => `/cart/account/${accountId}/items`, // POST /api/cart/account/{accountId}/items
-  UPDATE_CART_ITEM: (cartItemId: string) => `/cart/items/${cartItemId}`, // PUT /api/cart/items/{cartItemId}
-  REMOVE_ITEM_FROM_CART: (cartItemId: string) => `/cart/items/${cartItemId}`, // DELETE /api/cart/items/{cartItemId}
-  GET_CART_ITEMS: (accountId: string) => `/cart/account/${accountId}/items`, // GET /api/cart/account/{accountId}/items
-  CLEAR_CART: (accountId: string) => `/cart/account/${accountId}/clear`, // DELETE /api/cart/account/{accountId}/clear
-  DISABLE_CART: (cartId: string) => `/cart/${cartId}/disable`, // PUT /api/cart/{cartId}/disable (Admin only)
-  ENABLE_CART: (cartId: string) => `/cart/${cartId}/enable`, // PUT /api/cart/{cartId}/enable (Admin only)
-  UPDATE_CART_STATUS: (cartId: string, status: number) => `/cart/${cartId}/status/${status}`, // PUT /api/cart/{cartId}/status/{status} (Admin only)
+  GET_ALL_CARTS: '/cart-service/api/cart', // GET /api/cart?page=0&size=10 (Admin only)
+  GET_CART_BY_ID: (cartId: string) => `/cart-service/api/cart/${cartId}`, // GET /api/cart/{cartId} (Admin only)
+  GET_CART_BY_ACCOUNT: (accountId: string) => `/cart-service/api/cart/account/${accountId}`, // GET /api/cart/account/{accountId}
+  CREATE_CART: (accountId: string) => `/cart-service/api/cart/account/${accountId}`, // POST /api/cart/account/{accountId}
+  DELETE_CART: (cartId: string) => `/cart-service/api/cart/${cartId}`, // DELETE /api/cart/{cartId}
+  ADD_ITEM_TO_CART: (accountId: string) => `/cart-service/api/cart/account/${accountId}/items`, // POST /api/cart/account/{accountId}/items
+  UPDATE_CART_ITEM: (cartItemId: string) => `/cart-service/api/cart/items/${cartItemId}`, // PUT /api/cart/items/{cartItemId}
+  REMOVE_ITEM_FROM_CART: (cartItemId: string) => `/cart-service/api/cart/items/${cartItemId}`, // DELETE /api/cart/items/{cartItemId}
+  GET_CART_ITEMS: (accountId: string) => `/cart-service/api/cart/account/${accountId}/items`, // GET /api/cart/account/{accountId}/items
+  CLEAR_CART: (accountId: string) => `/cart-service/api/cart/account/${accountId}/clear`, // DELETE /api/cart/account/{accountId}/clear
+  DISABLE_CART: (cartId: string) => `/cart-service/api/cart/${cartId}/disable`, // PUT /api/cart/{cartId}/disable (Admin only)
+  ENABLE_CART: (cartId: string) => `/cart-service/api/cart/${cartId}/enable`, // PUT /api/cart/{cartId}/enable (Admin only)
+  UPDATE_CART_STATUS: (cartId: string, status: number) => `/cart-service/api/cart/${cartId}/status/${status}`, // PUT /api/cart/{cartId}/status/{status} (Admin only)
 
   // Roles - Theo RoleController.java
   GET_ALL_ROLES: '/role', // GET /api/role

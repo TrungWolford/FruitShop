@@ -30,7 +30,9 @@ export const adminLoginAsync = createAsyncThunk<LoginResponse, LoginCredentials>
       // Kiểm tra xem user có role ADMIN không
       if (response.success && response.user) {
         const userRoles = response.user.roles || []
-        const isAdmin = userRoles.some(role => role.roleName === 'ADMIN')
+        const isAdmin = userRoles.some(
+          role => role.roleName === 'ADMIN' || role.roleName === 'ROLE_ADMIN'
+        )
         
         if (!isAdmin) {
           // Xóa data đã lưu vì không phải admin

@@ -35,7 +35,9 @@ const AdminLogin: React.FC = () => {
     // If already authenticated as admin, redirect to dashboard
     if (isAuthenticated && user) {
       const userRoles = user.roles || []
-      const isAdmin = userRoles.some(role => role.roleName === 'ADMIN')
+      const isAdmin = userRoles.some(
+        role => role.roleName === 'ADMIN' || role.roleName === 'ROLE_ADMIN'
+      )
       
       if (isAdmin) {
         navigate('/admin/dashboard')
@@ -69,7 +71,9 @@ const AdminLogin: React.FC = () => {
       const result = await dispatch(adminLoginAsync({ email, password })).unwrap()
       if (result.success && result.user) {
         const userRoles = result.user.roles || []
-        const isAdmin = userRoles.some(role => role.roleName === 'ADMIN')
+        const isAdmin = userRoles.some(
+          role => role.roleName === 'ADMIN' || role.roleName === 'ROLE_ADMIN'
+        )
         if (isAdmin) {
           navigate('/admin/dashboard', { replace: true })
         } else {

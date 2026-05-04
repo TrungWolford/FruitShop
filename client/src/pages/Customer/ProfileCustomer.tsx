@@ -377,7 +377,9 @@ const ProfileCustomer: React.FC = () => {
                             <Shield className="w-4 h-4" />
                             <span className="font-medium">Vai trò:</span>
                             <span className="bg-blue-100 px-2 py-1 text-sm">
-                              {user.roles?.some((role) => role.roleName === 'ADMIN')
+                              {user.roles?.some(
+                                (role) => role.roleName === 'ADMIN' || role.roleName === 'ROLE_ADMIN'
+                              )
                                 ? 'Quản trị viên'
                                 : 'Khách hàng'}
                             </span>

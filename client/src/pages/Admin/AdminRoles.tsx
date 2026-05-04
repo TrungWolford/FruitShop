@@ -50,7 +50,9 @@ const AdminRoles: React.FC = () => {
     }
 
     const userRoles = user.roles || [];
-    const isAdmin = userRoles.some((role) => role.roleName === 'ADMIN');
+    const isAdmin = userRoles.some(
+      (role) => role.roleName === 'ADMIN' || role.roleName === 'ROLE_ADMIN'
+    );
 
     if (!isAdmin) {
       navigate('/admin');

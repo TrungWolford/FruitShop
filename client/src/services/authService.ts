@@ -3,6 +3,7 @@ import type { AxiosResponse } from 'axios';
 import { API } from '../config/constants';
 import type { Account } from '../types/account';
 import { mockLogin } from '../apis/mockData';
+import { STORAGE_KEYS } from '../config/constants';
 
 export interface LoginCredentials {
   email: string
@@ -13,6 +14,14 @@ export interface LoginResponse {
   success: boolean
   user?: Account
   message?: string
+}
+
+interface LoginApiResponse {
+  accessToken: string
+  refreshToken: string
+  tokenType: string
+  expiresIn: number
+  account: Account
 }
 
 // Real API login
@@ -47,20 +56,24 @@ export const authService = {
     // Dùng real API
     console.log('🌐 Using real API authentication');
     try {
-      const response: AxiosResponse<Account> = await axiosInstance.post(API.ACCOUNT_LOGIN, {
+      const response: AxiosResponse<LoginApiResponse> = await axiosInstance.post(API.ACCOUNT_LOGIN, {
         accountPhone: credentials.email, // Using email field as phone
         password: credentials.password
       });
 
       // Save user data to localStorage
-      if (response.data) {
-        localStorage.setItem('user', JSON.stringify(response.data))
+      if (response.data?.account) {
+        const { account, accessToken, refreshToken } = response.data;
+        localStorage.setItem('user', JSON.stringify(account))
         localStorage.setItem('isAuthenticated', 'true')
+        localStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(account))
+        localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken)
+        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken)
       }
 
       return {
         success: true,
-        user: response.data
+        user: response.data.account
       };
     } catch (error: any) {
       // Parse error message from backend

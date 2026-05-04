@@ -440,7 +440,9 @@ const TopNavigation: React.FC = () => {
                 </DropdownMenuItem>
 
                 {/* Admin Panel - Only show for admin users */}
-                {displayUser.roles && displayUser.roles.some((role) => role.roleName === 'ADMIN') && (
+                {displayUser.roles && displayUser.roles.some(
+                  (role) => role.roleName === 'ADMIN' || role.roleName === 'ROLE_ADMIN'
+                ) && (
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem

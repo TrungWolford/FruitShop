@@ -17,7 +17,9 @@ const AdminAuthInitializer: React.FC = () => {
         
         // Kiểm tra xem user có role ADMIN không
         const userRoles = adminUser.roles || []
-        const isAdmin = userRoles.some(role => role.roleName === 'ADMIN')
+        const isAdmin = userRoles.some(
+          role => role.roleName === 'ADMIN' || role.roleName === 'ROLE_ADMIN'
+        )
         
         if (isAdmin) {
           dispatch(loadAdminUserFromStorage(adminUser))
@@ -31,6 +33,7 @@ const AdminAuthInitializer: React.FC = () => {
         // Không có admin user trong storage, đánh dấu là đã initialized
         dispatch(setAdminInitialized())
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       // Silent error handling
       dispatch(setAdminInitialized())

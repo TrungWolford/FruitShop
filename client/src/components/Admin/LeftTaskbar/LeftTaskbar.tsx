@@ -13,7 +13,8 @@ import {
   Star,
   RefreshCcw,
   CreditCard,
-  MessageSquare
+  MessageSquare,
+  Bot
 } from 'lucide-react'
 
 interface LeftTaskbar {
@@ -75,6 +76,11 @@ const LeftTaskbar: React.FC<LeftTaskbar> = ({ className }) => {
       icon: MessageSquare,
       label: 'Tin nhắn',
       path: '/admin/messages'
+    },
+    {
+      icon: Bot,
+      label: 'FruitBot',
+      path: '/admin/fruitbot'
     },
     {
       icon: Users,

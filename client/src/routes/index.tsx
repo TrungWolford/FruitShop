@@ -19,6 +19,7 @@ import AdminRefund from '../pages/Admin/AdminRefund';
 import AdminShipping from '../pages/Admin/AdminShipping';
 import AdminRating from '../pages/Admin/AdminRating';
 import AdminMessages from '../pages/Admin/AdminMessages';
+import AIConfigPage from '../pages/Admin/AIConfigPage';
 import CheckoutPage from '../pages/Checkout/CheckoutPage';
 import ProductDetail from '../pages/ProductDetail/ProductDetail';
 import PaymentPage from '../pages/Payment/PaymentPage';
@@ -93,6 +94,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/admin/roles" element={<AdminRoles />} />
       <Route path="/admin/categories" element={<AdminCategory />} />
       <Route path="/admin/messages" element={<AdminMessages />} />
+      <Route path="/admin/fruitbot" element={<AIConfigPage />} />
 
       {/* Redirect old auth routes to home */}
       <Route path="/auth/login" element={<Navigate to="/" replace />} />
