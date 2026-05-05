@@ -1,4 +1,22 @@
 services:
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: fruitshop-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - fruitshop-micro-network
+
   postgres-db:
     image: postgres:17-alpine
     container_name: fruitshop-postgres-db
@@ -82,6 +100,8 @@ services:
       - "8081:8081"
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/account_service
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
@@ -130,6 +150,8 @@ services:
       - "8082:8082"
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/catalog_service
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
@@ -181,6 +203,8 @@ services:
       - "8083:8083"
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/cart_service
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
@@ -229,6 +253,8 @@ services:
       - "8084:8084"
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/order_service
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
@@ -259,6 +285,8 @@ services:
       - "8085:8085"
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
       SERVER_PORT: 8085
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/payment_service
       SPRING_DATASOURCE_USERNAME: postgres
@@ -290,6 +318,8 @@ services:
       - "8087:8087"
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
       SERVER_PORT: 8087
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/review_service
       SPRING_DATASOURCE_USERNAME: postgres
@@ -321,6 +351,8 @@ services:
       - "8086:8086"
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
       SERVER_PORT: 8086
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/ai_service
       SPRING_DATASOURCE_USERNAME: postgres
@@ -343,6 +375,35 @@ services:
       discovery-server:
         condition: service_healthy
       redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - fruitshop-micro-network
+
+  cloudinary-service:
+    build:
+      context: ./cloudinary-service
+      dockerfile: Dockerfile
+    container_name: fruitshop-cloudinary-service
+    ports:
+      - "8088:8088"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SERVER_PORT: 8088
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      EUREKA_DEFAULT_ZONE: http://discovery-server:8761/eureka/
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8088/api/upload/test"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      discovery-server:
         condition: service_healthy
     restart: unless-stopped
     networks:
@@ -375,6 +436,8 @@ services:
       review-service:
         condition: service_healthy
       ai-service:
+        condition: service_healthy
+      cloudinary-service:
         condition: service_healthy
     restart: unless-stopped
     networks:

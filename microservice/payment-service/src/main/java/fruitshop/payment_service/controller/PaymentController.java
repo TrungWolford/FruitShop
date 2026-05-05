@@ -43,6 +43,12 @@ public class PaymentController {
         return ResponseEntity.ok(payment);
     }
 
+    @GetMapping("/transaction/{transactionId}")
+    public ResponseEntity<PaymentResponse> getPaymentByTransactionId(@PathVariable String transactionId) {
+        PaymentResponse payment = paymentService.getPaymentByTransactionId(transactionId);
+        return ResponseEntity.ok(payment);
+    }
+
     @PostMapping
     public ResponseEntity<PaymentResponse> createPayment(@RequestBody PaymentRequest request) {
         PaymentResponse payment = paymentService.createPayment(request);

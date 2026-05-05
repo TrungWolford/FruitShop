@@ -1,17 +1,23 @@
 package fruitshop.catalog_service.service;
 
 import fruitshop.catalog_service.entity.Category;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
 public interface CategoryService {
-  List<Category> findAll();
+    List<Category> findAll();
 
-  Category findById(String categoryId);
+    Page<Category> findAll(Pageable pageable);
 
-  Category create(Category category);
+    Category findById(String categoryId);
 
-  Category update(String categoryId, Category category);
+    Category create(Category category);
 
-  void delete(String categoryId);
+    Category update(String categoryId, Category category);
+
+    void delete(String categoryId);
+
+    Page<Category> searchCategory(String keyword, Pageable pageable);
 }

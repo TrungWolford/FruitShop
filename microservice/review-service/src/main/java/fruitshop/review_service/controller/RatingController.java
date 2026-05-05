@@ -32,6 +32,11 @@ public class RatingController {
         return ResponseEntity.ok(ratings);
     }
 
+    @GetMapping("/{ratingId}")
+    public ResponseEntity<RatingResponse> getRatingById(@PathVariable String ratingId) {
+        return ResponseEntity.ok(ratingService.getRatingById(ratingId));
+    }
+
     @GetMapping("/account/{accountId}")
     public ResponseEntity<Page<RatingDetailResponse>> getRatingsByAccountId(
             @PathVariable String accountId,
@@ -81,14 +86,20 @@ public class RatingController {
     }
 
     @DeleteMapping("/{ratingId}")
-    public ResponseEntity<RatingResponse> deleteRating(@PathVariable String ratingId) {
-        RatingResponse rating = ratingService.changeStatus(ratingId);
-        return ResponseEntity.ok(rating);
+    public ResponseEntity<Void> deleteRating(@PathVariable String ratingId) {
+        ratingService.deleteRating(ratingId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/product/{productId}/average")
     public ResponseEntity<Double> calculateAverageRating(@PathVariable String productId) {
         double averageRating = ratingService.calculateRatingStarByProductId(productId);
         return ResponseEntity.ok(averageRating);
+    }
+
+    @GetMapping("/product/{productId}/count")
+    public ResponseEntity<Long> countRatingsByProductId(@PathVariable String productId) {
+        long count = ratingService.countRatingsByProductId(productId);
+        return ResponseEntity.ok(count);
     }
 }

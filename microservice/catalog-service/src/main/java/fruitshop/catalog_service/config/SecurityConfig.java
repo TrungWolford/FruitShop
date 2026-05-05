@@ -14,27 +14,31 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-    }
+  public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+  }
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/actuator/**", "/error").permitAll()
-                        .requestMatchers("/api/catalog/**").permitAll()
-                        .requestMatchers("/api/upload/**").permitAll() // Allow upload for now
-                        .anyRequest().authenticated())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .httpBasic(httpBasic -> httpBasic.disable())
-                .formLogin(form -> form.disable());
+  @Bean
+  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    http
+        .csrf(csrf -> csrf.disable())
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+            .requestMatchers("/actuator/**", "/error").permitAll()
+            .requestMatchers("/api/catalog/**").permitAll()
+            .requestMatchers("/api/upload/**").permitAll() // Allow upload for now
+            .requestMatchers(HttpMethod.GET, "/api/catalog/**").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/catalog/**").hasAuthority("ROLE_ADMIN")
+            .requestMatchers(HttpMethod.PUT, "/api/catalog/**").hasAuthority("ROLE_ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/catalog/**").hasAuthority("ROLE_ADMIN")
+            .anyRequest().authenticated())
+        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        .httpBasic(httpBasic -> httpBasic.disable())
+        .formLogin(form -> form.disable());
 
-        return http.build();
-    }
+    return http.build();
+  }
 }

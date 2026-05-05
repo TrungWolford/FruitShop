@@ -21,6 +21,7 @@ import fruitshop.account_service.service.AccountService;
 
 @RestController
 @RequestMapping("/api/account")
+@CrossOrigin(origins = "*")
 public class AccountController {
 
   @Autowired

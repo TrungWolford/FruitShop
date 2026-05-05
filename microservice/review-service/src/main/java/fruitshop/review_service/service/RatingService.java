@@ -19,4 +19,7 @@ public interface RatingService {
     RatingResponse updateRating(UpdateRatingRequest request, String ratingId);
     RatingResponse changeStatus(String ratingId);
     double calculateRatingStarByProductId(String productId);
+    RatingResponse getRatingById(String ratingId);
+    void deleteRating(String ratingId);
+    long countRatingsByProductId(String productId);
 }

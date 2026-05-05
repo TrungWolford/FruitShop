@@ -4,9 +4,6 @@ package fruitshop.account_service.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
 import java.util.UUID;
 
 @Entity
