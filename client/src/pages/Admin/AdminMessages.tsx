@@ -26,32 +26,32 @@ const AdminMessages: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const loadTickets = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await adminChatService.getAdminSessions(0, 50);
-      setTickets(data.content ?? []);
-    } catch (error) {
-      console.error('Lỗi tải danh sách hội thoại:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // const loadTickets = useCallback(async () => {
+  //   try {
+  //     setLoading(true);
+  //     const data = await adminChatService.getAdminSessions(0, 50);
+  //     setTickets(data.content ?? []);
+  //   } catch (error) {
+  //     console.error('Lỗi tải danh sách hội thoại:', error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, []);
 
-  useEffect(() => {
-    void loadTickets();
-  }, [loadTickets]);
+  // useEffect(() => {
+  //   void loadTickets();
+  // }, [loadTickets]);
 
   // Nhận ticket mới real-time qua STOMP
-  const { connected } = useStompChat('/topic/admin/new-ticket', (newSession: AdminTicket) => {
-    setTickets(prev => {
-      const exists = prev.some(t => t.sessionId === newSession.sessionId);
-      if (exists) {
-        return prev.map(t => t.sessionId === newSession.sessionId ? { ...t, ...newSession } : t);
-      }
-      return [newSession, ...prev];
-    });
-  });
+  // const { connected } = useStompChat('/topic/admin/new-ticket', (newSession: AdminTicket) => {
+  //   setTickets(prev => {
+  //     const exists = prev.some(t => t.sessionId === newSession.sessionId);
+  //     if (exists) {
+  //       return prev.map(t => t.sessionId === newSession.sessionId ? { ...t, ...newSession } : t);
+  //     }
+  //     return [newSession, ...prev];
+  //   });
+  // });
 
   const selectedTicket = tickets.find(t => t.sessionId === selectedSessionId);
 

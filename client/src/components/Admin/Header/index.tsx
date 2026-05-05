@@ -18,26 +18,26 @@ const Header: React.FC<Header> = ({ className }) => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const [activeChat, setActiveChat] = useState<{sessionId: string, name:string} | null>(null)
-  const [tickets, setTickets] = useState<AdminTicket[]>([])
-  const [loadingTickets, setLoadingTickets] = useState(false)
+  // const [tickets, setTickets] = useState<AdminTicket[]>([])
+  // const [loadingTickets, setLoadingTickets] = useState(false)
 
 
-  const fetchPendingTickets = useCallback(async () => {
-    try {
-      setLoadingTickets(true)
-      const data = await adminChatService.getPendingTickets()
-      setTickets(Array.isArray(data) ? data : [])
-    } catch (error) {
-      console.error(error)
-      setTickets([])
-    } finally {
-      setLoadingTickets(false)
-    }
-  }, [])
+  // const fetchPendingTickets = useCallback(async () => {
+  //   try {
+  //     setLoadingTickets(true)
+  //     const data = await adminChatService.getPendingTickets()
+  //     setTickets(Array.isArray(data) ? data : [])
+  //   } catch (error) {
+  //     console.error(error)
+  //     setTickets([])
+  //   } finally {
+  //     setLoadingTickets(false)
+  //   }
+  // }, [])
 
-  useEffect(() => {
-    void fetchPendingTickets()
-  }, [fetchPendingTickets])
+  // useEffect(() => {
+  //   void fetchPendingTickets()
+  // }, [fetchPendingTickets])
 
   const handleOpenChat = async (ticket: AdminTicket) => {
     setActiveChat({
@@ -78,6 +78,7 @@ const Header: React.FC<Header> = ({ className }) => {
 
         <div className="flex gap-3 px-3">
           {/* //Tin nhắn */}
+          {/* //Tin nhắn - Tạm thời ẩn 
           <DropdownMenu.Root
             modal={false}
             onOpenChange={(open) => {
@@ -130,6 +131,7 @@ const Header: React.FC<Header> = ({ className }) => {
               ))}
             </DropdownMenu.Content>
           </DropdownMenu.Root>
+          */}
 
           {/* // Thông báo  */}
           <DropdownMenu.Root modal={false}>

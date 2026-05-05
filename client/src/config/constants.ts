@@ -85,35 +85,35 @@ export const API = {
   UPDATE_CART_STATUS: (cartId: string, status: number) => `/cart-service/api/cart/${cartId}/status/${status}`, // PUT /api/cart/{cartId}/status/{status} (Admin only)
 
   // Roles - Theo RoleController.java
-  GET_ALL_ROLES: '/role', // GET /api/role
-  GET_ROLE_BY_ID: (roleId: string) => `/role/${roleId}`, // GET /api/role/{roleId}
-  CREATE_ROLE: '/role', // POST /api/role
-  UPDATE_ROLE: (roleId: string) => `/role/${roleId}`, // PUT /api/role/{roleId}
-  DELETE_ROLE: (roleId: string) => `/role/${roleId}`, // DELETE /api/role/{roleId}
+  GET_ALL_ROLES: '/account-service/api/role', // GET /api/role
+  GET_ROLE_BY_ID: (roleId: string) => `/account-service/api/role/${roleId}`, // GET /api/role/{roleId}
+  CREATE_ROLE: '/account-service/api/role', // POST /api/role
+  UPDATE_ROLE: (roleId: string) => `/account-service/api/role/${roleId}`, // PUT /api/role/{roleId}
+  DELETE_ROLE: (roleId: string) => `/account-service/api/role/${roleId}`, // DELETE /api/role/{roleId}
 
   // Shipping - Theo ShippingController.java
-  GET_ALL_SHIPPING: '/shipping', // GET /api/shipping
-  GET_SHIPPING_BY_ID: (shippingId: string) => `/shipping/${shippingId}`, // GET /api/shipping/{shippingId}
-  CREATE_SHIPPING: '/shipping', // POST /api/shipping
-  UPDATE_SHIPPING: (shippingId: string) => `/shipping/${shippingId}`, // PUT /api/shipping/{shippingId}
-  DELETE_SHIPPING: (shippingId: string) => `/shipping/${shippingId}`, // DELETE /api/shipping/{shippingId}
-  GET_SHIPPING_BY_ORDER: (orderId: string) => `/shipping/order/${orderId}`, // GET /api/shipping/order/{orderId}
-  GET_SHIPPING_BY_ACCOUNT: (accountId: string) => `/shipping/account/${accountId}`, // GET /api/shipping/account/{accountId}
-  UPDATE_SHIPPING_STATUS: (shippingId: string) => `/shipping/${shippingId}/status`, // PUT /api/shipping/{shippingId}/status
-  SEARCH_SHIPPINGS: '/shipping/search', // GET /api/shipping/search?keyword=xxx&page=0&size=10
-  FILTER_SHIPPINGS: '/shipping/filter', // GET /api/shipping/filter?status=xxx&page=0&size=10
-  SEARCH_AND_FILTER_SHIPPINGS: '/shipping/search-filter', // GET /api/shipping/search-filter?keyword=xxx&status=xxx&page=0&size=10
+  GET_ALL_SHIPPING: '/order-service/api/shipping', // GET /api/shipping
+  GET_SHIPPING_BY_ID: (shippingId: string) => `/order-service/api/shipping/${shippingId}`, // GET /api/shipping/{shippingId}
+  CREATE_SHIPPING: '/order-service/api/shipping', // POST /api/shipping
+  UPDATE_SHIPPING: (shippingId: string) => `/order-service/api/shipping/${shippingId}`, // PUT /api/shipping/{shippingId}
+  DELETE_SHIPPING: (shippingId: string) => `/order-service/api/shipping/${shippingId}`, // DELETE /api/shipping/{shippingId}
+  GET_SHIPPING_BY_ORDER: (orderId: string) => `/order-service/api/orders/${orderId}/shipping`, // GET /api/orders/{orderId}/shipping
+  GET_SHIPPING_BY_ACCOUNT: (accountId: string) => `/order-service/api/shipping/account/${accountId}`, // GET /api/shipping/account/{accountId}
+  UPDATE_SHIPPING_STATUS: (shippingId: string) => `/order-service/api/shipping/${shippingId}/status`, // PUT /api/shipping/{shippingId}/status
+  SEARCH_SHIPPINGS: '/order-service/api/shipping/search', // GET /api/shipping/search?keyword=xxx&page=0&size=10
+  FILTER_SHIPPINGS: '/order-service/api/shipping/filter', // GET /api/shipping/filter?status=xxx&page=0&size=10
+  SEARCH_AND_FILTER_SHIPPINGS: '/order-service/api/shipping/search-filter', // GET /api/shipping/search-filter?keyword=xxx&status=xxx&page=0&size=10
 
   // Ratings - Theo RatingController.java
-  GET_ALL_RATINGS: '/rating', // GET /api/rating?page=0&size=10
-  GET_RATINGS_BY_ACCOUNT: (accountId: string) => `/rating/account/${accountId}`, // GET /api/rating/account/{accountId}?page=0&size=10
-  GET_RATINGS_BY_PRODUCT: (productId: string) => `/rating/product/${productId}`, // GET /api/rating/product/{productId}?page=0&size=10
-  GET_RATING_BY_ACCOUNT_AND_PRODUCT: (accountId: string, productId: string) => `/rating/account/${accountId}/product/${productId}`, // GET /api/rating/account/{accountId}/product/{productId}
-  GET_AVERAGE_RATING_BY_PRODUCT: (productId: string) => `/rating/product/${productId}/average`, // GET /api/rating/product/{productId}/average
-  CREATE_RATING: '/rating', // POST /api/rating
-  UPDATE_RATING: (ratingId: string) => `/rating/${ratingId}`, // PUT /api/rating/{ratingId}
-  CHANGE_RATING_STATUS: (ratingId: string) => `/rating/${ratingId}/status`, // PATCH /api/rating/{ratingId}/status
-  DELETE_RATING: (ratingId: string) => `/rating/${ratingId}`, // DELETE /api/rating/{ratingId}
+  GET_ALL_RATINGS: '/review-service/api/rating', // GET /api/rating?page=0&size=10
+  GET_RATINGS_BY_ACCOUNT: (accountId: string) => `/review-service/api/rating/account/${accountId}`, // GET /api/rating/account/{accountId}?page=0&size=10
+  GET_RATINGS_BY_PRODUCT: (productId: string) => `/review-service/api/rating/product/${productId}`, // GET /api/rating/product/{productId}?page=0&size=10
+  GET_RATING_BY_ACCOUNT_AND_PRODUCT: (accountId: string, productId: string) => `/review-service/api/rating/account/${accountId}/product/${productId}`, // GET /api/rating/account/{accountId}/product/{productId}
+  GET_AVERAGE_RATING_BY_PRODUCT: (productId: string) => `/review-service/api/rating/product/${productId}/average`, // GET /api/rating/product/{productId}/average
+  CREATE_RATING: '/review-service/api/rating', // POST /api/rating
+  UPDATE_RATING: (ratingId: string) => `/review-service/api/rating/${ratingId}`, // PUT /api/rating/{ratingId}
+  CHANGE_RATING_STATUS: (ratingId: string) => `/review-service/api/rating/${ratingId}/status`, // PATCH /api/rating/{ratingId}/status
+  DELETE_RATING: (ratingId: string) => `/review-service/api/rating/${ratingId}`, // DELETE /api/rating/{ratingId}
 
   // MoMo Payment - Theo MomoController.java
   CREATE_MOMO_PAYMENT: '/momo/create-payment', // POST /api/momo/create-payment
@@ -137,24 +137,24 @@ export const API = {
   GET_PENDING_REFUNDS_COUNT: '/refund/stats/pending-count', // GET /api/refund/stats/pending-count
 
   // Payments - Theo PaymentController.java
-  PAYMENT: '/payment', // GET /api/payment?page=0&size=10 | POST /api/payment
-  GET_PAYMENT_BY_ID: (paymentId: string) => `/payment/${paymentId}`, // GET /api/payment/{paymentId}
-  UPDATE_PAYMENT: (paymentId: string) => `/payment/${paymentId}`, // PUT /api/payment/{paymentId}
-  GET_PAYMENTS_BY_STATUS: (status: number) => `/payment/status/${status}`, // GET /api/payment/status/{status}?page=0&size=10
-  UPDATE_PAYMENT_STATUS: (paymentId: string) => `/payment/${paymentId}/status`, // PUT /api/payment/{paymentId}/status?status=1
-  GET_PAYMENT_BY_TRANSACTION_ID: (transactionId: string) => `/payment/transaction/${transactionId}`, // GET /api/payment/transaction/{transactionId}
+  PAYMENT: '/payment-service/api/payment', // GET /api/payment?page=0&size=10 | POST /api/payment
+  GET_PAYMENT_BY_ID: (paymentId: string) => `/payment-service/api/payment/${paymentId}`, // GET /api/payment/{paymentId}
+  UPDATE_PAYMENT: (paymentId: string) => `/payment-service/api/payment/${paymentId}`, // PUT /api/payment/{paymentId}
+  GET_PAYMENTS_BY_STATUS: (status: number) => `/payment-service/api/payment/status/${status}`, // GET /api/payment/status/{status}?page=0&size=10
+  UPDATE_PAYMENT_STATUS: (paymentId: string) => `/payment-service/api/payment/${paymentId}/status`, // PUT /api/payment/{paymentId}/status?status=1
+  GET_PAYMENT_BY_TRANSACTION_ID: (transactionId: string) => `/payment-service/api/payment/transaction/${transactionId}`, // GET /api/payment/transaction/{transactionId}
 
   //Chatbot
-  SESSION: '/chat/sessions',
-  MESSAGE: '/chat/messages',
+  SESSION: '/ai-service/api/chat/sessions',
+  MESSAGE: '/ai-service/api/chat/messages',
 
   //adminChat
-  GET_ADMIN_SESSIONS: '/chat/admin/sessions',
-  GET_PENDING_TICKETS: '/chat/admin/customer-care/tickets',
-  GET_TICKET_MESSAGES: (sessionId: string) => `/chat/admin/customer-care/tickets/${sessionId}/messages`,
-  REPLY_TICKET: (sessionId: string) => `/chat/admin/customer-care/tickets/${sessionId}/reply`,
-  MARK_SESSION_AS_READ: (sessionId: string) => `/chat/sessions/${sessionId}/read`,
-  UPDATE_SESSION: (sessionId: string) => `/chat/sessions/${sessionId}`,
+  GET_ADMIN_SESSIONS: '/ai-service/api/chat/admin/sessions',
+  GET_PENDING_TICKETS: '/ai-service/api/chat/admin/customer-care/tickets',
+  GET_TICKET_MESSAGES: (sessionId: string) => `/ai-service/api/chat/admin/customer-care/tickets/${sessionId}/messages`,
+  REPLY_TICKET: (sessionId: string) => `/ai-service/api/chat/admin/customer-care/tickets/${sessionId}/reply`,
+  MARK_SESSION_AS_READ: (sessionId: string) => `/ai-service/api/chat/sessions/${sessionId}/read`,
+  UPDATE_SESSION: (sessionId: string) => `/ai-service/api/chat/sessions/${sessionId}`,
 
 } as const;
 

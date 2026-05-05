@@ -1,6 +1,5 @@
 import axiosInstance from '../libs/axios';
 import { API } from '../config/constants';
-import { mockOrders, getOrdersByAccount as mockGetOrdersByAccount, getOrderById as mockGetOrderById } from '@/apis/mockData';
 
 // Types
 export interface OrderDetailResponse {
@@ -90,6 +89,7 @@ export function mapBackendOrderToFrontend(o: any): OrderResponse {
         return new Date().toISOString();
       }
       return date.toISOString();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return new Date().toISOString();
     }
@@ -156,84 +156,44 @@ export const orderService = {
 
   // Get all orders (for admin)
   getAllOrders: async (page: number = 0, size: number = 10): Promise<{ success: boolean; data?: OrderResponse[]; message?: string }> => {
-    try {
-      const response = await axiosInstance.get(API.GET_ALL_ORDERS, {
-        params: { page, size }
-      });
+    const response = await axiosInstance.get(API.GET_ALL_ORDERS, {
+      params: { page, size }
+    });
 
-      let orders: OrderResponse[] = [];
+    let orders: OrderResponse[] = [];
 
-      if (response.data && response.data.content) {
-        orders = response.data.content.map((o: any) => mapBackendOrderToFrontend(o));
-      } else if (Array.isArray(response.data)) {
-        orders = response.data.map((o: any) => mapBackendOrderToFrontend(o));
-      } else if (response.data === null || response.data === undefined) {
-        orders = [];
-      }
-
-      return {
-        success: true,
-        data: orders
-      };
-    } catch (error: any) {
-      console.warn('⚠️ Backend không phản hồi, dùng mock data cho getAllOrders');
-      // Fallback: dùng mock data
-      const start = page * size;
-      const paginatedOrders = mockOrders.slice(start, start + size).map((o: any) => mapBackendOrderToFrontend(o));
-      return {
-        success: true,
-        data: paginatedOrders,
-        message: 'Dữ liệu từ mock data'
-      };
+    if (response.data && response.data.content) {
+      orders = response.data.content.map((o: any) => mapBackendOrderToFrontend(o));
+    } else if (Array.isArray(response.data)) {
+      orders = response.data.map((o: any) => mapBackendOrderToFrontend(o));
+    } else if (response.data === null || response.data === undefined) {
+      orders = [];
     }
+
+    return {
+      success: true,
+      data: orders
+    };
   },
 
   // Get orders by account ID
   getOrdersByAccount: async (accountId: string): Promise<{ success: boolean; data?: OrderResponse[]; message?: string }> => {
-    try {
-      const response = await axiosInstance.get(API.GET_ORDERS_BY_ACCOUNT(accountId));
-      const mapped: OrderResponse[] = (response.data || []).map((o: any) => mapBackendOrderToFrontend(o));
-      return {
-        success: true,
-        data: mapped
-      };
-    } catch (error: any) {
-      console.warn('⚠️ Backend không phản hồi, dùng mock data cho getOrdersByAccount');
-      // Fallback: tìm trong mock data
-      const mockData = mockGetOrdersByAccount(accountId).map((o: any) => mapBackendOrderToFrontend(o));
-      return {
-        success: true,
-        data: mockData,
-        message: 'Dữ liệu từ mock data'
-      };
-    }
+    const response = await axiosInstance.get(API.GET_ORDERS_BY_ACCOUNT(accountId));
+    const mapped: OrderResponse[] = (response.data || []).map((o: any) => mapBackendOrderToFrontend(o));
+    return {
+      success: true,
+      data: mapped
+    };
   },
 
   // Get order by ID
   getOrderById: async (orderId: string): Promise<{ success: boolean; data?: OrderResponse; message?: string }> => {
-    try {
-      const response = await axiosInstance.get(API.GET_ORDER_BY_ID(orderId));
-      const mapped = response.data ? mapBackendOrderToFrontend(response.data) : undefined;
-      return {
-        success: true,
-        data: mapped
-      };
-    } catch (error: any) {
-      console.warn('⚠️ Backend không phản hồi, dùng mock data cho getOrderById');
-      // Fallback: tìm trong mock data
-      const mockOrder = mockGetOrderById(orderId);
-      if (mockOrder) {
-        return {
-          success: true,
-          data: mapBackendOrderToFrontend(mockOrder),
-          message: 'Dữ liệu từ mock data'
-        };
-      }
-      return {
-        success: false,
-        message: 'Không tìm thấy đơn hàng'
-      };
-    }
+    const response = await axiosInstance.get(API.GET_ORDER_BY_ID(orderId));
+    const mapped = response.data ? mapBackendOrderToFrontend(response.data) : undefined;
+    return {
+      success: true,
+      data: mapped
+    };
   },
 
   // Cancel order

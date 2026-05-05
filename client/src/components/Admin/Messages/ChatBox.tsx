@@ -107,7 +107,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ onClose, sessionId, customerName, cla
       <div className="flex-1 p-4 overflow-y-auto space-y-3">
         {messages.map((msg, index) => (
           <div key={index} className={`flex ${msg.senderRole === 'CUSTOMER' ? 'justify-start' : 'justify-end'}`}>
-            <span className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${msg.senderRole === 'CUSTOMER' ? 'bg-gray-100 text-[#111113]' : 'bg-[#FB923C] text-white'}`}>
+            <span className={`max-w-[80%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap break-words ${msg.senderRole === 'CUSTOMER' ? 'bg-gray-100 text-[#111113]' : 'bg-[#FB923C] text-white'}`}>
               {msg.content}
             </span>
           </div>

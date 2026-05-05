@@ -22,39 +22,31 @@ export interface RegisterResponse {
 export const registerService = {
   // Get CUSTOMER role
   getCustomerRole: async (): Promise<Role> => {
-    try {
-      const response: AxiosResponse<Role[]> = await axiosInstance.get(API.GET_ALL_ROLES);
-      const customerRole = response.data.find(role => role.roleName === 'CUSTOMER');
-      if (!customerRole) {
-        throw new Error('Không tìm thấy role CUSTOMER');
-      }
-      return customerRole;
-    } catch (error) {
-      throw error;
+    const response: AxiosResponse<Role[]> = await axiosInstance.get(API.GET_ALL_ROLES);
+    const customerRole = response.data.find(role => role.roleName === 'ROLE_USER');
+    if (!customerRole) {
+      throw new Error('Không tìm thấy role ROLE_USER');
     }
+    return customerRole;
   },
 
   // Register new account with CUSTOMER role
   registerAccount: async (registerData: RegisterRequest): Promise<RegisterResponse> => {
-    try {
-      // First, get the CUSTOMER role
-      const customerRole = await registerService.getCustomerRole();
-      
-      // Prepare account data with CUSTOMER role
-      const accountData = {
-        accountName: registerData.accountName,
-        accountPhone: registerData.accountPhone,
-        password: registerData.password,
-        status: 1, // Active by default
-        roleIds: [customerRole.roleId] // Assign CUSTOMER role
-      };
+    // First, get the CUSTOMER role
+    const customerRole = await registerService.getCustomerRole();
 
-      // Create account
-      const response: AxiosResponse<RegisterResponse> = await axiosInstance.post(API.CREATE_ACCOUNT, accountData);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    // Prepare account data with CUSTOMER role
+    const accountData = {
+      accountName: registerData.accountName,
+      accountPhone: registerData.accountPhone,
+      password: registerData.password,
+      status: 1, // Active by default
+      roleIds: [customerRole.roleId] // Assign CUSTOMER role
+    };
+
+    // Create account
+    const response: AxiosResponse<RegisterResponse> = await axiosInstance.post(API.CREATE_ACCOUNT, accountData);
+    return response.data;
   },
 
 

@@ -44,19 +44,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String jwt = authHeader.substring(7);
 
         try {
+            log.debug("Processing JWT for path: {}", request.getRequestURI());
             if (!jwtService.isAccessToken(jwt)) {
+                log.warn("Not an access token for path: {}", request.getRequestURI());
                 filterChain.doFilter(request, response);
                 return;
             }
 
             String subject = jwtService.extractSubject(jwt);
+            log.debug("Extracted subject: {}", subject);
             if (subject == null || subject.isBlank() || SecurityContextHolder.getContext().getAuthentication() != null) {
+                log.warn("Subject is null or already authenticated for path: {}", request.getRequestURI());
                 filterChain.doFilter(request, response);
                 return;
             }
 
             Claims claims = jwtService.extractAllClaims(jwt);
             List<?> rolesRaw = claims.get("roles", List.class);
+            log.debug("Extracted roles: {}", rolesRaw);
             List<SimpleGrantedAuthority> authorities = rolesRaw == null
                     ? Collections.emptyList()
                     : rolesRaw.stream()
@@ -69,9 +74,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     new UsernamePasswordAuthenticationToken(subject, null, authorities);
             authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authToken);
+            log.info("Successfully authenticated subject: {} for path: {}", subject, request.getRequestURI());
         } catch (Exception ex) {
             SecurityContextHolder.clearContext();
-            log.warn("JWT auth failed for path {}: {}", request.getRequestURI(), ex.getMessage());
+            log.error("JWT auth failed for path {}: {}", request.getRequestURI(), ex.getMessage(), ex);
         }
 
         filterChain.doFilter(request, response);

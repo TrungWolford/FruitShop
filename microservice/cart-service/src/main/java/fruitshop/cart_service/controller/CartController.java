@@ -1,5 +1,6 @@
 package fruitshop.cart_service.controller;
 
+import fruitshop.cart_service.dto.CartItemRequest;
 import fruitshop.cart_service.entity.Cart;
 import fruitshop.cart_service.service.CartService;
 import lombok.RequiredArgsConstructor;
@@ -12,30 +13,29 @@ import org.springframework.web.bind.annotation.*;
 public class CartController {
     private final CartService cartService;
 
-    @GetMapping("/{accountId}")
+    @GetMapping("/account/{accountId}")
     public ResponseEntity<Cart> getCart(@PathVariable String accountId) {
         return ResponseEntity.ok(cartService.getOrCreateCart(accountId));
     }
 
-    @PostMapping("/{accountId}/items")
+    @PostMapping("/account/{accountId}/items")
     public ResponseEntity<Cart> addItem(
             @PathVariable String accountId,
-            @RequestParam String productId,
-            @RequestParam(defaultValue = "1") int quantity
+            @RequestBody CartItemRequest request
     ) {
-        return ResponseEntity.ok(cartService.addItem(accountId, productId, quantity));
+        return ResponseEntity.ok(cartService.addItem(accountId, request.getProductId(), request.getQuantity()));
     }
 
-    @PutMapping("/{accountId}/items/{cartItemId}")
+    @PutMapping("/account/{accountId}/items/{cartItemId}")
     public ResponseEntity<Cart> updateQuantity(
             @PathVariable String accountId,
             @PathVariable String cartItemId,
-            @RequestParam int quantity
+            @RequestBody CartItemRequest request
     ) {
-        return ResponseEntity.ok(cartService.updateItemQuantity(accountId, cartItemId, quantity));
+        return ResponseEntity.ok(cartService.updateItemQuantity(accountId, cartItemId, request.getQuantity()));
     }
 
-    @DeleteMapping("/{accountId}/items/{cartItemId}")
+    @DeleteMapping("/account/{accountId}/items/{cartItemId}")
     public ResponseEntity<Cart> removeItem(
             @PathVariable String accountId,
             @PathVariable String cartItemId
@@ -43,7 +43,7 @@ public class CartController {
         return ResponseEntity.ok(cartService.removeItem(accountId, cartItemId));
     }
 
-    @DeleteMapping("/{accountId}/items")
+    @DeleteMapping("/account/{accountId}/items")
     public ResponseEntity<Cart> clearCart(@PathVariable String accountId) {
         return ResponseEntity.ok(cartService.clearCart(accountId));
     }

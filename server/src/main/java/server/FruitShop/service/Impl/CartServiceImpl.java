@@ -1,0 +1,303 @@
+package server.FruitShop.service.Impl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import server.FruitShop.dto.request.Cart.CreateCartItemRequest;
+import server.FruitShop.dto.request.Cart.UpdateCartItemRequest;
+import server.FruitShop.dto.response.Cart.CartItemResponse;
+import server.FruitShop.dto.response.Cart.CartResponse;
+import server.FruitShop.entity.Account;
+import server.FruitShop.entity.Cart;
+import server.FruitShop.entity.CartItem;
+import server.FruitShop.entity.Product;
+import server.FruitShop.repository.AccountRepository;
+import server.FruitShop.repository.CartItemRepository;
+import server.FruitShop.repository.CartRepository;
+import server.FruitShop.repository.ProductRepository;
+import server.FruitShop.service.CartService;
+import server.FruitShop.exception.ResourceNotFoundException;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+@Service
+public class CartServiceImpl implements CartService {
+
+    @Autowired
+    private CartRepository cartRepository;
+
+    @Autowired
+    private CartItemRepository cartItemRepository;
+
+    @Autowired
+    private AccountRepository accountRepository;
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    @Override
+    public Page<CartResponse> getAllCart(Pageable pageable) {
+        Page<Cart> cartPage = cartRepository.findAll(pageable);
+        return cartPage.map(CartResponse::fromEntity);
+    }
+
+    @Override
+    public CartResponse getCartById(String cartId) {
+        try {
+            Optional<Cart> cartOptional = cartRepository.findById(cartId);
+            return cartOptional.map(CartResponse::fromEntity).orElse(null);
+        } catch (Exception e) {
+            System.err.println("Error fetching cart for cartId " + cartId + ": " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public CartResponse getCartByAccountId(String accountId) {
+        try {
+            Optional<Cart> cartOptional = cartRepository.findByAccountAccountId(accountId);
+            return cartOptional.map(cart -> CartResponse.fromEntity(cart)).orElse(null);
+        } catch (Exception e) {
+            System.err.println("Error fetching cart for accountId " + accountId + ": " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public CartResponse createCart(String accountId) {
+        Optional<Account> accountOptional = accountRepository.findById(accountId);
+        if (accountOptional.isEmpty()) {
+            throw new ResourceNotFoundException("Account not found with id: " + accountId);
+        }
+
+        // Check if cart already exists
+        Optional<Cart> existingCart = cartRepository.findByAccountAccountId(accountId);
+        if (existingCart.isPresent()) {
+            return CartResponse.fromEntity(existingCart.get());
+        }
+
+        Cart cart = new Cart();
+        cart.setAccount(accountOptional.get());
+        cart.setCreatedAt(new Date());
+        cart.setStatus(1);
+        Cart savedCart = cartRepository.save(cart);
+        return CartResponse.fromEntity(savedCart);
+    }
+
+    @Override
+    public void deleteCart(String cartId) {
+        Optional<Cart> cartOptional = cartRepository.findById(cartId);
+        if (cartOptional.isPresent()) {
+            // Delete all cart items first
+            List<CartItem> items = cartOptional.get().getItems();
+            cartItemRepository.deleteAll(items);
+            // Then delete the cart
+            cartRepository.deleteById(cartId);
+        }
+    }
+
+    @Override
+    public CartItemResponse addCartItem(String accountId, CreateCartItemRequest request) {
+        // Get or create cart for account
+        Cart cart = getOrCreateCart(accountId);
+
+        // Check if cart is disabled
+        if (cart.getStatus() != 1) {
+            throw new RuntimeException("Giỏ hàng đã bị vô hiệu hóa do vi phạm chính sách, vui lòng liên hệ VuaTraiCay để biết thêm chi tiết");
+        }
+
+        // Check if product exists
+        Optional<Product> productOptional = productRepository.findById(request.getProductId());
+        if (productOptional.isEmpty()) {
+            throw new ResourceNotFoundException("Product not found with id: " + request.getProductId());
+        }
+
+        Product product = productOptional.get();
+
+        // Check if item already exists in cart
+        Optional<CartItem> existingItem = cartItemRepository.findByCartAndProduct(cart, product);
+        if (existingItem.isPresent()) {
+            // Update quantity
+            CartItem item = existingItem.get();
+            item.setQuantity(item.getQuantity() + request.getQuantity());
+            CartItem savedItem = cartItemRepository.save(item);
+            return CartItemResponse.fromEntity(savedItem);
+        }
+
+        // Create new cart item
+        CartItem cartItem = new CartItem();
+        cartItem.setCart(cart);
+        cartItem.setProduct(product);
+        cartItem.setQuantity(request.getQuantity());
+
+        CartItem savedItem = cartItemRepository.save(cartItem);
+        return CartItemResponse.fromEntity(savedItem);
+    }
+
+    @Override
+    public CartItemResponse updateCartItem(String cartItemId, UpdateCartItemRequest request) {
+        Optional<CartItem> cartItemOptional = cartItemRepository.findById(cartItemId);
+        if (cartItemOptional.isEmpty()) {
+            throw new ResourceNotFoundException("Cart item not found with id: " + cartItemId);
+        }
+
+        CartItem cartItem = cartItemOptional.get();
+        
+        // Check if cart is disabled
+        Cart cart = cartItem.getCart();
+        if (cart != null && cart.getStatus() != 1) {
+            throw new RuntimeException("Giỏ hàng đã bị vô hiệu hóa do vi phạm chính sách, vui lòng liên hệ VuaTraiCay để biết thêm chi tiết");
+        }
+        
+        cartItem.setQuantity(request.getQuantity());
+
+        CartItem savedItem = cartItemRepository.save(cartItem);
+        return CartItemResponse.fromEntity(savedItem);
+    }
+
+    @Override
+    public void removeCartItem(String cartItemId) {
+        Optional<CartItem> cartItemOptional = cartItemRepository.findById(cartItemId);
+        if (cartItemOptional.isPresent()) {
+            CartItem cartItem = cartItemOptional.get();
+            
+            // Check if cart is disabled
+            Cart cart = cartItem.getCart();
+            if (cart != null && cart.getStatus() != 1) {
+                throw new RuntimeException("Giỏ hàng đã bị vô hiệu hóa do vi phạm chính sách, vui lòng liên hệ VuaTraiCay để biết thêm chi tiết");
+            }
+            
+            cartItemRepository.deleteById(cartItemId);
+        }
+    }
+
+    @Override
+    public List<CartItemResponse> getCartItemsByAccountId(String accountId) {
+        try {
+            System.out.println("📦 GetCartItemsByAccountId called for: " + accountId);
+            return cartRepository.findByAccountAccountId(accountId)
+                    .map(cart -> {
+                        List<CartItem> items = cartItemRepository.findByCartCartId(cart.getCartId());
+                        if (items.isEmpty()) {
+                            System.out.println("📦 Cart found but no items");
+                            return List.<CartItemResponse>of();
+                        }
+                        System.out.println("📦 Found cart with " + items.size() + " items");
+                        for (CartItem item : items) {
+                            System.out.println("📦 Cart item: " + item.getCartItemId() + " - Product: " + item.getProduct().getProductId() + " - Quantity: " + item.getQuantity());
+                        }
+                        return items.stream()
+                                .map(CartItemResponse::fromEntity)
+                                .collect(Collectors.toList());
+                    })
+                    .orElseGet(() -> {
+                        System.out.println("📦 No cart found for accountId: " + accountId);
+                        return List.of();
+                    });
+        } catch (Exception e) {
+            System.err.println("Error fetching cart items for accountId " + accountId + ": " + e.getMessage());
+            e.printStackTrace();
+            return List.of();
+        }
+    }
+
+    @Override
+    @Transactional
+    public void clearCart(String accountId) {
+        System.out.println("🧹 ClearCart called for accountId: " + accountId);
+        Optional<Cart> cartOptional = cartRepository.findByAccountAccountId(accountId);
+        if (cartOptional.isPresent()) {
+            Cart cart = cartOptional.get();
+            String cartId = cart.getCartId();
+            System.out.println("🧹 Found cart with ID: " + cartId);
+
+            // Delete all cart items for this cart using direct repository query
+            List<CartItem> itemsToDelete = cartItemRepository.findByCartCartId(cartId);
+            System.out.println("🧹 Found " + itemsToDelete.size() + " items to delete using repository query");
+
+            // Log each item before deletion
+            for (CartItem item : itemsToDelete) {
+                System.out.println("🧹 Deleting cart item: " + item.getCartItemId() + " - Product: " + item.getProduct().getProductId());
+            }
+
+            // Try JPQL delete first (more efficient)
+            cartItemRepository.deleteByCartId(cartId);
+
+            // Alternative: Delete using repository
+            // cartItemRepository.deleteAll(itemsToDelete);
+
+            System.out.println("🧹 Cart cleared successfully for accountId: " + accountId);
+
+            // Verify deletion
+            List<CartItem> remainingItems = cartItemRepository.findByCartCartId(cartId);
+            System.out.println("🧹 Verification: " + remainingItems.size() + " items remaining after deletion");
+        } else {
+            System.out.println("🧹 No cart found for accountId: " + accountId);
+        }
+    }
+
+    @Override
+    public CartResponse disableCart(String cartId) {
+        Optional<Cart> cartOptional = cartRepository.findById(cartId);
+        if (cartOptional.isEmpty()) {
+            throw new ResourceNotFoundException("Cart not found with id: " + cartId);
+        }
+        
+        Cart cart = cartOptional.get();
+        cart.setStatus(0); // 0 = Disabled
+        Cart savedCart = cartRepository.save(cart);
+        return CartResponse.fromEntity(savedCart);
+    }
+
+    @Override
+    public CartResponse enableCart(String cartId) {
+        Optional<Cart> cartOptional = cartRepository.findById(cartId);
+        if (cartOptional.isEmpty()) {
+            throw new ResourceNotFoundException("Cart not found with id: " + cartId);
+        }
+        
+        Cart cart = cartOptional.get();
+        cart.setStatus(1); // 1 = Active
+        Cart savedCart = cartRepository.save(cart);
+        return CartResponse.fromEntity(savedCart);
+    }
+
+    @Override
+    public CartResponse updateCartStatus(String cartId, int status) {
+        Optional<Cart> cartOptional = cartRepository.findById(cartId);
+        if (cartOptional.isEmpty()) {
+            throw new ResourceNotFoundException("Cart not found with id: " + cartId);
+        }
+        
+        Cart cart = cartOptional.get();
+        cart.setStatus(status);
+        Cart savedCart = cartRepository.save(cart);
+        return CartResponse.fromEntity(savedCart);
+    }
+
+    private Cart getOrCreateCart(String accountId) {
+        Optional<Cart> cartOptional = cartRepository.findByAccountAccountId(accountId);
+        if (cartOptional.isPresent()) {
+            return cartOptional.get();
+        }
+
+        // Create new cart
+        Optional<Account> accountOptional = accountRepository.findById(accountId);
+        if (accountOptional.isEmpty()) {
+            throw new ResourceNotFoundException("Account not found with id: " + accountId);
+        }
+
+        Cart cart = new Cart();
+        cart.setAccount(accountOptional.get());
+        cart.setCreatedAt(new Date());
+        cart.setStatus(1);
+        return cartRepository.save(cart);
+    }
+}

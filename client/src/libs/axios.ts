@@ -20,9 +20,16 @@ const axiosInstance = axios.create({
 // Request interceptor
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+    // Thử lấy token từ nhiều key khác nhau để đảm bảo không bỏ sót
+    const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN) || 
+                  localStorage.getItem('access_token') || 
+                  localStorage.getItem('accessToken');
+                  
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log(`[Axios Request] ${config.method?.toUpperCase()} ${config.url} - Auth Attached`);
+    } else {
+      console.warn(`[Axios Request] ${config.method?.toUpperCase()} ${config.url} - MISSING TOKEN`);
     }
     
     return config;

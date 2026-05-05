@@ -2,7 +2,6 @@ import axiosInstance from '../libs/axios';
 import type { AxiosResponse } from 'axios';
 import { API } from '../config/constants';
 import type { Account } from '../types/account';
-import { mockLogin } from '../apis/mockData';
 import { STORAGE_KEYS } from '../config/constants';
 
 export interface LoginCredentials {
@@ -27,34 +26,6 @@ interface LoginApiResponse {
 // Real API login
 export const authService = {
   login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
-    // Kiểm tra environment flag để dùng mock hay real API
-    const useMockAuth = import.meta.env.VITE_USE_MOCK_AUTH === 'true';
-
-    if (useMockAuth) {
-      // Dùng mock data
-      console.log('🔄 Using mock authentication');
-      try {
-        const result = mockLogin(credentials.email, credentials.password);
-
-        if (result.success && result.account) {
-          // Save mock user data to localStorage
-          localStorage.setItem('user', JSON.stringify(result.account));
-          localStorage.setItem('isAuthenticated', 'true');
-
-          return {
-            success: true,
-            user: result.account
-          };
-        } else {
-          throw { message: result.message || 'Đăng nhập thất bại' };
-        }
-      } catch (error: any) {
-        throw { message: error.message || 'Đăng nhập thất bại' };
-      }
-    }
-
-    // Dùng real API
-    console.log('🌐 Using real API authentication');
     try {
       const response: AxiosResponse<LoginApiResponse> = await axiosInstance.post(API.ACCOUNT_LOGIN, {
         accountPhone: credentials.email, // Using email field as phone

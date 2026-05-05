@@ -11,34 +11,40 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
-    private final CategoryRepository categoryRepository;
+  private final CategoryRepository categoryRepository;
 
-    @Override
-    public List<Category> findAll() {
-        return categoryRepository.findAll();
-    }
+  @Override
+  public List<Category> findAll() {
+    return categoryRepository.findAll();
+  }
 
-    @Override
-    public Category findById(String categoryId) {
-        return categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new IllegalArgumentException("Category not found: " + categoryId));
-    }
+  @Override
+  public Category findById(String categoryId) {
+    return categoryRepository.findById(categoryId)
+        .orElseThrow(() -> new IllegalArgumentException("Category not found: " + categoryId));
+  }
 
-    @Override
-    public Category create(Category category) {
-        return categoryRepository.save(category);
-    }
+  @Override
+  public Category create(Category category) {
+    return categoryRepository.save(category);
+  }
 
-    @Override
-    public Category update(String categoryId, Category category) {
-        Category existing = findById(categoryId);
-        existing.setCategoryName(category.getCategoryName());
-        existing.setStatus(category.getStatus());
-        return categoryRepository.save(existing);
-    }
+  @Override
+  public Category update(String categoryId, Category category) {
+    Category existing = findById(categoryId);
+    existing.setCategoryName(category.getCategoryName());
+    existing.setStatus(category.getStatus());
+    return categoryRepository.save(existing);
+  }
 
-    @Override
-    public void delete(String categoryId) {
-        categoryRepository.deleteById(categoryId);
-    }
+  @Override
+  public void delete(String categoryId) {
+    categoryRepository.deleteById(categoryId);
+  }
+
 }
+
+  
+  
+    
+  

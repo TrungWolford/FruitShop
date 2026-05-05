@@ -73,7 +73,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authToken);
         } catch (Exception ex) {
             SecurityContextHolder.clearContext();
-            log.warn("JWT auth failed for path {}: {}", request.getRequestURI(), ex.getMessage());
+            log.error("JWT authentication failed for path {}: {}", request.getRequestURI(), ex.getMessage());
+            // In thêm stack trace để debug sâu hơn nếu cần
+            // ex.printStackTrace();
         }
 
         filterChain.doFilter(request, response);

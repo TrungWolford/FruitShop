@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { adminApi, type AiConfigPayload, type AiLanguage } from '../api/adminApi';
 
 const DEFAULT_CONFIG: AiConfigPayload = {
@@ -13,7 +13,28 @@ const DEFAULT_CONFIG: AiConfigPayload = {
 export function useAIConfig() {
   const [config, setConfig] = useState<AiConfigPayload>(DEFAULT_CONFIG);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Load current config from ai-service when admin opens the page
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    adminApi
+      .getAiConfig()
+      .then((data) => {
+        if (!cancelled) setConfig(data);
+      })
+      .catch(() => {
+        // Silently fall back to defaults if ai-service is unreachable
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const updateConfig = (next: Partial<AiConfigPayload>) => {
     setConfig((prev) => ({ ...prev, ...next }));
@@ -47,6 +68,7 @@ export function useAIConfig() {
     updateConfig,
     saveConfig,
     saving,
+    loading,
     error,
     languageOptions
   };

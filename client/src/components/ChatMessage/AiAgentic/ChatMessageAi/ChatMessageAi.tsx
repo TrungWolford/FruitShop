@@ -55,9 +55,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ onClose }) => {
         // ✅ Ưu tiên reuse session cũ nếu chưa được đóng (user mở-đóng mà chưa chat)
         if (storedSessionId) {
           try {
-            // Đơn giản reuse session cũ - AI chat không cần validate phức tạp
+            // Tải lịch sử tin nhắn cũ
+            const response = await axiosInstance.get(`${API.MESSAGE}/${storedSessionId}`);
+            setMessages(response.data);
             setSessionId(storedSessionId);
-            console.log('[AI Chat] Reusing existing session:', storedSessionId);
+            console.log('[AI Chat] Reusing existing session and loaded history:', storedSessionId);
             return;
           } catch {
             // Session hết hạn/không hợp lệ → xóa và tạo mới
@@ -123,9 +125,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ onClose }) => {
           headers: { 'Content-Type': 'application/json' }
         }).catch(err => console.warn('[AI Chat] Failed to close session:', err));
 
-        // Xóa sessionId khỏi localStorage khi đóng session
-        const sessionKey = getAiSessionKey(user?.accountId);
-        localStorage.removeItem(sessionKey);
+        // Không xóa sessionId để lần sau mở lại vẫn thấy lịch sử
+        console.log('[AI Chat] Session kept in background:', sessionId);
       } catch (error) {
         console.warn('[AI Chat] Error closing session:', error);
       }
@@ -164,7 +165,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ onClose }) => {
       <div className="flex-1 p-3 overflow-y-auto space-y-3">
         {messages.map((msg, index) => (
           <div key={index} className={`flex ${msg.senderRole === 'CUSTOMER' ? 'justify-end' : 'justify-start'}`}>
-            <span className={`max-w-[80%] rounded-lg px-3 py-2 ${msg.senderRole === 'CUSTOMER' ? 'bg-[#FB923C]' : 'bg-gray-200'}`}>
+            <span className={`max-w-[80%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap break-words ${msg.senderRole === 'CUSTOMER' ? 'bg-[#FB923C] text-white' : 'bg-gray-200 text-[#111113]'}`}>
               {msg.content}
             </span>
           </div>

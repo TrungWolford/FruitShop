@@ -190,7 +190,7 @@ const ChatMessageHuman: React.FC<ChatMessageProps> = ({ onClose }) => {
       try {
         console.log('[ChatMessageHuman] Closing session:', sessionId)
         // Không cần await - fire and forget
-        fetch(`http://localhost:8080/api/chat/sessions/${sessionId}/close`, {
+        fetch(`http://localhost:8080/ai-service/api/chat/sessions/${sessionId}/close`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' }
         }).catch(err => console.warn('[ChatMessageHuman] Failed to close session:', err))
@@ -237,7 +237,7 @@ const ChatMessageHuman: React.FC<ChatMessageProps> = ({ onClose }) => {
       <div className="flex-1 p-3 overflow-y-auto space-y-3">
         {messages.map((msg, index) => (
           <div key={index} className={`flex ${msg.senderRole === 'CUSTOMER' ? 'justify-end' : 'justify-start'}`}>
-            <span className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${msg.senderRole === 'CUSTOMER' ? 'bg-[#FB923C] text-white' : 'bg-gray-200 text-[#111113]'}`}>
+            <span className={`max-w-[80%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap break-words ${msg.senderRole === 'CUSTOMER' ? 'bg-[#FB923C] text-white' : 'bg-gray-200 text-[#111113]'}`}>
               {msg.content}
             </span>
           </div>

@@ -2,6 +2,7 @@ import axiosInstance from '../libs/axios';
 
 const ADMIN_BASE = '/api/admin';
 const AI_SERVICE_BASE = '/ai-service/api/admin';
+const AI_CONFIG_BASE = '/ai-service/api/ai/admin/config';
 
 export type AiLanguage = 'vi' | 'en' | 'auto';
 
@@ -50,8 +51,21 @@ export interface TestChatResponse {
 
 export const adminApi = {
   saveAiConfig: async (payload: AiConfigPayload) => {
-    const response = await axiosInstance.put(`${ADMIN_BASE}/ai-config`, payload);
+    const response = await axiosInstance.put(AI_CONFIG_BASE, payload);
     return response.data;
+  },
+
+  getAiConfig: async (): Promise<AiConfigPayload> => {
+    const response = await axiosInstance.get(AI_CONFIG_BASE);
+    const data = response.data;
+    return {
+      name: data.name ?? 'FruitBot',
+      systemPrompt: data.systemPrompt ?? '',
+      style: data.style ?? 60,
+      length: data.length ?? 50,
+      sales: data.sales ?? 40,
+      language: (data.language as AiLanguage) ?? 'vi',
+    };
   },
 
   getRules: async (): Promise<RuleItem[]> => {

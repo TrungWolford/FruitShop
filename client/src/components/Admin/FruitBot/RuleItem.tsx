@@ -1,8 +1,7 @@
 import React from 'react';
 import { Button } from '../../ui/Button/Button';
-import { Badge } from '../../ui/badge';
 import { Checkbox } from '../../ui/input/checkbox';
-import { GripVertical, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import type { RuleItem as RuleItemType } from '../../../api/adminApi';
 
 interface RuleItemProps {

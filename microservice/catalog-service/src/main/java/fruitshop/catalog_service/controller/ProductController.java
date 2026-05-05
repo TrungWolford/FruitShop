@@ -3,6 +3,7 @@ package fruitshop.catalog_service.controller;
 import fruitshop.catalog_service.entity.Product;
 import fruitshop.catalog_service.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,38 +13,46 @@ import java.util.List;
 @RequestMapping("/api/catalog/products")
 @RequiredArgsConstructor
 public class ProductController {
-    private final ProductService productService;
+  private final ProductService productService;
 
-    @GetMapping
-    public ResponseEntity<List<Product>> findAll() {
-        return ResponseEntity.ok(productService.findAll());
-    }
+  @GetMapping
+  public ResponseEntity<Page<Product>> findAll(org.springframework.data.domain.Pageable pageable) {
+    return ResponseEntity.ok(productService.findAll(pageable));
+  }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Product> findById(@PathVariable("id") String id) {
-        return ResponseEntity.ok(productService.findById(id));
-    }
+  @GetMapping("/filter")
+  public ResponseEntity<Page<Product>> filter(
+      @RequestParam(required = false) List<String> categoryIds,
+      @RequestParam(required = false) Integer status,
+      @RequestParam(required = false, defaultValue = "0") long minPrice,
+      @RequestParam(required = false, defaultValue = "999999999") long maxPrice,
+      org.springframework.data.domain.Pageable pageable) {
+    return ResponseEntity.ok(productService.filter(categoryIds, status, minPrice, maxPrice, pageable));
+  }
 
-    @PostMapping
-    public ResponseEntity<Product> create(
-            @RequestBody Product product,
-            @RequestParam(value = "categoryIds", required = false) List<String> categoryIds
-    ) {
-        return ResponseEntity.ok(productService.create(product, categoryIds));
-    }
+  @GetMapping("/{id}")
+  public ResponseEntity<Product> findById(@PathVariable("id") String id) {
+    return ResponseEntity.ok(productService.findById(id));
+  }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Product> update(
-            @PathVariable("id") String id,
-            @RequestBody Product product,
-            @RequestParam(value = "categoryIds", required = false) List<String> categoryIds
-    ) {
-        return ResponseEntity.ok(productService.update(id, product, categoryIds));
-    }
+  @PostMapping
+  public ResponseEntity<Product> create(
+      @RequestBody Product product,
+      @RequestParam(value = "categoryIds", required = false) List<String> categoryIds) {
+    return ResponseEntity.ok(productService.create(product, categoryIds));
+  }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable("id") String id) {
-        productService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
+  @PutMapping("/{id}")
+  public ResponseEntity<Product> update(
+      @PathVariable("id") String id,
+      @RequestBody Product product,
+      @RequestParam(value = "categoryIds", required = false) List<String> categoryIds) {
+    return ResponseEntity.ok(productService.update(id, product, categoryIds));
+  }
+
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> delete(@PathVariable("id") String id) {
+    productService.delete(id);
+    return ResponseEntity.noContent().build();
+  }
 }
