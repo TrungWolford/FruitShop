@@ -241,6 +241,36 @@ public class RatingServiceImpl implements RatingService {
         }
     }
 
+    @Override
+    public RatingResponse getRatingById(String ratingId) {
+        Rating rating = ratingRepository.findById(ratingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Rating not found with id: " + ratingId));
+        return RatingResponse.fromEntity(rating);
+    }
+
+    @Override
+    public void deleteRating(String ratingId) {
+        if (!ratingRepository.existsById(ratingId)) {
+            throw new ResourceNotFoundException("Rating not found with id: " + ratingId);
+        }
+        ratingRepository.deleteById(ratingId);
+    }
+
+    @Override
+    public long countRatingsByProductId(String productId) {
+        try {
+            ensureProductExists(productId);
+            List<Rating> ratings = ratingRepository.findByProductId(productId);
+            if (ratings == null || ratings.isEmpty()) {
+                return 0L;
+            }
+            return ratings.stream().filter(r -> r.getStatus() == 1).count();
+        } catch (Exception e) {
+            System.err.println("Error counting ratings for productId " + productId + ": " + e.getMessage());
+            return 0L;
+        }
+    }
+
     private void ensureAccountExists(String accountId) {
         try {
             AccountSummaryDto account = accountClient.getAccountById(accountId);

@@ -2,6 +2,7 @@ package fruitshop.catalog_service.config;
 
 import fruitshop.catalog_service.event.RatingCreatedEvent;
 import fruitshop.catalog_service.event.RatingUpdatedEvent;
+import fruitshop.catalog_service.event.OrderConfirmedEvent;
 import fruitshop.catalog_service.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,23 @@ public class CatalogEventConfig {
         return event -> {
             log.info("Received RatingUpdatedEvent for product: {}", event.getProductId());
             updateProductRating(event.getProductId());
+        };
+    }
+
+    @Bean
+    public Consumer<OrderConfirmedEvent> orderConfirmedConsumer() {
+        return event -> {
+            log.info("Received OrderConfirmedEvent for order: {}", event.getOrderId());
+            if (event.getItems() != null) {
+                event.getItems().forEach(item -> {
+                    try {
+                        productService.decrementStock(item.getProductId(), item.getQuantity());
+                    } catch (Exception e) {
+                        log.error("Failed to decrement stock for product {} in order {}", 
+                                item.getProductId(), event.getOrderId(), e);
+                    }
+                });
+            }
         };
     }
 

@@ -21,7 +21,10 @@ import fruitshop.account_service.service.AccountService;
 import fruitshop.account_service.exception.ResourceNotFoundException;
 import fruitshop.account_service.exception.DuplicateResourceException;
 import fruitshop.account_service.security.JwtService;
+import fruitshop.account_service.event.AccountDeactivatedEvent;
+import org.springframework.cloud.stream.function.StreamBridge;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -39,6 +42,9 @@ public class AccountServiceImpl implements AccountService {
 
     @Autowired
     private JwtService jwtService;
+
+    @Autowired
+    private StreamBridge streamBridge;
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -114,7 +120,12 @@ public class AccountServiceImpl implements AccountService {
         }
 
         // Status: luôn cập nhật (bắt buộc)
+        int oldStatus = account.getStatus();
         account.setStatus(request.getStatus());
+        
+        if (oldStatus == 1 && request.getStatus() == 0) {
+            streamBridge.send("accountDeactivatedSupplier-out-0", new AccountDeactivatedEvent(account.getAccountId(), new Date()));
+        }
 
         // Update roles if provided
         if (request.getRoleIds() != null) {

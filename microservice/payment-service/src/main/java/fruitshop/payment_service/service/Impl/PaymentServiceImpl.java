@@ -45,7 +45,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public PaymentResponse createPayment(PaymentRequest request) {
         validatePaymentRequest(request);
-        validateOrderIfPresent(request.getOrderId());
+        // Removed synchronous validation to avoid race conditions with order-service
 
         Payment payment = new Payment();
         payment.setPaymentMethod(request.getPaymentMethod());
@@ -71,7 +71,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .orElseThrow(() -> new RuntimeException("Payment not found with ID: " + paymentId));
 
         validatePaymentRequest(request);
-        validateOrderIfPresent(request.getOrderId());
+        // Removed synchronous validation to avoid race conditions with order-service
 
         if (request.getPaymentMethod() != null) {
             payment.setPaymentMethod(request.getPaymentMethod());
@@ -105,7 +105,7 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setPaymentStatus(status);
         Payment savedPayment = paymentRepository.save(payment);
 
-        if (status == 1) { // Assuming 1 = COMPLETED
+        if (status == 1) { // 1 = COMPLETED
             PaymentCompletedEvent event = new PaymentCompletedEvent(
                     savedPayment.getPaymentId(),
                     savedPayment.getOrderId(),
@@ -115,6 +115,15 @@ public class PaymentServiceImpl implements PaymentService {
             );
             streamBridge.send("paymentCompletedSupplier-out-0", event);
             log.info("Published PaymentCompletedEvent for paymentId: {}", savedPayment.getPaymentId());
+        } else if (status == 3) { // 3 = FAILED
+            fruitshop.payment_service.event.PaymentFailedEvent failedEvent = new fruitshop.payment_service.event.PaymentFailedEvent(
+                    savedPayment.getPaymentId(),
+                    savedPayment.getOrderId(),
+                    savedPayment.getAmount(),
+                    "Payment failed or rejected"
+            );
+            streamBridge.send("paymentFailedSupplier-out-0", failedEvent);
+            log.info("Published PaymentFailedEvent for paymentId: {}", savedPayment.getPaymentId());
         }
 
         return PaymentResponse.fromEntity(savedPayment);

@@ -5,6 +5,8 @@ import fruitshop.catalog_service.repository.CategoryRepository;
 import fruitshop.catalog_service.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -40,5 +42,18 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public void delete(String categoryId) {
         categoryRepository.deleteById(categoryId);
+    }
+
+    @Override
+    public Page<Category> getAllCategory(Pageable pageable) {
+        return categoryRepository.findAll(pageable);
+    }
+
+    @Override
+    public Page<Category> searchCategory(String keyword, Pageable pageable) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return categoryRepository.findAll(pageable);
+        }
+        return categoryRepository.searchCategory(keyword, pageable);
     }
 }

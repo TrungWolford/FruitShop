@@ -42,6 +42,8 @@ public class Product {
     private long price;
 
     private long stock;
+    
+    private long soldQuantity = 0;
 
     @Column(length = 3600)
     private String description;

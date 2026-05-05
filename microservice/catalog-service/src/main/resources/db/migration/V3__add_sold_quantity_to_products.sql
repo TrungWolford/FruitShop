@@ -1,0 +1,1 @@
+ALTER TABLE products ADD COLUMN sold_quantity BIGINT NOT NULL DEFAULT 0;

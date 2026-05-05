@@ -12,6 +12,8 @@ import fruitshop.cart_service.repository.CartItemRepository;
 import fruitshop.cart_service.repository.CartRepository;
 import fruitshop.cart_service.service.CartService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,6 +46,7 @@ public class CartServiceImpl implements CartService {
         ensureProductExists(productId);
 
         Cart cart = getOrCreateCart(accountId);
+        checkCartStatus(cart);
         CartItem item = cartItemRepository.findByCartCartIdAndProductId(cart.getCartId(), productId)
                 .orElseGet(() -> {
                     CartItem newItem = new CartItem();
@@ -64,6 +67,7 @@ public class CartServiceImpl implements CartService {
         ensureAccountExists(accountId);
 
         Cart cart = getOrCreateCart(accountId);
+        checkCartStatus(cart);
         CartItem item = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new IllegalArgumentException("Cart item not found: " + cartItemId));
 
@@ -87,6 +91,7 @@ public class CartServiceImpl implements CartService {
         ensureAccountExists(accountId);
 
         Cart cart = getOrCreateCart(accountId);
+        checkCartStatus(cart);
         CartItem item = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new IllegalArgumentException("Cart item not found: " + cartItemId));
 
@@ -104,8 +109,36 @@ public class CartServiceImpl implements CartService {
         ensureAccountExists(accountId);
 
         Cart cart = getOrCreateCart(accountId);
+        checkCartStatus(cart);
         cart.getItems().clear();
         return cartRepository.save(cart);
+    }
+
+    private void checkCartStatus(Cart cart) {
+        if (cart.getStatus() != 1) {
+            throw new IllegalArgumentException("Cart is disabled and cannot be modified.");
+        }
+    }
+
+    @Override
+    @Transactional
+    public Cart updateCartStatus(String cartId, int status) {
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new IllegalArgumentException("Cart not found: " + cartId));
+        cart.setStatus(status);
+        return cartRepository.save(cart);
+    }
+
+    @Override
+    @Transactional
+    public Cart enableCart(String cartId) {
+        return updateCartStatus(cartId, 1);
+    }
+
+    @Override
+    @Transactional
+    public Cart disableCart(String cartId) {
+        return updateCartStatus(cartId, 0);
     }
 
     private void ensureAccountExists(String accountId) {
@@ -132,5 +165,25 @@ public class CartServiceImpl implements CartService {
         } catch (Exception ex) {
             throw new DownstreamServiceException("Catalog service unavailable while validating productId: " + productId);
         }
+    }
+
+    @Override
+    public Page<Cart> getAllCart(Pageable pageable) {
+        return cartRepository.findAll(pageable);
+    }
+
+    @Override
+    public Cart getCartById(String cartId) {
+        return cartRepository.findById(cartId)
+                .orElseThrow(() -> new IllegalArgumentException("Cart not found: " + cartId));
+    }
+
+    @Override
+    @Transactional
+    public void deleteCart(String cartId) {
+        if (!cartRepository.existsById(cartId)) {
+            throw new IllegalArgumentException("Cart not found: " + cartId);
+        }
+        cartRepository.deleteById(cartId);
     }
 }
