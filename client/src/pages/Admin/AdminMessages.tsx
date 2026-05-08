@@ -14,7 +14,7 @@ const TASKBAR_MARGIN_TOP = 'mt-[60px]';
 
 const AdminMessages: React.FC = () => {
   const navigate = useNavigate();
-  const { user: adminUser, isAuthenticated } = useAppSelector(state => state.adminAuth);
+  const { isAuthenticated } = useAppSelector(state => state.adminAuth);
 
   const [tickets, setTickets] = useState<AdminTicket[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
@@ -43,7 +43,7 @@ const AdminMessages: React.FC = () => {
   }, [loadTickets]);
 
   // Nhận ticket mới real-time qua STOMP
-  const { connected } = useStompChat('/topic/admin/new-ticket', (newSession: AdminTicket) => {
+  useStompChat('/topic/admin/new-ticket', (newSession: AdminTicket) => {
     setTickets(prev => {
       const exists = prev.some(t => t.sessionId === newSession.sessionId);
       if (exists) {

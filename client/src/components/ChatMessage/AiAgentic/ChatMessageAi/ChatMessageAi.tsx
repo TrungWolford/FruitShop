@@ -3,8 +3,6 @@ import images from "@/assets";
 import { X, SendHorizontal } from "lucide-react";
 import { chatMessageAi, createSession, Message } from "@/services/geminiService/geminiService";
 import { useAppSelector } from "@/hooks/redux";
-import axiosInstance from "@/libs/axios";
-import { API } from "@/config/constants";
 
 
 interface ChatMessageProps {

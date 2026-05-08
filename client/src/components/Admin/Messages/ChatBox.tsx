@@ -38,7 +38,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ onClose, sessionId, customerName, cla
   }, [sessionId])
 
   // Lắng nghe tin nhắn mới từ customer qua STOMP
-  const { connected, disconnect } = useStompChat(
+  const { disconnect } = useStompChat(
     `/topic/session/${sessionId}`,
     (newMessage: DisplayMessage) => {
       // Tránh duplicate: tin ADMIN đã optimistic append trong handleSend
