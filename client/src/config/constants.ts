@@ -102,7 +102,7 @@ export const API = {
   UPDATE_SHIPPING_STATUS: (shippingId: string) => `/order-service/api/shipping/${shippingId}/status`, // PUT /api/shipping/{shippingId}/status
   SEARCH_SHIPPINGS: '/order-service/api/shipping/search', // GET /api/shipping/search?keyword=xxx&page=0&size=10
   FILTER_SHIPPINGS: '/order-service/api/shipping/filter', // GET /api/shipping/filter?status=xxx&page=0&size=10
-  SEARCH_AND_FILTER_SHIPPINGS: '/order-service/api/shipping/search-filter', // GET /api/shipping/search-filter?keyword=xxx&status=xxx&page=0&size=10
+  SEARCH_AND_FILTER_SHIPPINGS: '/order-service/api/shipping/search', // GET /api/shipping/search?keyword=xxx&status=xxx&page=0&size=10
 
   // Ratings - Theo RatingController.java
   GET_ALL_RATINGS: '/review-service/api/rating', // GET /api/rating?page=0&size=10
@@ -121,20 +121,20 @@ export const API = {
   MOMO_RETURN: '/momo/return', // GET /api/momo/return
   CHECK_MOMO_STATUS: (orderId: string) => `/momo/check-status/${orderId}`, // GET /api/momo/check-status/{orderId}
 
-  // Refunds - Theo RefundController.java
-  REFUND: '/refund', // GET /api/refund?page=0&size=10 | POST /api/refund
-  GET_REFUND_BY_ID: (refundId: string) => `/refund/${refundId}`, // GET /api/refund/{refundId}
-  GET_REFUNDS_BY_STATUS: (status: string) => `/refund/status/${status}`, // GET /api/refund/status/{status}?page=0&size=10
-  GET_REFUNDS_BY_ORDER: (orderId: string) => `/refund/order/${orderId}`, // GET /api/refund/order/{orderId}
-  SEARCH_REFUNDS: '/refund/search', // GET /api/refund/search?keyword=xxx&page=0&size=10
-  GET_REFUNDS_BY_DATE_RANGE: '/refund/date-range', // GET /api/refund/date-range?startDate=xxx&endDate=xxx&page=0&size=10
-  UPDATE_REFUND_STATUS: (refundId: string) => `/refund/${refundId}/status`, // PUT /api/refund/{refundId}/status
-  APPROVE_REFUND: (refundId: string) => `/refund/${refundId}/approve`, // PUT /api/refund/{refundId}/approve
-  REJECT_REFUND: (refundId: string) => `/refund/${refundId}/reject`, // PUT /api/refund/{refundId}/reject
-  COMPLETE_REFUND: (refundId: string) => `/refund/${refundId}/complete`, // PUT /api/refund/{refundId}/complete
-  DELETE_REFUND: (refundId: string) => `/refund/${refundId}`, // DELETE /api/refund/{refundId}
-  CANCEL_REFUND: (refundId: string) => `/refund/${refundId}`, // DELETE /api/refund/{refundId}
-  GET_PENDING_REFUNDS_COUNT: '/refund/stats/pending-count', // GET /api/refund/stats/pending-count
+  // Refunds - Theo RefundController.java (order-service)
+  REFUND: '/order-service/api/refunds', // GET /api/refunds?page=0&size=10 | POST /api/refunds
+  GET_REFUND_BY_ID: (refundId: string) => `/order-service/api/refunds/${refundId}`, // GET /api/refunds/{refundId}
+  GET_REFUNDS_BY_STATUS: (status: string) => `/order-service/api/refunds/status/${status}`, // GET /api/refunds/status/{status}
+  GET_REFUNDS_BY_ORDER: (orderId: string) => `/order-service/api/refunds/order/${orderId}`, // GET /api/refunds/order/{orderId}
+  SEARCH_REFUNDS: '/order-service/api/refunds/search', // GET /api/refunds/search?keyword=xxx
+  GET_REFUNDS_BY_DATE_RANGE: '/order-service/api/refunds/daterange', // GET /api/refunds/daterange?startDate=xxx&endDate=xxx
+  UPDATE_REFUND_STATUS: (refundId: string) => `/order-service/api/refunds/${refundId}/status`, // PUT /api/refunds/{refundId}/status
+  APPROVE_REFUND: (refundId: string) => `/order-service/api/refunds/${refundId}/approve`, // PUT (via order) /api/orders/{orderId}/refunds/{refundId}/approve
+  REJECT_REFUND: (refundId: string) => `/order-service/api/refunds/${refundId}/reject`, // PUT /api/refunds/{refundId}/reject
+  COMPLETE_REFUND: (refundId: string) => `/order-service/api/refunds/${refundId}/complete`, // PUT /api/refunds/{refundId}/complete
+  DELETE_REFUND: (refundId: string) => `/order-service/api/refunds/${refundId}`, // DELETE /api/refunds/{refundId}
+  CANCEL_REFUND: (refundId: string) => `/order-service/api/refunds/${refundId}/cancel`, // PUT /api/refunds/{refundId}/cancel
+  GET_PENDING_REFUNDS_COUNT: '/order-service/api/refunds/pending/count', // GET /api/refunds/pending/count
 
   // Payments - Theo PaymentController.java
   PAYMENT: '/payment-service/api/payment', // GET /api/payment?page=0&size=10 | POST /api/payment

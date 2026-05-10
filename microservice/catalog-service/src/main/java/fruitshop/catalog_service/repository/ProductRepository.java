@@ -42,5 +42,8 @@ public interface ProductRepository extends JpaRepository<Product, String> {
       Pageable pageable);
 
   @Query("SELECT p FROM Product p ORDER BY p.soldQuantity DESC")
+  List<Product> findTop10BySoldQuantity(Pageable pageable);
+
+  @Query("SELECT p FROM Product p ORDER BY p.soldQuantity DESC")
   List<Product> findTop8BestSelling(Pageable pageable);
 }

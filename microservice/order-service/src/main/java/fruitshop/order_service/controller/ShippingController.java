@@ -1,6 +1,7 @@
 package fruitshop.order_service.controller;
 
-import fruitshop.order_service.entity.Shipping;
+import fruitshop.order_service.dto.request.ShippingRequest;
+import fruitshop.order_service.dto.response.ShippingResponse;
 import fruitshop.order_service.service.ShippingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -13,51 +14,53 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/shipping")
 @RequiredArgsConstructor
 public class ShippingController {
     private final ShippingService shippingService;
 
-    // --- Original methods mapped to the old paths ---
-
-    @GetMapping("/orders/{orderId}/shipping")
-    public ResponseEntity<Shipping> getShipping(@PathVariable String orderId) {
+    @GetMapping("/order/{orderId}")
+    public ResponseEntity<ShippingResponse> getShipping(@PathVariable String orderId) {
         return ResponseEntity.ok(shippingService.findByOrderId(orderId));
     }
 
-    @PutMapping("/orders/{orderId}/shipping")
-    public ResponseEntity<Shipping> upsert(
+    @PutMapping("/order/{orderId}")
+    public ResponseEntity<ShippingResponse> upsert(
             @PathVariable String orderId,
-            @RequestBody Shipping shipping
+            @RequestBody ShippingRequest request
     ) {
-        return ResponseEntity.ok(shippingService.upsert(orderId, shipping));
+        return ResponseEntity.ok(shippingService.upsert(orderId, request));
     }
 
-    // --- New features under /shippings ---
-
-    @GetMapping("/shippings/{shippingId}")
-    public ResponseEntity<Shipping> getShippingById(@PathVariable String shippingId) {
+    @GetMapping("/{shippingId}")
+    public ResponseEntity<ShippingResponse> getShippingById(@PathVariable String shippingId) {
         return ResponseEntity.ok(shippingService.getShippingById(shippingId));
     }
 
-    @PostMapping("/orders/{orderId}/shipping")
-    public ResponseEntity<Shipping> createShipping(
+    @PostMapping
+    public ResponseEntity<ShippingResponse> createShipping(@RequestBody ShippingRequest request) {
+        // Create without orderId initially if needed, or implement appropriate logic
+        return ResponseEntity.ok(shippingService.createShipping(request));
+    }
+
+    @PostMapping("/order/{orderId}")
+    public ResponseEntity<ShippingResponse> createShippingWithOrder(
             @PathVariable String orderId,
-            @RequestBody Shipping shipping
+            @RequestBody ShippingRequest request
     ) {
-        return ResponseEntity.ok(shippingService.createShipping(orderId, shipping));
+        return ResponseEntity.ok(shippingService.createShipping(orderId, request));
     }
 
-    @PutMapping("/shippings/{shippingId}")
-    public ResponseEntity<Shipping> updateShipping(
+    @PutMapping("/{shippingId}")
+    public ResponseEntity<ShippingResponse> updateShipping(
             @PathVariable String shippingId,
-            @RequestBody Shipping shipping
+            @RequestBody ShippingRequest request
     ) {
-        return ResponseEntity.ok(shippingService.updateShipping(shippingId, shipping));
+        return ResponseEntity.ok(shippingService.updateShipping(shippingId, request));
     }
 
-    @GetMapping("/shippings")
-    public ResponseEntity<Page<Shipping>> getAllShippings(
+    @GetMapping
+    public ResponseEntity<Page<ShippingResponse>> getAllShippings(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "shippingId") String sortBy,
@@ -68,13 +71,13 @@ public class ShippingController {
         return ResponseEntity.ok(shippingService.getAllShippingsPaginated(pageable));
     }
 
-    @GetMapping("/shippings/account/{accountId}")
-    public ResponseEntity<List<Shipping>> getShippingsByAccountId(@PathVariable String accountId) {
+    @GetMapping("/account/{accountId}")
+    public ResponseEntity<List<ShippingResponse>> getShippingsByAccountId(@PathVariable String accountId) {
         return ResponseEntity.ok(shippingService.getShippingsByAccountId(accountId));
     }
 
-    @GetMapping("/shippings/status/{status}")
-    public ResponseEntity<Page<Shipping>> getShippingsByStatus(
+    @GetMapping("/status/{status}")
+    public ResponseEntity<Page<ShippingResponse>> getShippingsByStatus(
             @PathVariable int status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -86,8 +89,8 @@ public class ShippingController {
         return ResponseEntity.ok(shippingService.getShippingsByStatus(status, pageable));
     }
 
-    @GetMapping("/shippings/search")
-    public ResponseEntity<Page<Shipping>> searchAndFilterShippings(
+    @GetMapping("/search")
+    public ResponseEntity<Page<ShippingResponse>> searchAndFilterShippings(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer status,
             @RequestParam(defaultValue = "0") int page,
@@ -100,15 +103,15 @@ public class ShippingController {
         return ResponseEntity.ok(shippingService.searchAndFilterShippings(keyword, status, pageable));
     }
 
-    @PutMapping("/shippings/{shippingId}/status")
-    public ResponseEntity<Shipping> updateShippingStatus(
+    @PutMapping("/{shippingId}/status")
+    public ResponseEntity<ShippingResponse> updateShippingStatus(
             @PathVariable String shippingId,
             @RequestParam int status
     ) {
         return ResponseEntity.ok(shippingService.updateShippingStatus(shippingId, status));
     }
 
-    @DeleteMapping("/shippings/{shippingId}")
+    @DeleteMapping("/{shippingId}")
     public ResponseEntity<Void> deleteShipping(@PathVariable String shippingId) {
         shippingService.deleteShipping(shippingId);
         return ResponseEntity.noContent().build();

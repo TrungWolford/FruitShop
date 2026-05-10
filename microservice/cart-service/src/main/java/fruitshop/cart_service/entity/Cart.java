@@ -26,7 +26,7 @@ public class Cart {
 
     private int status;
 
-    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true, fetch = jakarta.persistence.FetchType.EAGER)
     private List<CartItem> items = new ArrayList<>();
 
     @PrePersist

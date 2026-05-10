@@ -28,16 +28,24 @@ public class PaymentEventConfig {
     @Bean
     public Consumer<OrderCreatedEvent> orderCreatedConsumer() {
         return event -> {
-            log.info("Received OrderCreatedEvent for order: {}", event.getOrderId());
+            log.info("Received OrderCreatedEvent for order: {}, paymentMethod: {}", event.getOrderId(), event.getPaymentMethod());
             try {
+                // Map payment method: 0 = COD, 1 = MOMO
+                String methodStr;
+                switch (event.getPaymentMethod()) {
+                    case 0: methodStr = "COD"; break;
+                    case 1: methodStr = "MOMO"; break;
+                    default: methodStr = "COD"; break;
+                }
+
                 PaymentRequest request = new PaymentRequest();
                 request.setOrderId(event.getOrderId());
                 request.setAmount(BigDecimal.valueOf(event.getTotalAmount()));
                 request.setPaymentStatus(0); // 0 = PENDING
-                request.setPaymentMethod("UNSELECTED");
+                request.setPaymentMethod(methodStr);
                 request.setPaymentDate(new Date());
                 paymentService.createPayment(request);
-                log.info("Successfully created pending payment for order: {}", event.getOrderId());
+                log.info("Successfully created pending payment ({}) for order: {}", methodStr, event.getOrderId());
             } catch (Exception e) {
                 log.error("Error creating payment for order: {}", event.getOrderId(), e);
             }

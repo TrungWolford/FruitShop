@@ -14,6 +14,7 @@ public class OrderCreatedEvent {
     private String orderId;
     private String accountId;
     private long totalAmount;
+    private int paymentMethod; // 0 = COD, 1 = MOMO
     private List<OrderItemDto> items;
     private Instant createdAt;
 

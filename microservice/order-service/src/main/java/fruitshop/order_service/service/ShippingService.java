@@ -1,35 +1,41 @@
 package fruitshop.order_service.service;
 
-import fruitshop.order_service.entity.Shipping;
+import fruitshop.order_service.dto.request.ShippingRequest;
+import fruitshop.order_service.dto.response.ShippingResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
 public interface ShippingService {
-    Shipping upsert(String orderId, Shipping shipping);
+    ShippingResponse upsert(String orderId, ShippingRequest request);
 
-    Shipping findByOrderId(String orderId);
+    ShippingResponse findByOrderId(String orderId);
 
-    Shipping getShippingById(String shippingId);
+    ShippingResponse findByOrderIdSafe(String orderId);
 
-    Shipping createShipping(String orderId, Shipping shipping);
+    ShippingResponse getShippingById(String shippingId);
 
-    Shipping updateShipping(String shippingId, Shipping shipping);
+    fruitshop.order_service.entity.Shipping getRawEntityById(String shippingId);
+
+    ShippingResponse createShipping(String orderId, ShippingRequest request);
+    ShippingResponse createShipping(ShippingRequest request);
+
+    ShippingResponse updateShipping(String shippingId, ShippingRequest request);
 
     void deleteShipping(String shippingId);
 
-    List<Shipping> getAllShippings();
+    List<ShippingResponse> getAllShippings();
 
-    Page<Shipping> getAllShippingsPaginated(Pageable pageable);
+    Page<ShippingResponse> getAllShippingsPaginated(Pageable pageable);
 
-    List<Shipping> getShippingsByAccountId(String accountId);
+    List<ShippingResponse> getShippingsByAccountId(String accountId);
 
-    Shipping updateShippingStatus(String shippingId, int status);
+    ShippingResponse updateShippingStatus(String shippingId, int status);
 
-    Page<Shipping> getShippingsByStatus(int status, Pageable pageable);
+    Page<ShippingResponse> getShippingsByStatus(int status, Pageable pageable);
 
-    Page<Shipping> searchShippings(String keyword, Pageable pageable);
+    Page<ShippingResponse> searchShippings(String keyword, Pageable pageable);
 
-    Page<Shipping> searchAndFilterShippings(String keyword, Integer status, Pageable pageable);
+    Page<ShippingResponse> searchAndFilterShippings(String keyword, Integer status, Pageable pageable);
 }

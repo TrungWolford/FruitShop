@@ -1,30 +1,37 @@
 package fruitshop.cart_service.service;
 
-import fruitshop.cart_service.entity.Cart;
+import fruitshop.cart_service.dto.request.CreateCartItemRequest;
+import fruitshop.cart_service.dto.request.UpdateCartItemRequest;
+import fruitshop.cart_service.dto.response.CartItemResponse;
+import fruitshop.cart_service.dto.response.CartResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import java.util.List;
 
 public interface CartService {
-    Cart getOrCreateCart(String accountId);
+    CartResponse getOrCreateCart(String accountId);
 
-    Cart addItem(String accountId, String productId, int quantity);
+    CartResponse addItem(String accountId, CreateCartItemRequest request);
 
-    Cart updateItemQuantity(String accountId, String cartItemId, int quantity);
+    CartResponse updateItemQuantity(String accountId, String cartItemId, UpdateCartItemRequest request);
+    CartItemResponse updateCartItem(String cartItemId, UpdateCartItemRequest request);
 
-    Cart removeItem(String accountId, String cartItemId);
+    CartResponse removeItem(String accountId, String cartItemId);
+    void removeCartItem(String cartItemId);
 
-    Cart clearCart(String accountId);
+    CartResponse clearCart(String accountId);
 
-    Cart updateCartStatus(String cartId, int status);
+    CartResponse updateCartStatus(String cartId, int status);
 
-    Cart enableCart(String cartId);
+    CartResponse enableCart(String cartId);
 
-    Cart disableCart(String cartId);
+    CartResponse disableCart(String cartId);
 
-    Page<Cart> getAllCart(Pageable pageable);
+    Page<CartResponse> getAllCart(Pageable pageable);
 
-    Cart getCartById(String cartId);
+    CartResponse getCartById(String cartId);
 
     void deleteCart(String cartId);
-}
 
+    List<CartItemResponse> getCartItemsByAccountId(String accountId);
+}

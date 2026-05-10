@@ -1,13 +1,14 @@
 package fruitshop.catalog_service.service;
 
-import fruitshop.catalog_service.entity.ProductImage;
+import fruitshop.catalog_service.dto.request.Product.CreateProductImageRequest;
+import fruitshop.catalog_service.dto.response.Product.ProductImageResponse;
 
 import java.util.List;
 
 public interface ProductImageService {
-    List<ProductImage> findByProductId(String productId);
+    List<ProductImageResponse> findByProductId(String productId);
 
-    ProductImage create(String productId, ProductImage image);
+    ProductImageResponse create(String productId, CreateProductImageRequest request);
 
     void delete(Long imageId);
 }

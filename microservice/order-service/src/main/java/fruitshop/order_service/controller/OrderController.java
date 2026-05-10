@@ -1,124 +1,97 @@
 package fruitshop.order_service.controller;
 
-import fruitshop.order_service.entity.Order;
-import fruitshop.order_service.entity.OrderItem;
+import fruitshop.order_service.dto.request.CreateOrderRequest;
+import fruitshop.order_service.dto.request.UpdateOrderRequest;
+import fruitshop.order_service.dto.response.OrderItemResponse;
+import fruitshop.order_service.dto.response.OrderResponse;
 import fruitshop.order_service.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/orders")
+@RequestMapping("/api/order")
 @RequiredArgsConstructor
 public class OrderController {
-  private final OrderService orderService;
+    private final OrderService orderService;
 
-  @GetMapping("/account/{accountId}")
-  public ResponseEntity<List<Order>> getByAccount(@PathVariable String accountId) {
-    return ResponseEntity.ok(orderService.findByAccountId(accountId));
-  }
+    @GetMapping("/account/{accountId}")
+    public ResponseEntity<List<OrderResponse>> getOrdersByAccount(@PathVariable String accountId) {
+        return ResponseEntity.ok(orderService.findByAccountId(accountId));
+    }
 
-  @GetMapping("/{orderId}")
-  public ResponseEntity<Order> getById(@PathVariable String orderId) {
-    return ResponseEntity.ok(orderService.findById(orderId));
-  }
+    @GetMapping("/{orderId}")
+    public ResponseEntity<OrderResponse> getOrderById(@PathVariable String orderId) {
+        return ResponseEntity.ok(orderService.findById(orderId));
+    }
 
-  @PostMapping
-  public ResponseEntity<Order> create(@RequestBody Order order) {
-    return ResponseEntity.ok(orderService.create(order));
-  }
+    @PostMapping
+    public ResponseEntity<OrderResponse> createOrder(@RequestBody CreateOrderRequest request) {
+        return ResponseEntity.ok(orderService.create(request));
+    }
 
-  @PostMapping("/{orderId}/items")
-  public ResponseEntity<Order> addItem(@PathVariable String orderId, @RequestBody OrderItem item) {
-    return ResponseEntity.ok(orderService.addItem(orderId, item));
-  }
+    @PutMapping("/{orderId}")
+    public ResponseEntity<OrderResponse> updateOrder(
+            @PathVariable String orderId,
+            @RequestBody UpdateOrderRequest request
+    ) {
+        return ResponseEntity.ok(orderService.update(orderId, request));
+    }
 
-  // --- New features ---
+    @GetMapping
+    public ResponseEntity<Page<OrderResponse>> getAllOrders(Pageable pageable) {
+        return ResponseEntity.ok(orderService.getAllOrders(pageable));
+    }
 
-  @GetMapping
-  public ResponseEntity<Page<Order>> getAllOrders(
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "10") int size,
-      @RequestParam(defaultValue = "createdAt") String sortBy,
-      @RequestParam(defaultValue = "desc") String sortDir) {
-    Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-    Pageable pageable = PageRequest.of(page, size, sort);
-    return ResponseEntity.ok(orderService.getAllOrders(pageable));
-  }
+    @GetMapping("/status/{status}")
+    public ResponseEntity<Page<OrderResponse>> getOrdersByStatus(
+            @PathVariable int status,
+            Pageable pageable
+    ) {
+        return ResponseEntity.ok(orderService.getOrdersByStatus(status, pageable));
+    }
 
-  @GetMapping("/status/{status}")
-  public ResponseEntity<Page<Order>> getOrdersByStatus(
-      @PathVariable int status,
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "10") int size,
-      @RequestParam(defaultValue = "createdAt") String sortBy,
-      @RequestParam(defaultValue = "desc") String sortDir) {
-    Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-    Pageable pageable = PageRequest.of(page, size, sort);
-    return ResponseEntity.ok(orderService.getOrdersByStatus(status, pageable));
-  }
+    @GetMapping("/items/{orderId}")
+    public ResponseEntity<List<OrderItemResponse>> getOrderItems(@PathVariable String orderId) {
+        return ResponseEntity.ok(orderService.getOrderItems(orderId));
+    }
 
-  @GetMapping("/daterange")
-  public ResponseEntity<Page<Order>> getOrdersByDateRange(
-      @RequestParam String startDate,
-      @RequestParam String endDate,
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "10") int size,
-      @RequestParam(defaultValue = "createdAt") String sortBy,
-      @RequestParam(defaultValue = "desc") String sortDir) {
-    Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-    Pageable pageable = PageRequest.of(page, size, sort);
-    return ResponseEntity.ok(orderService.getOrdersByDateRange(startDate, endDate, pageable));
-  }
+    // Customer endpoints
+    // @PreAuthorize("hasRole('CUSTOMER')")
+    @PutMapping("/{orderId}/cancel")
+    public ResponseEntity<OrderResponse> cancelOrder(@PathVariable String orderId) {
+        return ResponseEntity.ok(orderService.cancelOrder(orderId));
+    }
 
-  @GetMapping("/search")
-  public ResponseEntity<Page<Order>> searchAndFilterOrders(
-      @RequestParam(required = false) String keyword,
-      @RequestParam(required = false) Integer status,
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "10") int size,
-      @RequestParam(defaultValue = "createdAt") String sortBy,
-      @RequestParam(defaultValue = "desc") String sortDir) {
-    Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-    Pageable pageable = PageRequest.of(page, size, sort);
-    return ResponseEntity.ok(orderService.searchAndFilterOrders(keyword, status, pageable));
-  }
+    // @PreAuthorize("hasRole('CUSTOMER')")
+    @PutMapping("/{orderId}/complete")
+    public ResponseEntity<OrderResponse> completeOrder(@PathVariable String orderId) {
+        return ResponseEntity.ok(orderService.completeOrder(orderId));
+    }
 
-  @PutMapping("/{orderId}/status")
-  public ResponseEntity<Order> updateOrderStatus(
-      @PathVariable String orderId,
-      @RequestParam int status) {
-    return ResponseEntity.ok(orderService.updateOrderStatus(orderId, status));
-  }
+    // Admin endpoints
+    // @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{orderId}/confirm")
+    public ResponseEntity<OrderResponse> confirmOrder(@PathVariable String orderId) {
+        return ResponseEntity.ok(orderService.confirmOrder(orderId));
+    }
 
-  @GetMapping("/{orderId}/items")
-  public ResponseEntity<List<OrderItem>> getOrderItems(@PathVariable String orderId) {
-    return ResponseEntity.ok(orderService.getOrderItems(orderId));
-  }
+    // @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{orderId}/start-delivery")
+    public ResponseEntity<OrderResponse> startDelivery(@PathVariable String orderId) {
+        return ResponseEntity.ok(orderService.startDelivery(orderId));
+    }
 
-  @PutMapping("/{orderId}/cancel")
-  public ResponseEntity<Order> cancelOrder(@PathVariable String orderId) {
-    return ResponseEntity.ok(orderService.cancelOrder(orderId));
-  }
-
-  @PutMapping("/{orderId}/confirm")
-  public ResponseEntity<Order> confirmOrder(@PathVariable String orderId) {
-    return ResponseEntity.ok(orderService.confirmOrder(orderId));
-  }
-
-  @PutMapping("/{orderId}/start-delivery")
-  public ResponseEntity<Order> startDelivery(@PathVariable String orderId) {
-    return ResponseEntity.ok(orderService.startDelivery(orderId));
-  }
-
-  @PutMapping("/{orderId}/complete")
-  public ResponseEntity<Order> completeOrder(@PathVariable String orderId) {
-    return ResponseEntity.ok(orderService.completeOrder(orderId));
-  }
+    // @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{orderId}/update-status")
+    public ResponseEntity<OrderResponse> updateOrderStatus(
+            @PathVariable String orderId,
+            @RequestParam int status
+    ) {
+        return ResponseEntity.ok(orderService.updateOrderStatus(orderId, status));
+    }
 }

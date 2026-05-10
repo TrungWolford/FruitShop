@@ -1,11 +1,16 @@
 package fruitshop.cart_service.controller;
 
-import fruitshop.cart_service.dto.CartItemRequest;
-import fruitshop.cart_service.entity.Cart;
+import fruitshop.cart_service.dto.request.CreateCartItemRequest;
+import fruitshop.cart_service.dto.request.UpdateCartItemRequest;
+import fruitshop.cart_service.dto.response.CartItemResponse;
+import fruitshop.cart_service.dto.response.CartResponse;
 import fruitshop.cart_service.service.CartService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/cart")
@@ -14,42 +19,45 @@ public class CartController {
     private final CartService cartService;
 
     @GetMapping("/account/{accountId}")
-    public ResponseEntity<Cart> getCart(@PathVariable String accountId) {
+    public ResponseEntity<CartResponse> getCart(@PathVariable String accountId) {
         return ResponseEntity.ok(cartService.getOrCreateCart(accountId));
     }
 
+    @GetMapping("/account/{accountId}/items")
+    public ResponseEntity<List<CartItemResponse>> getCartItems(@PathVariable String accountId) {
+        return ResponseEntity.ok(cartService.getCartItemsByAccountId(accountId));
+    }
+
     @PostMapping("/account/{accountId}/items")
-    public ResponseEntity<Cart> addItem(
+    public ResponseEntity<CartResponse> addItem(
             @PathVariable String accountId,
-            @RequestBody CartItemRequest request
+            @RequestBody CreateCartItemRequest request
     ) {
-        return ResponseEntity.ok(cartService.addItem(accountId, request.getProductId(), request.getQuantity()));
+        return ResponseEntity.ok(cartService.addItem(accountId, request));
     }
 
-    @PutMapping("/account/{accountId}/items/{cartItemId}")
-    public ResponseEntity<Cart> updateQuantity(
-            @PathVariable String accountId,
+    @PutMapping("/items/{cartItemId}")
+    public ResponseEntity<CartItemResponse> updateCartItem(
             @PathVariable String cartItemId,
-            @RequestBody CartItemRequest request
+            @RequestBody UpdateCartItemRequest request
     ) {
-        return ResponseEntity.ok(cartService.updateItemQuantity(accountId, cartItemId, request.getQuantity()));
+        return ResponseEntity.ok(cartService.updateCartItem(cartItemId, request));
     }
 
-    @DeleteMapping("/account/{accountId}/items/{cartItemId}")
-    public ResponseEntity<Cart> removeItem(
-            @PathVariable String accountId,
-            @PathVariable String cartItemId
-    ) {
-        return ResponseEntity.ok(cartService.removeItem(accountId, cartItemId));
+    @DeleteMapping("/items/{cartItemId}")
+    public ResponseEntity<Void> removeCartItem(@PathVariable String cartItemId) {
+        cartService.removeCartItem(cartItemId);
+        return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/account/{accountId}/items")
-    public ResponseEntity<Cart> clearCart(@PathVariable String accountId) {
-        return ResponseEntity.ok(cartService.clearCart(accountId));
+    @DeleteMapping("/account/{accountId}/clear")
+    public ResponseEntity<Void> clearCart(@PathVariable String accountId) {
+        cartService.clearCart(accountId);
+        return ResponseEntity.ok().build();
     }
 
     @PutMapping("/{cartId}/status")
-    public ResponseEntity<Cart> updateCartStatus(
+    public ResponseEntity<CartResponse> updateCartStatus(
             @PathVariable String cartId,
             @RequestParam int status
     ) {
@@ -57,17 +65,17 @@ public class CartController {
     }
 
     @PutMapping("/{cartId}/enable")
-    public ResponseEntity<Cart> enableCart(@PathVariable String cartId) {
+    public ResponseEntity<CartResponse> enableCart(@PathVariable String cartId) {
         return ResponseEntity.ok(cartService.enableCart(cartId));
     }
 
     @PutMapping("/{cartId}/disable")
-    public ResponseEntity<Cart> disableCart(@PathVariable String cartId) {
+    public ResponseEntity<CartResponse> disableCart(@PathVariable String cartId) {
         return ResponseEntity.ok(cartService.disableCart(cartId));
     }
 
     @GetMapping
-    public ResponseEntity<org.springframework.data.domain.Page<Cart>> getAllCarts(
+    public ResponseEntity<Page<CartResponse>> getAllCarts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -81,7 +89,7 @@ public class CartController {
     }
 
     @GetMapping("/id/{cartId}")
-    public ResponseEntity<Cart> getCartById(@PathVariable String cartId) {
+    public ResponseEntity<CartResponse> getCartById(@PathVariable String cartId) {
         return ResponseEntity.ok(cartService.getCartById(cartId));
     }
 

@@ -1,5 +1,7 @@
 package fruitshop.order_service.service.impl;
 
+import fruitshop.order_service.dto.request.ShippingRequest;
+import fruitshop.order_service.dto.response.ShippingResponse;
 import fruitshop.order_service.entity.Order;
 import fruitshop.order_service.entity.Shipping;
 import fruitshop.order_service.repository.OrderRepository;
@@ -9,8 +11,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -19,63 +23,109 @@ public class ShippingServiceImpl implements ShippingService {
     private final OrderRepository orderRepository;
 
     @Override
-    public Shipping upsert(String orderId, Shipping shipping) {
+    @Transactional
+    public ShippingResponse upsert(String orderId, ShippingRequest request) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
 
         Shipping existing = shippingRepository.findByOrderOrderId(orderId).orElse(null);
         if (existing != null) {
-            existing.setAccountId(shipping.getAccountId());
-            existing.setReceiverName(shipping.getReceiverName());
-            existing.setReceiverPhone(shipping.getReceiverPhone());
-            existing.setReceiverAddress(shipping.getReceiverAddress());
-            existing.setCity(shipping.getCity());
-            existing.setShipperName(shipping.getShipperName());
-            existing.setShippingFee(shipping.getShippingFee());
-            existing.setShippedAt(shipping.getShippedAt());
-            existing.setStatus(shipping.getStatus());
-            return shippingRepository.save(existing);
+            updateFields(existing, request);
+            return mapToResponse(shippingRepository.save(existing));
         }
 
+        Shipping shipping = new Shipping();
         shipping.setOrder(order);
-        return shippingRepository.save(shipping);
+        updateFields(shipping, request);
+        return mapToResponse(shippingRepository.save(shipping));
     }
 
     @Override
-    public Shipping findByOrderId(String orderId) {
+    public ShippingResponse findByOrderId(String orderId) {
         return shippingRepository.findByOrderOrderId(orderId)
+                .map(this::mapToResponse)
                 .orElseThrow(() -> new IllegalArgumentException("Shipping not found for order: " + orderId));
     }
 
     @Override
-    public Shipping getShippingById(String shippingId) {
+    public ShippingResponse findByOrderIdSafe(String orderId) {
+        return shippingRepository.findByOrderOrderId(orderId)
+                .map(this::mapToResponse)
+                .orElse(null);
+    }
+
+    @Override
+    public ShippingResponse getShippingById(String shippingId) {
         return shippingRepository.findById(shippingId)
+                .map(this::mapToResponse)
                 .orElseThrow(() -> new IllegalArgumentException("Shipping not found with id: " + shippingId));
     }
 
     @Override
-    public Shipping createShipping(String orderId, Shipping shipping) {
+    public Shipping getRawEntityById(String shippingId) {
+        return shippingRepository.findById(shippingId).orElse(null);
+    }
+
+    @Override
+    @Transactional
+    public ShippingResponse createShipping(String orderId, ShippingRequest request) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
         if (shippingRepository.findByOrderOrderId(orderId).isPresent()) {
             throw new IllegalArgumentException("Shipping already exists for order: " + orderId);
         }
+        Shipping shipping = new Shipping();
         shipping.setOrder(order);
-        return shippingRepository.save(shipping);
+        updateFields(shipping, request);
+        shipping.setStatus(0); // Default status when creating from order
+        return mapToResponse(shippingRepository.save(shipping));
     }
 
     @Override
-    public Shipping updateShipping(String shippingId, Shipping shipping) {
-        Shipping existing = getShippingById(shippingId);
-        existing.setAccountId(shipping.getAccountId());
-        existing.setReceiverName(shipping.getReceiverName());
-        existing.setReceiverPhone(shipping.getReceiverPhone());
-        existing.setReceiverAddress(shipping.getReceiverAddress());
-        existing.setCity(shipping.getCity());
-        existing.setShipperName(shipping.getShipperName());
-        existing.setShippingFee(shipping.getShippingFee());
-        existing.setShippedAt(shipping.getShippedAt());
-        return shippingRepository.save(existing);
+    @Transactional
+    public ShippingResponse createShipping(ShippingRequest request) {
+        Shipping shipping = new Shipping();
+        updateFields(shipping, request);
+        shipping.setStatus(0); // Default status when creating new
+        return mapToResponse(shippingRepository.save(shipping));
+    }
+
+    @Override
+    @Transactional
+    public ShippingResponse updateShipping(String shippingId, ShippingRequest request) {
+        Shipping existing = shippingRepository.findById(shippingId)
+                .orElseThrow(() -> new IllegalArgumentException("Shipping not found with id: " + shippingId));
+        updateFields(existing, request);
+        existing.setStatus(request.getStatus()); // Update status from request
+        return mapToResponse(shippingRepository.save(existing));
+    }
+
+    private void updateFields(Shipping target, ShippingRequest source) {
+        if (source.getAccountId() != null) target.setAccountId(source.getAccountId());
+        if (source.getReceiverName() != null) target.setReceiverName(source.getReceiverName());
+        if (source.getReceiverPhone() != null) target.setReceiverPhone(source.getReceiverPhone());
+        if (source.getReceiverAddress() != null) target.setReceiverAddress(source.getReceiverAddress());
+        if (source.getCity() != null) target.setCity(source.getCity());
+        if (source.getShipperName() != null) target.setShipperName(source.getShipperName());
+        target.setShippingFee(source.getShippingFee());
+        if (source.getShippedAt() != null) target.setShippedAt(source.getShippedAt());
+    }
+
+    private ShippingResponse mapToResponse(Shipping shipping) {
+        if (shipping == null) return null;
+        return ShippingResponse.builder()
+                .shippingId(shipping.getShippingId())
+                .orderId(shipping.getOrder() != null ? shipping.getOrder().getOrderId() : null)
+                .accountId(shipping.getAccountId())
+                .receiverName(shipping.getReceiverName())
+                .receiverPhone(shipping.getReceiverPhone())
+                .receiverAddress(shipping.getReceiverAddress())
+                .city(shipping.getCity())
+                .shipperName(shipping.getShipperName())
+                .shippingFee(shipping.getShippingFee())
+                .shippedAt(shipping.getShippedAt())
+                .status(shipping.getStatus())
+                .build();
     }
 
     @Override
@@ -87,48 +137,51 @@ public class ShippingServiceImpl implements ShippingService {
     }
 
     @Override
-    public List<Shipping> getAllShippings() {
-        return shippingRepository.findAll();
+    public List<ShippingResponse> getAllShippings() {
+        return shippingRepository.findAll().stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
     @Override
-    public Page<Shipping> getAllShippingsPaginated(Pageable pageable) {
-        return shippingRepository.findAll(pageable);
+    public Page<ShippingResponse> getAllShippingsPaginated(Pageable pageable) {
+        return shippingRepository.findAll(pageable).map(this::mapToResponse);
     }
 
     @Override
-    public List<Shipping> getShippingsByAccountId(String accountId) {
-        return shippingRepository.findByAccountId(accountId);
+    public List<ShippingResponse> getShippingsByAccountId(String accountId) {
+        return shippingRepository.findByAccountId(accountId).stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
     @Override
-    public Shipping updateShippingStatus(String shippingId, int status) {
+    @Transactional
+    public ShippingResponse updateShippingStatus(String shippingId, int status) {
         Shipping shipping = shippingRepository.findById(shippingId)
                 .orElseThrow(() -> new IllegalArgumentException("Shipping not found with id: " + shippingId));
         shipping.setStatus(status);
-        return shippingRepository.save(shipping);
+        return mapToResponse(shippingRepository.save(shipping));
     }
 
     @Override
-    public Page<Shipping> getShippingsByStatus(int status, Pageable pageable) {
-        return shippingRepository.findByStatus(status, pageable);
+    public Page<ShippingResponse> getShippingsByStatus(int status, Pageable pageable) {
+        return shippingRepository.findByStatus(status, pageable).map(this::mapToResponse);
     }
 
     @Override
-    public Page<Shipping> searchShippings(String keyword, Pageable pageable) {
-        return shippingRepository.searchShippings(keyword, pageable);
+    public Page<ShippingResponse> searchShippings(String keyword, Pageable pageable) {
+        return shippingRepository.searchShippings(keyword, pageable).map(this::mapToResponse);
     }
 
     @Override
-    public Page<Shipping> searchAndFilterShippings(String keyword, Integer status, Pageable pageable) {
+    public Page<ShippingResponse> searchAndFilterShippings(String keyword, Integer status, Pageable pageable) {
+        Page<Shipping> shippings;
         if (keyword != null && !keyword.trim().isEmpty() && status != null) {
-            return shippingRepository.searchAndFilterShippings(keyword, status, pageable);
+            shippings = shippingRepository.searchAndFilterShippings(keyword, status, pageable);
         } else if (keyword != null && !keyword.trim().isEmpty()) {
-            return shippingRepository.searchShippings(keyword, pageable);
+            shippings = shippingRepository.searchShippings(keyword, pageable);
         } else if (status != null) {
-            return shippingRepository.findByStatus(status, pageable);
+            shippings = shippingRepository.findByStatus(status, pageable);
         } else {
-            return shippingRepository.findAll(pageable);
+            shippings = shippingRepository.findAll(pageable);
         }
+        return shippings.map(this::mapToResponse);
     }
 }

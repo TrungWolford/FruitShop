@@ -1,0 +1,1 @@
+ALTER TABLE shippings ALTER COLUMN order_id DROP NOT NULL;

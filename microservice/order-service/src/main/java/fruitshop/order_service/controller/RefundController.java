@@ -45,6 +45,26 @@ public class RefundController {
 
     // --- Admin endpoints ---
 
+    @PostMapping("/refunds")
+    public ResponseEntity<Refund> createRefundDirect(@RequestBody java.util.Map<String, Object> body) {
+        String orderId = (String) body.get("orderId");
+        String orderItemId = (String) body.get("orderItemId");
+        
+        Refund refund = new Refund();
+        refund.setReason((String) body.get("reason"));
+        if (body.get("refundAmount") != null) {
+            refund.setRefundAmount(((Number) body.get("refundAmount")).longValue());
+        }
+        if (body.get("imageUrls") != null) {
+            @SuppressWarnings("unchecked")
+            java.util.List<String> imageUrls = (java.util.List<String>) body.get("imageUrls");
+            refund.setImageUrls(String.join(",", imageUrls));
+        }
+        refund.setOriginalPaymentId((String) body.get("originalPaymentId"));
+        
+        return ResponseEntity.ok(refundService.create(orderId, orderItemId, refund));
+    }
+
     @GetMapping("/refunds")
     public ResponseEntity<Page<Refund>> getAllRefunds(
             @RequestParam(defaultValue = "0") int page,
@@ -123,6 +143,12 @@ public class RefundController {
     public ResponseEntity<Void> cancelRefund(@PathVariable String refundId) {
         refundService.cancelRefund(refundId);
         return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/refunds/{refundId}")
+    public ResponseEntity<Void> deleteRefund(@PathVariable String refundId) {
+        refundService.cancelRefund(refundId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/orders/items/{orderItemId}/refunds")

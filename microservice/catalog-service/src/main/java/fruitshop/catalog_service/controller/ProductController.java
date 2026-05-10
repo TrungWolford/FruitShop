@@ -1,6 +1,8 @@
 package fruitshop.catalog_service.controller;
 
-import fruitshop.catalog_service.entity.Product;
+import fruitshop.catalog_service.dto.request.Product.CreateProductRequest;
+import fruitshop.catalog_service.dto.request.Product.UpdateProductRequest;
+import fruitshop.catalog_service.dto.response.Product.ProductResponse;
 import fruitshop.catalog_service.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -19,12 +21,12 @@ public class ProductController {
   private final ProductService productService;
 
   @GetMapping
-  public ResponseEntity<Page<Product>> findAll(org.springframework.data.domain.Pageable pageable) {
+  public ResponseEntity<Page<ProductResponse>> findAll(org.springframework.data.domain.Pageable pageable) {
     return ResponseEntity.ok(productService.getAllProducts(pageable));
   }
 
   @GetMapping("/filter")
-  public ResponseEntity<Page<Product>> filter(
+  public ResponseEntity<Page<ProductResponse>> filter(
       @RequestParam(required = false) List<String> categoryIds,
       @RequestParam(required = false) Integer status,
       @RequestParam(required = false, defaultValue = "0") long minPrice,
@@ -34,7 +36,7 @@ public class ProductController {
   }
 
   @GetMapping("/paginated")
-  public ResponseEntity<Page<Product>> getAllProducts(
+  public ResponseEntity<Page<ProductResponse>> getAllProducts(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size,
       @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -45,23 +47,20 @@ public class ProductController {
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<Product> findById(@PathVariable("id") String id) {
+  public ResponseEntity<ProductResponse> findById(@PathVariable("id") String id) {
     return ResponseEntity.ok(productService.findById(id));
   }
 
   @PostMapping
-  public ResponseEntity<Product> create(
-      @RequestBody Product product,
-      @RequestParam(value = "categoryIds", required = false) List<String> categoryIds) {
-    return ResponseEntity.ok(productService.create(product, categoryIds));
+  public ResponseEntity<ProductResponse> create(@RequestBody CreateProductRequest request) {
+    return ResponseEntity.ok(productService.create(request));
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<Product> update(
+  public ResponseEntity<ProductResponse> update(
       @PathVariable("id") String id,
-      @RequestBody Product product,
-      @RequestParam(value = "categoryIds", required = false) List<String> categoryIds) {
-    return ResponseEntity.ok(productService.update(id, product, categoryIds));
+      @RequestBody UpdateProductRequest request) {
+    return ResponseEntity.ok(productService.update(id, request));
   }
 
   @DeleteMapping("/{id}")
@@ -71,7 +70,7 @@ public class ProductController {
   }
 
   @GetMapping("/search")
-  public ResponseEntity<Page<Product>> searchProducts(
+  public ResponseEntity<Page<ProductResponse>> searchProducts(
       @RequestParam(required = false) String keyword,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size,
@@ -83,7 +82,7 @@ public class ProductController {
   }
 
   @GetMapping("/category/{categoryId}")
-  public ResponseEntity<Page<Product>> getProductsByCategoryId(
+  public ResponseEntity<Page<ProductResponse>> getProductsByCategoryId(
       @PathVariable String categoryId,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size,
@@ -94,8 +93,8 @@ public class ProductController {
     return ResponseEntity.ok(productService.getProductsByCategoryId(categoryId, pageable));
   }
 
-  @GetMapping("/filter")
-  public ResponseEntity<Page<Product>> filterProducts(
+  @GetMapping("/filter/paged")
+  public ResponseEntity<Page<ProductResponse>> filterProducts(
       @RequestParam(required = false) Long minPrice,
       @RequestParam(required = false) Long maxPrice,
       @RequestParam(required = false) String categoryId,
@@ -109,12 +108,23 @@ public class ProductController {
   }
 
   @GetMapping("/top-selling")
-  public ResponseEntity<List<Product>> getTop8BestSellingProducts() {
+  public ResponseEntity<List<ProductResponse>> getTop8BestSellingProducts() {
     return ResponseEntity.ok(productService.getTop8BestSellingProducts());
   }
 
+  @GetMapping("/top-10")
+  public ResponseEntity<List<ProductResponse>> getTop10Products() {
+    return ResponseEntity.ok(productService.getTop10Products());
+  }
+
+  @PostMapping("/{productId}/cleanup-images")
+  public ResponseEntity<String> cleanupDuplicateImages(@PathVariable String productId) {
+    productService.cleanupDuplicateImages(productId);
+    return ResponseEntity.ok("Duplicate images cleaned up successfully");
+  }
+
   @GetMapping("/{productId}/related")
-  public ResponseEntity<Page<Product>> getRelatedProducts(
+  public ResponseEntity<Page<ProductResponse>> getRelatedProducts(
       @PathVariable String productId,
       @RequestParam String categoryId,
       @RequestParam(defaultValue = "0") int page,

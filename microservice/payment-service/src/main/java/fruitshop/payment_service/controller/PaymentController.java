@@ -17,7 +17,6 @@ import fruitshop.payment_service.service.PaymentService;
 @RequestMapping("/api/payment")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "*")
 public class PaymentController {
 
     private final PaymentService paymentService;

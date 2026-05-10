@@ -8,7 +8,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -16,13 +21,18 @@ import java.util.UUID;
 @Entity
 @Table(name = "shippings")
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Shipping {
     @Id
     private String shippingId;
 
     @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", unique = true)
+    @JoinColumn(name = "order_id", unique = true, nullable = true)
     private Order order;
 
     private String accountId;

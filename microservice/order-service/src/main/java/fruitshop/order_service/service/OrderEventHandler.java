@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 @RequiredArgsConstructor
@@ -47,13 +49,17 @@ public class OrderEventHandler {
         log.error("Failed to publish OrderConfirmedEvent for order: {}", order.getOrderId(), e);
       }
 
-      // Automatically create initial Shipping record
+      // Automatically create initial Shipping record if not already created during order creation
       try {
-        Shipping sh = new Shipping();
-        sh.setAccountId(order.getAccountId());
-        sh.setStatus(0); // 0 = PENDING/CREATED
-        shippingService.upsert(order.getOrderId(), sh);
-        log.info("Created initial pending shipping record for Order: {}", order.getOrderId());
+        if (shippingService.findByOrderIdSafe(order.getOrderId()) == null) {
+          fruitshop.order_service.dto.request.ShippingRequest shRequest = new fruitshop.order_service.dto.request.ShippingRequest();
+          shRequest.setAccountId(order.getAccountId());
+          shRequest.setStatus(0); // 0 = PENDING/CREATED
+          shippingService.upsert(order.getOrderId(), shRequest);
+          log.info("Created initial pending shipping record for Order: {}", order.getOrderId());
+        } else {
+          log.info("Shipping record already exists for Order: {}, skipping initial creation", order.getOrderId());
+        }
       } catch (Exception e) {
         log.error("Failed to default-init shipping record for Order: {}", order.getOrderId(), e);
       }

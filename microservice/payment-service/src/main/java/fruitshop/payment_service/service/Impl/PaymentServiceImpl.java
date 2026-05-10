@@ -113,7 +113,7 @@ public class PaymentServiceImpl implements PaymentService {
           new Date());
       streamBridge.send("paymentCompletedSupplier-out-0", event);
       log.info("Published PaymentCompletedEvent for paymentId: {}", savedPayment.getPaymentId());
-    } else if (status == 3) { // 3 = FAILED
+    } else if (status == 2) { // 2 = FAILED
       fruitshop.payment_service.event.PaymentFailedEvent failedEvent = new fruitshop.payment_service.event.PaymentFailedEvent(
           savedPayment.getPaymentId(),
           savedPayment.getOrderId(),
@@ -130,6 +130,13 @@ public class PaymentServiceImpl implements PaymentService {
   public PaymentResponse getPaymentByTransactionId(String transactionId) {
     Payment payment = paymentRepository.findByTransactionId(transactionId)
         .orElseThrow(() -> new ResourceNotFoundException("Payment not found with transaction ID: " + transactionId));
+    return PaymentResponse.fromEntity(payment);
+  }
+
+  @Override
+  public PaymentResponse getPaymentByOrderId(String orderId) {
+    Payment payment = paymentRepository.findByOrderId(orderId)
+        .orElseThrow(() -> new ResourceNotFoundException("Payment not found for order ID: " + orderId));
     return PaymentResponse.fromEntity(payment);
   }
 

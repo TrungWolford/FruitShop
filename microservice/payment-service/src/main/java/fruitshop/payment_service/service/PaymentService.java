@@ -14,4 +14,5 @@ public interface PaymentService {
     Page<PaymentResponse> getPaymentsByStatus(int status, Pageable pageable);
     PaymentResponse updatePaymentStatus(String paymentId, int status);
     PaymentResponse getPaymentByTransactionId(String transactionId);
+    PaymentResponse getPaymentByOrderId(String orderId);
 }

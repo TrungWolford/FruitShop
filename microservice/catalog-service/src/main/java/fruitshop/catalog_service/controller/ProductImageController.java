@@ -1,6 +1,7 @@
 package fruitshop.catalog_service.controller;
 
-import fruitshop.catalog_service.entity.ProductImage;
+import fruitshop.catalog_service.dto.request.Product.CreateProductImageRequest;
+import fruitshop.catalog_service.dto.response.Product.ProductImageResponse;
 import fruitshop.catalog_service.service.ProductImageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,13 +16,13 @@ public class ProductImageController {
     private final ProductImageService productImageService;
 
     @GetMapping("/product/{productId}")
-    public ResponseEntity<List<ProductImage>> findByProductId(@PathVariable String productId) {
+    public ResponseEntity<List<ProductImageResponse>> findByProductId(@PathVariable String productId) {
         return ResponseEntity.ok(productImageService.findByProductId(productId));
     }
 
     @PostMapping("/product/{productId}")
-    public ResponseEntity<ProductImage> create(@PathVariable String productId, @RequestBody ProductImage image) {
-        return ResponseEntity.ok(productImageService.create(productId, image));
+    public ResponseEntity<ProductImageResponse> create(@PathVariable String productId, @RequestBody CreateProductImageRequest request) {
+        return ResponseEntity.ok(productImageService.create(productId, request));
     }
 
     @DeleteMapping("/{id}")
