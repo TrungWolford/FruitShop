@@ -35,6 +35,7 @@ import { ratingService } from '../../services/ratingService';
 import { toast } from 'sonner';
 import type { Product } from '../../types/product';
 import type { Rating } from '../../types/rating';
+import CustomerChatDock from '@/components/ChatMessage/CustomerChatDock';
 
 const ProductDetail: React.FC = () => {
   const { productName } = useParams<{ productName: string }>();
@@ -733,6 +734,8 @@ const ProductDetail: React.FC = () => {
               <div className="space-y-6">
                 {/* Product Title */}
                 <div>
+
+                <CustomerChatDock />
                   <h1 className="text-2xl font-bold text-gray-900 mb-4">
                     <span className="text-red-700 font-black">[{product.productId}]</span> -{' '}
                     {product.productName}

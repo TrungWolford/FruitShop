@@ -8,6 +8,7 @@ import Footer from '../../components/layout/Footer/Footer';
 import { categoryService } from '../../services/categoryService';
 import { productService } from '../../services/productService';
 import ProductItem from '../../components/Product/ProductItem';
+import CustomerChatDock from '@/components/ChatMessage/CustomerChatDock';
 
 // Mock data for products
 const mockProducts: Product[] = [
@@ -566,6 +567,8 @@ const ProductPage: React.FC = () => {
           </div>
         </div>
       </main>
+
+      <CustomerChatDock />
 
       <Footer />
     </div>

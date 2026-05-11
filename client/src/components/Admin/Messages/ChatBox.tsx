@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import images from "@/assets";
-import { X, SendHorizontal } from "lucide-react";
+import { X, Minus, SendHorizontal } from "lucide-react";
 
 import { useStompChat } from "@/hooks/useStompChat";
 import { useAppSelector } from "@/hooks/redux";
@@ -70,11 +70,18 @@ const ChatBox: React.FC<ChatBoxProps> = ({ onClose, sessionId, customerName, cla
     }
   }
 
-  // Kết thúc hỗ trợ: trả session về chế độ bot trước khi đóng UI
-  const handleClose = async () => {
+  // Đóng hẳn ticket, trả session về chế độ bot
+  const handleResolveAndClose = async () => {
     console.log('[ChatBox] Closing - disconnecting WebSocket for session:', sessionId)
     disconnect() // Ngắt kết nối WebSocket trước khi đóng
     await adminChatService.resolveTicket(sessionId)
+    onClose()
+  }
+
+  // Thu gọn khung chat tạm thời, giữ nguyên session chat để mở lại sau
+  const handleMinimize = () => {
+    console.log('[ChatBox] Minimizing chat for session:', sessionId)
+    disconnect()
     onClose()
   }
 
@@ -95,12 +102,22 @@ const ChatBox: React.FC<ChatBoxProps> = ({ onClose, sessionId, customerName, cla
           <span className="text-sm font-semibold truncate">{customerName || 'Khách hàng'}</span>
           <span className="text-xs text-gray-400 truncate">Session: {sessionId}</span>
         </div>
-        <button
-          onClick={handleClose}
-          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
-        >
-          <X className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={handleMinimize}
+            title="Thu gọn"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
+          >
+            <Minus className="w-4 h-4" />
+          </button>
+          <button
+            onClick={handleResolveAndClose}
+            title="Đóng ticket"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Tin nhắn */}
