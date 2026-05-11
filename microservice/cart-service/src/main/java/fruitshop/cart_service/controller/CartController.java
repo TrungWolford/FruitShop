@@ -36,30 +36,60 @@ public class CartController {
         return ResponseEntity.ok(cartService.addItem(accountId, request));
     }
 
-    @PutMapping("/items/{cartItemId}")
-    public ResponseEntity<CartItemResponse> updateCartItem(
+    @PutMapping("/account/{accountId}/items/{cartItemId}")
+    public ResponseEntity<CartResponse> updateQuantity(
+            @PathVariable String accountId,
             @PathVariable String cartItemId,
             @RequestBody UpdateCartItemRequest request
     ) {
-        return ResponseEntity.ok(cartService.updateCartItem(cartItemId, request));
+        return ResponseEntity.ok(cartService.updateItemQuantity(accountId, cartItemId, request));
+    }
+
+    @PutMapping("/items/{cartItemId}")
+    public ResponseEntity<CartResponse> updateQuantityOnly(
+            @PathVariable String cartItemId,
+            @RequestBody UpdateCartItemRequest request
+    ) {
+        return ResponseEntity.ok(cartService.updateItemQuantityByItemId(cartItemId, request));
+    }
+
+    @DeleteMapping("/account/{accountId}/items/{cartItemId}")
+    public ResponseEntity<CartResponse> removeItem(
+            @PathVariable String accountId,
+            @PathVariable String cartItemId
+    ) {
+        return ResponseEntity.ok(cartService.removeItem(accountId, cartItemId));
     }
 
     @DeleteMapping("/items/{cartItemId}")
-    public ResponseEntity<Void> removeCartItem(@PathVariable String cartItemId) {
-        cartService.removeCartItem(cartItemId);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<CartResponse> removeItemOnly(
+            @PathVariable String cartItemId
+    ) {
+        return ResponseEntity.ok(cartService.removeItemByItemId(cartItemId));
+    }
+
+    @DeleteMapping("/account/{accountId}/items")
+    public ResponseEntity<CartResponse> clearCart(@PathVariable String accountId) {
+        return ResponseEntity.ok(cartService.clearCart(accountId));
     }
 
     @DeleteMapping("/account/{accountId}/clear")
-    public ResponseEntity<Void> clearCart(@PathVariable String accountId) {
-        cartService.clearCart(accountId);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<CartResponse> clearCartAlternative(@PathVariable String accountId) {
+        return ResponseEntity.ok(cartService.clearCart(accountId));
     }
 
     @PutMapping("/{cartId}/status")
     public ResponseEntity<CartResponse> updateCartStatus(
             @PathVariable String cartId,
             @RequestParam int status
+    ) {
+        return ResponseEntity.ok(cartService.updateCartStatus(cartId, status));
+    }
+
+    @PutMapping("/{cartId}/status/{status}")
+    public ResponseEntity<CartResponse> updateCartStatusAlternative(
+            @PathVariable String cartId,
+            @PathVariable int status
     ) {
         return ResponseEntity.ok(cartService.updateCartStatus(cartId, status));
     }

@@ -14,9 +14,11 @@ public interface CartService {
     CartResponse addItem(String accountId, CreateCartItemRequest request);
 
     CartResponse updateItemQuantity(String accountId, String cartItemId, UpdateCartItemRequest request);
+    CartResponse updateItemQuantityByItemId(String cartItemId, UpdateCartItemRequest request);
     CartItemResponse updateCartItem(String cartItemId, UpdateCartItemRequest request);
 
     CartResponse removeItem(String accountId, String cartItemId);
+    CartResponse removeItemByItemId(String cartItemId);
     void removeCartItem(String cartItemId);
 
     CartResponse clearCart(String accountId);

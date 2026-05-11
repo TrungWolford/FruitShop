@@ -100,6 +100,32 @@ public class CartServiceImpl implements CartService {
         Cart updatedCart = cartRepository.findById(cart.getCartId()).orElse(cart);
         return mapToResponse(updatedCart, accountDto);
     }
+    @Override
+    @Transactional
+    public CartResponse updateItemQuantityByItemId(String cartItemId, UpdateCartItemRequest request) {
+        CartItem item = cartItemRepository.findById(cartItemId)
+                .orElseThrow(() -> new IllegalArgumentException("Cart item not found: " + cartItemId));
+
+        Cart cart = item.getCart();
+        checkCartStatus(cart);
+
+        if (request.getQuantity() <= 0) {
+            cart.getItems().remove(item);
+            cartItemRepository.delete(item);
+        } else {
+            item.setQuantity(request.getQuantity());
+            cartItemRepository.save(item);
+        }
+
+        Cart updatedCart = cartRepository.findById(cart.getCartId()).orElse(cart);
+        
+        AccountSummaryDto accountDto = null;
+        try {
+            accountDto = accountClient.getById(cart.getAccountId());
+        } catch (Exception ignored) {}
+
+        return mapToResponse(updatedCart, accountDto);
+    }
 
     @Override
     @Transactional
@@ -119,6 +145,27 @@ public class CartServiceImpl implements CartService {
 
         cart.getItems().remove(item);
         Cart updatedCart = cartRepository.save(cart);
+        return mapToResponse(updatedCart, accountDto);
+    }
+    @Override
+    @Transactional
+    public CartResponse removeItemByItemId(String cartItemId) {
+        CartItem item = cartItemRepository.findById(cartItemId)
+                .orElseThrow(() -> new IllegalArgumentException("Cart item not found: " + cartItemId));
+
+        Cart cart = item.getCart();
+        checkCartStatus(cart);
+
+        cart.getItems().remove(item);
+        cartItemRepository.delete(item);
+        
+        Cart updatedCart = cartRepository.findById(cart.getCartId()).orElse(cart);
+        
+        AccountSummaryDto accountDto = null;
+        try {
+            accountDto = accountClient.getById(cart.getAccountId());
+        } catch (Exception ignored) {}
+
         return mapToResponse(updatedCart, accountDto);
     }
 
