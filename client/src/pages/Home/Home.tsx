@@ -1,5 +1,5 @@
 // src/pages/Home/Home.tsx
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopNavigation from '../../components/layout/Header/Header';
 import MainBanner from './Banner/MainBanner';
