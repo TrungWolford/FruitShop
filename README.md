@@ -1,6 +1,6 @@
 # FruitShop 🍎🛒
 
-E-commerce platform for fruit shop with admin management and MoMo payment integration.
+E-commerce platform for fruit shop with admin management, AI Agent, chatbot, realtime customer support chat, and MoMo payment integration.
 
 ## 🚀 Quick Start
 
@@ -34,6 +34,15 @@ createdb -U admin FruitShop
 
 # Connection details in server/src/main/resources/application.properties
 ```
+
+#### 4. Admin Portal
+- Admin login page: `http://localhost:5173/admin`
+- Admin dashboard after login: `http://localhost:5173/admin/dashboard`
+- Demo admin account:
+    - Username: `0355142890`
+    - Password: `123456`
+
+Use this account to access the admin website and test the management features.
 
 ---
 
@@ -140,6 +149,14 @@ FruitShop/
   - Search and filter payments
   - Update payment status manually
   - Track MoMo transactions
+- **Customer Support Chat**
+    - View pending customer chat tickets
+    - Reply to customers in realtime
+    - Close and resolve support tickets
+- **AI Agent & Chatbot**
+    - AI chatbot hỗ trợ tư vấn sản phẩm cho khách hàng
+    - Kết nối realtime giữa khách hàng và hệ thống hỗ trợ
+    - Chuyển từ chatbot sang nhân viên admin khi cần hỗ trợ trực tiếp
 - Product management
 - User management
 
@@ -296,7 +313,21 @@ momo.access-key=F8BBA842ECF85
 momo.secret-key=K951B6PE1waDMi640xX08PD3vg6EkVlz
 momo.ipn-url=https://YOUR-NGROK-URL/api/momo/ipn-handler  # Update this!
 momo.return-url=http://localhost:5173/customer/orders
+
+# Gemini AI
+# Nếu API key hết hạn hoặc không còn dùng được, thay bằng key mới ở đây
+gemini.api-key=YOUR_NEW_GEMINI_API_KEY
+gemini.model=gemini-2.5-flash
+gemini.max-output-tokens=1024
+gemini.temperature=0.7
 ```
+
+### Cách đổi Gemini API khi bị hết hạn
+1. Tạo API key mới trong Google AI Studio hoặc Google Cloud theo project bạn đang dùng.
+2. Cập nhật giá trị `gemini.api-key` trong `server/src/main/resources/application-dev.properties` nếu đang chạy local.
+3. Nếu deploy production, cập nhật biến môi trường `GEMINI_API_KEY` và `GEMINI_MODEL` thay vì sửa trực tiếp file config.
+4. Khởi động lại backend sau khi đổi key để cấu hình mới có hiệu lực.
+5. Nếu vẫn lỗi, kiểm tra log backend để xem có phải key bị thu hồi, vượt quota, hoặc chọn model không còn hợp lệ.
 
 ---
 
