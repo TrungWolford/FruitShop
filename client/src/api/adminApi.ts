@@ -1,6 +1,5 @@
 import axiosInstance from '../libs/axios';
 
-const ADMIN_BASE = '/api/admin';
 const AI_SERVICE_BASE = '/ai-service/api/admin';
 const AI_CONFIG_BASE = '/ai-service/api/ai/admin/config';
 
@@ -69,7 +68,7 @@ export const adminApi = {
   },
 
   getRules: async (): Promise<RuleItem[]> => {
-    const response = await axiosInstance.get(`${ADMIN_BASE}/rules`);
+    const response = await axiosInstance.get(`${AI_SERVICE_BASE}/rules`);
     if (Array.isArray(response.data)) {
       return response.data as RuleItem[];
     }
@@ -80,19 +79,19 @@ export const adminApi = {
   },
 
   createRule: async (payload: RuleItemPayload) => {
-    const response = await axiosInstance.post(`${ADMIN_BASE}/rules`, payload);
+    const response = await axiosInstance.post(`${AI_SERVICE_BASE}/rules`, payload);
     return response.data as RuleItem;
   },
 
   toggleRule: async (id: string, isActive: boolean) => {
-    const response = await axiosInstance.patch(`${ADMIN_BASE}/rules/${id}`, {
+    const response = await axiosInstance.patch(`${AI_SERVICE_BASE}/rules/${id}`, {
       is_active: isActive
     });
     return response.data as RuleItem;
   },
 
   deleteRule: async (id: string) => {
-    await axiosInstance.delete(`${ADMIN_BASE}/rules/${id}`);
+    await axiosInstance.delete(`${AI_SERVICE_BASE}/rules/${id}`);
   },
 
   getRagSources: async (): Promise<RagSourcesResponse> => {
@@ -120,6 +119,10 @@ export const adminApi = {
   reindexRagSource: async (id: string) => {
     const response = await axiosInstance.post(`${AI_SERVICE_BASE}/rag-sources/${id}/reindex`);
     return response.data;
+  },
+
+  deleteRagSource: async (name: string) => {
+    await axiosInstance.delete(`${AI_SERVICE_BASE}/rag-sources/${encodeURIComponent(name)}`);
   },
 
   testChat: async (message: string, useCurrentConfig: boolean) => {

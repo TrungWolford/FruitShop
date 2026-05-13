@@ -39,23 +39,28 @@ const RuleItem: React.FC<RuleItemProps> = ({
       onDrop={() => onDrop(rule.id)}
     >
       <div className={`w-3 h-3 rounded-full flex-shrink-0 ${rule.is_active ? 'bg-teal-400' : 'bg-gray-500'}`} />
-      
+
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-100">{rule.content}</p>
         <p className="text-xs text-gray-400 mt-1">Ưu tiên: {rule.priority === 1 ? 'Cao' : rule.priority === 2 ? 'Trung' : 'Thấp'} - Áp dụng: {scopeLabel[rule.scope]}</p>
       </div>
-      
-      <div className="flex items-center gap-3 flex-shrink-0">
-        <span className={`text-xs font-medium px-2 py-1 rounded ${rule.is_active ? 'text-green-400' : 'text-gray-400'}`}>
+
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {/* Toggle Switch */}
+        <button
+          onClick={() => onToggle(rule.id, !rule.is_active)}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${rule.is_active ? 'bg-teal-500' : 'bg-gray-500'
+            }`}
+          title={rule.is_active ? 'Đang hoạt động – nhấn để tắt' : 'Đang tắt – nhấn để bật'}
+        >
+          <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${rule.is_active ? 'translate-x-6' : 'translate-x-1'
+              }`}
+          />
+        </button>
+        <span className={`text-xs font-medium w-6 ${rule.is_active ? 'text-teal-400' : 'text-gray-500'}`}>
           {rule.is_active ? 'Bật' : 'Tắt'}
         </span>
-        <label className="flex items-center gap-2">
-          <Checkbox
-            checked={rule.is_active}
-            onCheckedChange={(checked) => onToggle(rule.id, Boolean(checked))}
-            className="w-4 h-4"
-          />
-        </label>
         <Button
           variant="ghost"
           size="sm"

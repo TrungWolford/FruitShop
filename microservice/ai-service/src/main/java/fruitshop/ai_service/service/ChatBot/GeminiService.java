@@ -34,7 +34,7 @@ public class GeminiService {
     @Autowired
     public GeminiService(
             @Value("${gemini.api-key:}") String apiKey,
-            @Value("${gemini.model:gemini-2.5-flash}") String model,
+            @Value("${gemini.model:gemini-2.0-flash}") String model,
             @Value("${gemini.max-output-tokens:1024}") int maxOutputTokens,
             @Value("${gemini.temperature:0.7}") float temperature,
             ChatToolService chatToolService) {

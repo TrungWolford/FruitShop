@@ -1,6 +1,5 @@
 package fruitshop.order_service.service;
 
-import fruitshop.order_service.entity.Shipping;
 import fruitshop.order_service.event.OrderConfirmedEvent;
 import fruitshop.order_service.event.PaymentCompletedEvent;
 import fruitshop.order_service.repository.OrderRepository;
@@ -13,8 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Service
 @RequiredArgsConstructor
@@ -49,7 +46,8 @@ public class OrderEventHandler {
         log.error("Failed to publish OrderConfirmedEvent for order: {}", order.getOrderId(), e);
       }
 
-      // Automatically create initial Shipping record if not already created during order creation
+      // Automatically create initial Shipping record if not already created during
+      // order creation
       try {
         if (shippingService.findByOrderIdSafe(order.getOrderId()) == null) {
           fruitshop.order_service.dto.request.ShippingRequest shRequest = new fruitshop.order_service.dto.request.ShippingRequest();

@@ -15,6 +15,12 @@ import org.springframework.stereotype.Service;
 @Service
 public class PromptBuilderService {
 
+    private final RulesService rulesService;
+
+    public PromptBuilderService(RulesService rulesService) {
+        this.rulesService = rulesService;
+    }
+
     /**
      * Builds the system prompt with rules and RAG context.
      */
@@ -33,26 +39,26 @@ public class PromptBuilderService {
         int proactiveness = config != null && config.getProactiveness() != null ? config.getProactiveness() : 50;
 
         if (tone <= 30) {
-            sb.append("\n- Luon tra loi lich su, chuyen nghiep.");
+            sb.append("\n- Luôn trả lời lịch sự, chuyên nghiệp.");
         } else if (tone >= 70) {
-            sb.append("\n- Tra loi than thien, dung emoji phu hop.");
+            sb.append("\n- Trả lời thân thiện, dùng emoji phù hợp.");
         }
 
         if (verbosity <= 30) {
-            sb.append("\n- Tra loi ngan gon duoi 3 cau.");
+            sb.append("\n- Trả lời ngắn gọn dưới 3 câu.");
         } else if (verbosity >= 70) {
-            sb.append("\n- Giai thich chi tiet khi can.");
+            sb.append("\n- Giải thích chi tiết khi cần.");
         }
 
         if (proactiveness >= 70) {
-            sb.append("\n- Chu dong goi y san pham lien quan va combo.");
+            sb.append("\n- Chủ động gợi ý sản phẩm liên quan và combo.");
         }
 
-        List<Rule> rules = config != null ? config.getActiveRules() : null;
-        if (rules != null && !rules.isEmpty()) {
-            String rulesText = rules.stream()
-                    .sorted(Comparator.comparing(Rule::getPriority, Comparator.nullsLast(Integer::compareTo)).reversed())
-                    .map(r -> "- " + r.getText())
+        // Load only active rules from DB
+        List<String> activeRules = rulesService.findActiveRuleContents();
+        if (!activeRules.isEmpty()) {
+            String rulesText = activeRules.stream()
+                    .map(r -> "- " + r)
                     .collect(Collectors.joining("\n"));
             sb.append("\n\n## Quy tac bat buoc:\n").append(rulesText);
         }

@@ -72,6 +72,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (Exception ex) {
             SecurityContextHolder.clearContext();
             log.warn("JWT auth failed for path {}: {}", request.getRequestURI(), ex.getMessage());
+            // Trả về 401 thay vì để fall-through thành 403,
+            // để axios interceptor ở frontend tự động redirect về trang đăng nhập.
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write(
+                "{\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Token hết hạn hoặc không hợp lệ, vui lòng đăng nhập lại\"}"
+            );
+            return;
         }
 
         filterChain.doFilter(request, response);

@@ -3,7 +3,10 @@ package fruitshop.ai_service.controller;
 import fruitshop.ai_service.orchestrator.config.AIConfigChangedEvent;
 import fruitshop.ai_service.orchestrator.model.AIConfig;
 import fruitshop.ai_service.orchestrator.service.AdminAiConfigStore;
+import fruitshop.ai_service.orchestrator.service.DocumentService;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import fruitshop.ai_service.dto.request.ChatBot.AiChatRequest;
@@ -19,13 +22,16 @@ public class AiController {
 
     private final GeminiService geminiService;
     private final AdminAiConfigStore store;
+    private final DocumentService documentService;
     private final ApplicationEventPublisher eventPublisher;
 
     public AiController(GeminiService geminiService, 
                         AdminAiConfigStore store,
+                        DocumentService documentService,
                         ApplicationEventPublisher eventPublisher) {
         this.geminiService = geminiService;
         this.store = store;
+        this.documentService = documentService;
         this.eventPublisher = eventPublisher;
     }
 
@@ -56,6 +62,20 @@ public class AiController {
         eventPublisher.publishEvent(new AIConfigChangedEvent(this));
 
         return ResponseEntity.ok(toResponse(cfg));
+    }
+
+    @PostMapping("/admin/rag-sources/upload")
+    public ResponseEntity<String> ingestPdf(@RequestParam("file") MultipartFile file) {
+        try {
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest().body("File rong!");
+            }
+            documentService.ingestPdf(file);
+            return ResponseEntity.ok("Da nap kien thuc tu PDF thanh cong!");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Loi khi nap PDF: " + e.getMessage());
+        }
     }
 
     @Data

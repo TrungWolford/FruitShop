@@ -10,5 +10,12 @@ public class ProductSummaryDto {
     private long price;
     private int status;
     private long stock;
-    private List<String> images;
+    private List<ProductImageDto> images;
+
+    @Data
+    public static class ProductImageDto {
+        private String imageId;
+        private String imageUrl;
+        private Integer imageOrder;
+    }
 }

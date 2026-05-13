@@ -1,12 +1,10 @@
 package fruitshop.ai_service.orchestrator.service;
 
 import fruitshop.ai_service.orchestrator.client.AIConfigClient;
-import fruitshop.ai_service.orchestrator.client.RAGClient;
 import fruitshop.ai_service.orchestrator.model.AIConfig;
 import fruitshop.ai_service.orchestrator.model.ChatRequest;
 import fruitshop.ai_service.orchestrator.model.ConversationTurn;
 import fruitshop.ai_service.orchestrator.model.RAGChunk;
-import fruitshop.ai_service.orchestrator.model.RAGQuery;
 import fruitshop.ai_service.orchestrator.model.TestChatResponse;
 import io.github.resilience4j.reactor.retry.RetryOperator;
 import io.github.resilience4j.retry.Retry;
@@ -35,7 +33,7 @@ public class OrchestratorService {
     private static final Logger log = LoggerFactory.getLogger(OrchestratorService.class);
 
     private final AIConfigClient aiConfigClient;
-    private final RAGClient ragClient;
+    private final VectorStoreService vectorStoreService;
     private final PromptBuilderService promptBuilderService;
     private final LLMService llmService;
     private final ConversationService conversationService;
@@ -44,14 +42,14 @@ public class OrchestratorService {
 
     public OrchestratorService(
             AIConfigClient aiConfigClient,
-            RAGClient ragClient,
+            VectorStoreService vectorStoreService,
             PromptBuilderService promptBuilderService,
             LLMService llmService,
             ConversationService conversationService,
             RetryRegistry retryRegistry,
             AdminAiConfigStore adminAiConfigStore) {
         this.aiConfigClient = aiConfigClient;
-        this.ragClient = ragClient;
+        this.vectorStoreService = vectorStoreService;
         this.promptBuilderService = promptBuilderService;
         this.llmService = llmService;
         this.conversationService = conversationService;
@@ -70,15 +68,17 @@ public class OrchestratorService {
 
         Mono<List<RAGChunk>> ragMono = Mono.fromCallable(() -> {
                     try {
-                        List<RAGChunk> chunks = ragClient.search(new RAGQuery(request.getMessage(), 4));
-                        return chunks != null ? chunks : List.<RAGChunk>of();
+                        return vectorStoreService.similaritySearch(request.getMessage(), 4)
+                                .stream()
+                                .map(content -> new RAGChunk(content, "PDF Document", 1.0))
+                                .toList();
                     } catch (Exception e) {
                         log.warn("RAG search failed: {}", e.getMessage());
                         return List.<RAGChunk>of();
                     }
                 })
                 .subscribeOn(Schedulers.boundedElastic())
-                .timeout(Duration.ofSeconds(2))
+                .timeout(Duration.ofSeconds(5))
                 .onErrorReturn(List.of());
 
         Mono<List<ConversationTurn>> historyMono = conversationService
@@ -141,14 +141,16 @@ public class OrchestratorService {
 
         Mono<List<RAGChunk>> ragMono = Mono.fromCallable(() -> {
                     try {
-                        List<RAGChunk> chunks = ragClient.search(new RAGQuery(request.getMessage(), 4));
-                        return chunks != null ? chunks : List.<RAGChunk>of();
+                        return vectorStoreService.similaritySearch(request.getMessage(), 4)
+                                .stream()
+                                .map(content -> new RAGChunk(content, "PDF Document", 1.0))
+                                .toList();
                     } catch (Exception e) {
                         return List.<RAGChunk>of();
                     }
                 })
                 .subscribeOn(Schedulers.boundedElastic())
-                .timeout(Duration.ofSeconds(2))
+                .timeout(Duration.ofSeconds(5))
                 .onErrorReturn(List.of());
 
         Mono<List<ConversationTurn>> historyMono = conversationService.loadHistory(sessionId)

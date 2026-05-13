@@ -71,6 +71,17 @@ const RAGTab: React.FC = () => {
     }
   };
 
+  const handleDelete = async (name: string) => {
+    if (!window.confirm(`Xac nhan xoa "${name}" khoi he thong?`)) return;
+    try {
+      await adminApi.deleteRagSource(name);
+      toast.success(`Da xoa: ${name}`);
+      await loadSources();
+    } catch (error) {
+      toast.error('Khong the xoa nguon du lieu');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid md:grid-cols-2 gap-4">
@@ -116,6 +127,13 @@ const RAGTab: React.FC = () => {
               <Badge className={statusColor(source.status)}>{source.status}</Badge>
               <Button variant="outline" onClick={() => handleReindex(source.id)}>
                 Re-index
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => handleDelete(source.name)}
+                className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
+              >
+                Xóa
               </Button>
             </div>
           </div>

@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import fruitshop.cart_service.feign.dto.ProductSummaryDto;
 import java.util.List;
 
 @Data
@@ -18,5 +19,5 @@ public class CartItemResponse {
     private long productPrice;
     private int quantity;
     private long totalPrice;
-    private List<String> images;
+    private List<ProductSummaryDto.ProductImageDto> images;
 }
