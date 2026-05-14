@@ -132,4 +132,9 @@ public class ProductController {
     Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
     return ResponseEntity.ok(productService.getRelatedProducts(categoryId, productId, pageable));
   }
+
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex) {
+    return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND).body(ex.getMessage());
+  }
 }

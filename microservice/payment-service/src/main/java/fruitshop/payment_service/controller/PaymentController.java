@@ -89,4 +89,9 @@ public class PaymentController {
             throw new IllegalArgumentException("Invalid payment status. Must be between 0 and 3");
         }
     }
+
+    @ExceptionHandler(fruitshop.payment_service.exception.ResourceNotFoundException.class)
+    public ResponseEntity<String> handleResourceNotFoundException(fruitshop.payment_service.exception.ResourceNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
 }

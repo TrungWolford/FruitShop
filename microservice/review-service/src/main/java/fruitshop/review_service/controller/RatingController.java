@@ -101,4 +101,9 @@ public class RatingController {
         long count = ratingService.countRatingsByProductId(productId);
         return ResponseEntity.ok(count);
     }
+
+    @ExceptionHandler(fruitshop.review_service.exception.ResourceNotFoundException.class)
+    public ResponseEntity<String> handleResourceNotFoundException(fruitshop.review_service.exception.ResourceNotFoundException ex) {
+        return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
 }

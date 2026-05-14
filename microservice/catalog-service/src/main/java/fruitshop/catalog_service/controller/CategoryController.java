@@ -70,4 +70,9 @@ public class CategoryController {
         Pageable pageable = PageRequest.of(page, size, sort);
         return ResponseEntity.ok(categoryService.searchCategory(keyword, pageable));
     }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex) {
+        return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
 }

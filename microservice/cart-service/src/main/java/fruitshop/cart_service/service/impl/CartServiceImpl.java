@@ -301,8 +301,9 @@ public class CartServiceImpl implements CartService {
         List<CartItemResponse> itemResponses = new ArrayList<>();
         long totalPrice = 0;
 
-        if (cart.getItems() != null) {
-            for (CartItem item : cart.getItems()) {
+        List<CartItem> currentItems = cartItemRepository.findByCartCartId(cart.getCartId());
+        if (currentItems != null) {
+            for (CartItem item : currentItems) {
                 CartItemResponse itemDto = CartItemResponse.builder()
                         .cartItemId(item.getCartItemId())
                         .productId(item.getProductId())

@@ -12,7 +12,9 @@ class PromptBuilderServiceTest {
 
     @Test
     void buildSystemPrompt_includesRulesAndRag() {
-        PromptBuilderService service = new PromptBuilderService();
+        RulesService rulesService = org.mockito.Mockito.mock(RulesService.class);
+        org.mockito.Mockito.when(rulesService.findActiveRuleContents()).thenReturn(List.of("Always verify stock"));
+        PromptBuilderService service = new PromptBuilderService(rulesService);
 
         Rule rule = new Rule();
         rule.setText("Always verify stock");

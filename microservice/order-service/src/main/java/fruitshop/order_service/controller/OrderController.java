@@ -94,4 +94,9 @@ public class OrderController {
     ) {
         return ResponseEntity.ok(orderService.updateOrderStatus(orderId, status));
     }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex) {
+        return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
 }

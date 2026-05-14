@@ -33,7 +33,7 @@ public class PaymentServiceImpl implements PaymentService {
   @Override
   public PaymentResponse getByPaymentId(String paymentId) {
     Payment payment = paymentRepository.findById(paymentId)
-        .orElseThrow(() -> new RuntimeException("Payment not found with ID: " + paymentId));
+        .orElseThrow(() -> new ResourceNotFoundException("Payment not found with ID: " + paymentId));
     return PaymentResponse.fromEntity(payment);
   }
 
@@ -64,7 +64,7 @@ public class PaymentServiceImpl implements PaymentService {
   @Transactional
   public PaymentResponse updatePayment(String paymentId, PaymentRequest request) {
     Payment payment = paymentRepository.findById(paymentId)
-        .orElseThrow(() -> new RuntimeException("Payment not found with ID: " + paymentId));
+        .orElseThrow(() -> new ResourceNotFoundException("Payment not found with ID: " + paymentId));
 
     validatePaymentRequest(request);
     // Removed synchronous validation to avoid race conditions with order-service

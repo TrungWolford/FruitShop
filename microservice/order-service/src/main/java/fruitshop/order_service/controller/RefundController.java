@@ -155,4 +155,9 @@ public class RefundController {
     public ResponseEntity<List<Refund>> getByOrderItem(@PathVariable String orderItemId) {
         return ResponseEntity.ok(refundService.getRefundsByOrderItemId(orderItemId));
     }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex) {
+        return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
 }
