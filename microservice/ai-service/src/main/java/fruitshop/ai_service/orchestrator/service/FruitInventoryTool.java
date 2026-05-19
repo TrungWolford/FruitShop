@@ -35,13 +35,14 @@ public class FruitInventoryTool {
             sb.append("Thông tin tồn kho cho '").append(fruitName).append("':\n");
 
             for (JsonNode product : content) {
+                String id = product.path("productId").asText("");
                 String name = product.path("productName").asText("Không rõ tên");
                 long stock = product.path("stock").asLong(0);
                 long price = product.path("price").asLong(0);
                 int status = product.path("status").asInt(0);
 
                 if (status == 1) { // chỉ hiển thị sản phẩm đang bán
-                    sb.append("- ").append(name)
+                    sb.append("- [ID: ").append(id).append("] ").append(name)
                       .append(": còn ").append(stock).append(" sản phẩm")
                       .append(", giá ").append(String.format("%,d", price)).append(" VNĐ\n");
                 }

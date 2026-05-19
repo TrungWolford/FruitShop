@@ -320,7 +320,11 @@ public class OrderServiceImpl implements OrderService {
           ProductSummaryDto product = productClient.getById(item.getProductId());
           if (product != null) {
             itemDto.setProductName(product.getProductName());
-            itemDto.setProductImages(product.getImages());
+            if (product.getImages() != null) {
+                itemDto.setProductImages(product.getImages().stream()
+                        .map(ProductSummaryDto.ProductImageDto::getImageUrl)
+                        .collect(Collectors.toList()));
+            }
           }
         } catch (Exception ignored) {
         }

@@ -60,9 +60,6 @@ export const cartService = {
         data: response.data
       };
     } catch (error: any) {
-      // Don't log 404 errors - it's normal for accounts to not have carts yet
-      if (error.response?.status !== 404) {
-      }
       return {
         success: false,
         message: error.response?.data?.message || 'Lỗi khi lấy giỏ hàng',

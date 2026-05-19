@@ -8,7 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/ta
 import PersonalityTab from '../../components/Admin/FruitBot/PersonalityTab';
 import RulesTab from '../../components/Admin/FruitBot/RulesTab';
 import RAGTab from '../../components/Admin/FruitBot/RAGTab';
-import TestLiveTab from '../../components/Admin/FruitBot/TestLiveTab';
 import { useAIConfig } from '../../hooks/useAIConfig';
 import { toast } from 'sonner';
 
@@ -63,11 +62,10 @@ const AIConfigPage: React.FC = () => {
         </div>
 
         <Tabs defaultValue="personality" className="space-y-4">
-          <TabsList className="grid grid-cols-2 md:grid-cols-4 gap-2 items-center bg-white border border-gray-200 rounded-lg p-1">
+          <TabsList className="grid grid-cols-2 md:grid-cols-3 gap-2 items-center bg-white border border-gray-200 rounded-lg p-1">
             <TabsTrigger value="personality" className="data-[state=active]:border-b-4 data-[state=active]:border-blue-600 pb-2">Tính cách AI</TabsTrigger>
             <TabsTrigger value="rules" className="data-[state=active]:border-b-4 data-[state=active]:border-blue-600 pb-2">Quy tắc trả lời</TabsTrigger>
             <TabsTrigger value="rag" className="data-[state=active]:border-b-4 data-[state=active]:border-blue-600 pb-2">RAG & Knowledge</TabsTrigger>
-            <TabsTrigger value="test" className="data-[state=active]:border-b-4 data-[state=active]:border-blue-600 pb-2">Test Live</TabsTrigger>
           </TabsList>
 
           <TabsContent value="personality">
@@ -87,9 +85,6 @@ const AIConfigPage: React.FC = () => {
             <RAGTab />
           </TabsContent>
 
-          <TabsContent value="test">
-            <TestLiveTab configName={config.name} />
-          </TabsContent>
         </Tabs>
       </Container>
     </div>

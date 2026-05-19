@@ -5,7 +5,7 @@ export interface CartItem {
   productPrice: number;
   totalPrice: number;
   quantity: number;
-  images?: string[]; // List of image URLs from backend
+  images?: Array<string | { imageUrl?: string | null }>; // URLs or image objects from backend
   discount?: number;
 }
 

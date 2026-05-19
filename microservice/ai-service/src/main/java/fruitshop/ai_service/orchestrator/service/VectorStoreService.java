@@ -28,7 +28,7 @@ public class VectorStoreService {
     private String apiKey;
 
     private static final String EMBEDDING_URL =
-            "https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent";
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2:embedContent";
 
     public VectorStoreService(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -45,7 +45,7 @@ public class VectorStoreService {
                     id BIGSERIAL PRIMARY KEY,
                     content TEXT NOT NULL,
                     source VARCHAR(500),
-                    embedding vector(768),
+                    embedding vector(3072),
                     created_at TIMESTAMP DEFAULT NOW()
                 )
             """);
@@ -144,7 +144,7 @@ public class VectorStoreService {
     @SuppressWarnings("unchecked")
     private float[] generateEmbedding(String text) throws Exception {
         String json = objectMapper.writeValueAsString(Map.of(
-            "model", "models/text-embedding-004",
+            "model", "models/gemini-embedding-2",
             "content", Map.of("parts", List.of(Map.of("text", text)))
         ));
 

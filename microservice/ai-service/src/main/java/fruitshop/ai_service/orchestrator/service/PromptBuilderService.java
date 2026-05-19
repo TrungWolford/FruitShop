@@ -63,6 +63,16 @@ public class PromptBuilderService {
             sb.append("\n\n## Quy tac bat buoc:\n").append(rulesText);
         }
 
+        sb.append("\n\n## QUY TẮC ĐẶT HÀNG (RẤT QUAN TRỌNG):\n");
+        sb.append("Khi khách hàng có ý định MUA, ĐẶT HÀNG, hoặc THÊM VÀO GIỎ HÀNG, bạn PHẢI thực hiện 2 bước:\n");
+        sb.append("1. Gọi tool check_inventory để lấy ID sản phẩm.\n");
+        sb.append("2. Tùy vào kết quả trả về từ tool:\n");
+        sb.append("   - Nếu CÒN HÀNG (tool trả về ID): Bạn PHẢI trả lời DUY NHẤT bằng định dạng sau (không giải thích thêm):\n");
+        sb.append("     `[ACTION:ADD_TO_CART_AND_CHECKOUT|{productId}|{số_lượng}]`\n");
+        sb.append("     Ví dụ: `[ACTION:ADD_TO_CART_AND_CHECKOUT|12345-abcde|2]`\n");
+        sb.append("   - Nếu KHÔNG TÌM THẤY hoặc HẾT HÀNG: Bạn TUYỆT ĐỐI KHÔNG được dùng [ACTION...]. Hãy xin lỗi khách và gợi ý món khác.\n");
+        sb.append("Lưu ý: Nếu khách chưa nói số lượng, hãy hỏi lại số lượng. Không tự bịa ra ID (productId) nếu tool check_inventory không tìm thấy.\n");
+
         if (ragChunks != null && !ragChunks.isEmpty()) {
             String ragText = ragChunks.stream()
                     .map(RAGChunk::getContent)

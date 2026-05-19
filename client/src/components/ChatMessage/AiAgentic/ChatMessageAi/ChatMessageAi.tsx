@@ -5,12 +5,17 @@ import { chatMessageAi, createSession, Message } from "@/services/geminiService/
 import { useAppSelector } from "@/hooks/redux";
 import axiosInstance from "@/libs/axios";
 import { API } from "@/config/constants";
+import { useNavigate } from "react-router-dom";
+import { cartService } from "@/services/cartService";
+import type { CartItem as CartItemType } from "@/types/cart";
 
 
 interface ChatMessageProps {
   onClose: () => void;
 }
-type DisplayMessage = { content: string; senderRole: 'CUSTOMER' | 'SYSTEM' }
+type DisplayMessage = { content: string; senderRole: 'CUSTOMER' | 'SYSTEM'; timestamp: string }
+
+const ACTION_REGEX = /\[ACTION:ADD_TO_CART_AND_CHECKOUT\|([^|]+)\|(\d+)\]/;
 
 // Key lưu sessionId theo từng user - AI CHAT dùng key riêng theo accountId
 const getAiSessionKey = (accountId?: string | null) =>
@@ -25,6 +30,21 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ onClose }) => {
   const messageEndRef = useRef<HTMLDivElement>(null)
   const hasInitialized = useRef(false) // Chặn duplicate init từ StrictMode
   const currentUserIdRef = useRef<string | null>(null) // Track user ID để detect thay đổi
+  const navigate = useNavigate();
+
+  const formatTimestamp = (value: string) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    const pad = (num: number) => String(num).padStart(2, '0');
+    return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
+
+  const formatDateLabel = (value: string) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    const pad = (num: number) => String(num).padStart(2, '0');
+    return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`;
+  };
 
   // AI chat: dùng key riêng theo accountId để tránh conflict giữa users
   useEffect(() => {
@@ -57,7 +77,23 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ onClose }) => {
           try {
             // Tải lịch sử tin nhắn cũ
             const response = await axiosInstance.get(`${API.MESSAGE}/${storedSessionId}`);
-            setMessages(response.data);
+            const normalizedMessages = Array.isArray(response.data)
+              ? response.data.map((msg: DisplayMessage) => {
+                  const nextTimestamp = msg.timestamp ?? new Date().toISOString();
+                  if (msg.senderRole !== 'SYSTEM' || typeof msg.content !== 'string') {
+                    return { ...msg, timestamp: nextTimestamp };
+                  }
+                  const match = msg.content.match(ACTION_REGEX);
+                  if (!match) return { ...msg, timestamp: nextTimestamp };
+                  const quantity = parseInt(match[2], 10);
+                  return {
+                    ...msg,
+                    timestamp: nextTimestamp,
+                    content: `Đã thêm ${quantity} sản phẩm vào giỏ hàng. Mình sẽ chuyển bạn sang trang thanh toán nhé.`
+                  };
+                })
+              : response.data;
+            setMessages(normalizedMessages);
             setSessionId(storedSessionId);
             console.log('[AI Chat] Reusing existing session and loaded history:', storedSessionId);
             return;
@@ -84,7 +120,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ onClose }) => {
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
 
-    const newUserMessage: DisplayMessage = { senderRole: 'CUSTOMER', content: inputValue.trim() }
+    const newUserMessage: DisplayMessage = {
+      senderRole: 'CUSTOMER',
+      content: inputValue.trim(),
+      timestamp: new Date().toISOString()
+    }
     setMessages(prev => [...prev, newUserMessage])
     setInputValue("")
     setIsLoading(true)
@@ -98,9 +138,70 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ onClose }) => {
         messageType: 'TEXT',
         senderId: user?.accountId ?? null, // ✅ Gửi kèm accountId
       }
-      const aiResponeText = await chatMessageAi(payload)
+      const aiResponeText = await chatMessageAi(payload);
+      let responseText = aiResponeText.content;
+      
+      // Xử lý action từ AI Agent
+      const actionMatch = responseText.match(ACTION_REGEX);
+      if (actionMatch) {
+        const productId = actionMatch[1];
+        const quantity = parseInt(actionMatch[2], 10);
+        
+        // Cắt bỏ chuỗi ACTION khỏi tin nhắn hiển thị
+        responseText = responseText.replace(actionMatch[0], '').trim();
+        if (!responseText) {
+          responseText = `Đã thêm ${quantity} sản phẩm vào giỏ hàng. Mình sẽ chuyển bạn sang trang thanh toán nhé.`;
+        }
 
-      const aiMessage: DisplayMessage = { content: aiResponeText.content, senderRole: 'SYSTEM' }
+        // Gọi cart API để thêm/cập nhật vào giỏ hàng
+        if (user?.accountId) {
+          try {
+            // Xóa giỏ hàng cũ để đảm bảo chỉ mua đúng số lượng/sản phẩm user vừa chat
+            await cartService.clearCart(user.accountId);
+
+            const cartItemsResponse = await cartService.getCartItems(user.accountId);
+            let items: CartItemType[] = [];
+            if (Array.isArray(cartItemsResponse.data)) {
+              items = cartItemsResponse.data as CartItemType[];
+            } else if (cartItemsResponse.data && typeof cartItemsResponse.data === 'object' && 'items' in cartItemsResponse.data) {
+              const data = cartItemsResponse.data as { items?: CartItemType[] };
+              items = data.items ?? [];
+            }
+
+            const existingItem = items.find((item) => item.productId === productId);
+
+            if (existingItem?.cartItemId) {
+              await cartService.updateCartItem({
+                cartItemId: existingItem.cartItemId,
+                quantity
+              });
+            } else {
+              await cartService.addToCart({
+                accountId: user.accountId,
+                productId,
+                quantity
+              });
+            }
+
+            const productName = existingItem?.productName ?? 'sản phẩm';
+            responseText = `Đã thêm ${quantity} quả ${productName} vào giỏ hàng. Mình sẽ chuyển bạn sang trang thanh toán nhé.`;
+            console.log('[AI Chat] Added item to cart, navigating to checkout...');
+            // Điều hướng đến trang thanh toán
+            navigate('/checkout');
+          } catch (e) {
+            console.error('[AI Chat] Failed to add to cart:', e);
+            responseText = "Xin lỗi, đã xảy ra lỗi khi thêm vào giỏ hàng.";
+          }
+        } else {
+          responseText = "Vui lòng đăng nhập để đặt hàng nhé!";
+        }
+      }
+
+      const aiMessage: DisplayMessage = {
+        content: responseText,
+        senderRole: 'SYSTEM',
+        timestamp: new Date().toISOString()
+      }
       setMessages(prev => [...prev, aiMessage])
     } catch (error) {
       console.error("Xin lỗi, vui lòng thử lại sau nhé!", error)
@@ -163,13 +264,33 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ onClose }) => {
 
       {/* Hiển thị thông tin chat */}
       <div className="flex-1 p-3 overflow-y-auto space-y-3">
-        {messages.map((msg, index) => (
-          <div key={index} className={`flex ${msg.senderRole === 'CUSTOMER' ? 'justify-end' : 'justify-start'}`}>
-            <span className={`max-w-[80%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap break-words ${msg.senderRole === 'CUSTOMER' ? 'bg-[#FB923C] text-white' : 'bg-gray-200 text-[#111113]'}`}>
-              {msg.content}
-            </span>
-          </div>
-        ))}
+        {messages.map((msg, index) => {
+          const currentDateLabel = formatDateLabel(msg.timestamp);
+          const previousDateLabel = index > 0 ? formatDateLabel(messages[index - 1].timestamp) : null;
+          const showDateLabel = index === 0 || currentDateLabel !== previousDateLabel;
+
+          return (
+            <React.Fragment key={index}>
+              {showDateLabel && (
+                <div className="flex justify-center">
+                  <span className="text-[11px] text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
+                    {currentDateLabel}
+                  </span>
+                </div>
+              )}
+              <div
+                className={`flex flex-col ${msg.senderRole === 'CUSTOMER' ? 'items-end' : 'items-start'}`}
+              >
+                <span className={`max-w-[80%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap break-words ${msg.senderRole === 'CUSTOMER' ? 'bg-[#FB923C] text-white' : 'bg-gray-200 text-[#111113]'}`}>
+                  {msg.content}
+                </span>
+                <span className="mt-1 text-[10px] text-gray-400">
+                  {formatTimestamp(msg.timestamp)}
+                </span>
+              </div>
+            </React.Fragment>
+          );
+        })}
         {isLoading && (
           <div className="flex justify-start">
             <span className="inline-flex items-center gap-1 rounded-lg bg-gray-200 px-4 py-3">

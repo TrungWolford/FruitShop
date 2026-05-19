@@ -171,12 +171,29 @@ const CheckoutPage: React.FC = () => {
             city: firstAddress.city,
             paymentMethod: 0, // Default to COD
           });
+        } else {
+          // Fallback to user account info if no saved addresses
+          setShippingData(prev => ({
+            ...prev,
+            receiverName: currentUser.accountName || '',
+            receiverPhone: currentUser.accountPhone || ''
+          }));
         }
       } else {
         setSavedShippingAddresses([]);
+        setShippingData(prev => ({
+          ...prev,
+          receiverName: currentUser.accountName || '',
+          receiverPhone: currentUser.accountPhone || ''
+        }));
       }
     } catch (error) {
       setSavedShippingAddresses([]);
+      setShippingData(prev => ({
+        ...prev,
+        receiverName: currentUser.accountName || '',
+        receiverPhone: currentUser.accountPhone || ''
+      }));
     } finally {
       setIsLoadingShipping(false);
     }
@@ -217,18 +234,19 @@ const CheckoutPage: React.FC = () => {
     }
   };
 
-  const getImageUrl = (imageUrl?: string) => {
-    if (!imageUrl) return '/placeholder-image.jpg';
+  const getImageUrl = (image?: string | { imageUrl?: string | null }) => {
+    const resolvedUrl = typeof image === 'string' ? image : image?.imageUrl ?? '';
+    if (!resolvedUrl) return '/placeholder-image.jpg';
 
-    if (imageUrl.startsWith('http')) {
-      return imageUrl;
+    if (resolvedUrl.startsWith('http')) {
+      return resolvedUrl;
     }
 
-    if (imageUrl.startsWith('/products/')) {
-      return imageUrl;
+    if (resolvedUrl.startsWith('/products/')) {
+      return resolvedUrl;
     }
 
-    const cleanUrl = imageUrl.startsWith('/') ? imageUrl.slice(1) : imageUrl;
+    const cleanUrl = resolvedUrl.startsWith('/') ? resolvedUrl.slice(1) : resolvedUrl;
     return `/products/${cleanUrl}`;
   };
 
@@ -438,6 +456,7 @@ const CheckoutPage: React.FC = () => {
                   }),
                 );
                 window.dispatchEvent(new CustomEvent('closeCartModal'));
+                // eslint-disable-next-line no-empty
               } else {
               }
 

@@ -52,7 +52,7 @@ const PersonalityTab: React.FC<PersonalityTabProps> = ({ config, onChange, onSav
         <h3 className="text-sm font-medium text-gray-700 mb-4">Thanh điều chỉnh phong cách</h3>
         <div className="space-y-4">
           <div className="flex items-center gap-4">
-            <span className="w-28 text-sm text-gray-600 font-medium">Chuyên nghiệp</span>
+            <span className="w-28 text-sm text-gray-600 font-medium">Thân thiện</span>
             <input
               type="range"
               min={0}
@@ -61,12 +61,11 @@ const PersonalityTab: React.FC<PersonalityTabProps> = ({ config, onChange, onSav
               onChange={(e) => onChange({ style: Number(e.target.value) })}
               className="flex-1 accent-gray-600"
             />
-            <span className="w-24 text-sm text-gray-600 text-right font-medium">Thân thiện</span>
             <span className="w-8 text-sm text-blue-600 font-semibold text-right">{config.style}</span>
           </div>
 
           <div className="flex items-center gap-4">
-            <span className="w-28 text-sm text-gray-600 font-medium">Ngắn gọn</span>
+            <span className="w-28 text-sm text-gray-600 font-medium">Độ dài</span>
             <input
               type="range"
               min={0}
@@ -75,12 +74,11 @@ const PersonalityTab: React.FC<PersonalityTabProps> = ({ config, onChange, onSav
               onChange={(e) => onChange({ length: Number(e.target.value) })}
               className="flex-1 accent-gray-600"
             />
-            <span className="w-24 text-sm text-gray-600 text-right font-medium">Chi tiết</span>
             <span className="w-8 text-sm text-blue-600 font-semibold text-right">{config.length}</span>
           </div>
 
           <div className="flex items-center gap-4">
-            <span className="w-28 text-sm text-gray-600 font-medium">Thận trọng</span>
+            <span className="w-28 text-sm text-gray-600 font-medium">Chủ động bán</span>
             <input
               type="range"
               min={0}
@@ -89,7 +87,6 @@ const PersonalityTab: React.FC<PersonalityTabProps> = ({ config, onChange, onSav
               onChange={(e) => onChange({ sales: Number(e.target.value) })}
               className="flex-1 accent-gray-600"
             />
-            <span className="w-24 text-sm text-gray-600 text-right font-medium">Chủ động bán</span>
             <span className="w-8 text-sm text-blue-600 font-semibold text-right">{config.sales}</span>
           </div>
         </div>

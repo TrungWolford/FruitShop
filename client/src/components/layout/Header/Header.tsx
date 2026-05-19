@@ -220,7 +220,8 @@ const TopNavigation: React.FC = () => {
   // Helper function to get correct image URL
   const getImageUrl = (item: CartItem): string => {
     // Lấy image đầu tiên từ images array
-    const imageUrl = item.images?.[0];
+    const image = item.images?.[0];
+    const imageUrl = typeof image === 'string' ? image : image?.imageUrl ?? '';
 
     if (!imageUrl) {
       return '/placeholder-image.svg';

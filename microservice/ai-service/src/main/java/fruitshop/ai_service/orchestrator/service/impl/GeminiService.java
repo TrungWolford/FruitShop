@@ -76,6 +76,7 @@ public class GeminiService implements LLMService {
                     return Mono.just("");
                 })
                 .flatMapMany(probeResponse -> {
+                    System.out.println("[AI-SERVICE] Raw Gemini probe response: " + probeResponse);
                     JsonNode toolCall = extractToolCallFromResponse(probeResponse);
 
                     if (toolCall != null) {

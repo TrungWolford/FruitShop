@@ -22,18 +22,19 @@ const CartItem: React.FC<CartItemProps> = ({
     }).format(price);
   };
 
-  const getImageUrl = (imageUrl?: string) => {
-    if (!imageUrl) return '/placeholder-image.jpg';
-    
-    if (imageUrl.startsWith('http')) {
-      return imageUrl;
+  const getImageUrl = (image?: string | { imageUrl?: string | null }) => {
+    const resolvedUrl = typeof image === 'string' ? image : image?.imageUrl ?? '';
+    if (!resolvedUrl) return '/placeholder-image.jpg';
+
+    if (resolvedUrl.startsWith('http')) {
+      return resolvedUrl;
     }
-    
-    if (imageUrl.startsWith('/products/')) {
-      return imageUrl;
+
+    if (resolvedUrl.startsWith('/products/')) {
+      return resolvedUrl;
     }
-    
-    const cleanUrl = imageUrl.startsWith('/') ? imageUrl.slice(1) : imageUrl;
+
+    const cleanUrl = resolvedUrl.startsWith('/') ? resolvedUrl.slice(1) : resolvedUrl;
     return `/products/${cleanUrl}`;
   };
 

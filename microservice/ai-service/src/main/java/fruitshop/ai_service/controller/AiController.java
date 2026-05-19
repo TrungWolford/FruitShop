@@ -9,10 +9,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import fruitshop.ai_service.dto.request.ChatBot.AiChatRequest;
-import fruitshop.ai_service.dto.response.ChatBot.AiChatResponse;
-import fruitshop.ai_service.dto.response.ChatBot.GeminiAgentResult;
-import fruitshop.ai_service.service.ChatBot.GeminiService;
 import lombok.Data;
 import java.util.List;
 
@@ -20,25 +16,16 @@ import java.util.List;
 @RequestMapping("/api/ai")
 public class AiController {
 
-    private final GeminiService geminiService;
     private final AdminAiConfigStore store;
     private final DocumentService documentService;
     private final ApplicationEventPublisher eventPublisher;
 
-    public AiController(GeminiService geminiService, 
-                        AdminAiConfigStore store,
+    public AiController(AdminAiConfigStore store,
                         DocumentService documentService,
                         ApplicationEventPublisher eventPublisher) {
-        this.geminiService = geminiService;
         this.store = store;
         this.documentService = documentService;
         this.eventPublisher = eventPublisher;
-    }
-
-    @PostMapping("/chat")
-    public ResponseEntity<AiChatResponse> chat(@RequestBody AiChatRequest request) {
-        GeminiAgentResult result = geminiService.agentChat(request.getMessage(), request.getAccountId());
-        return ResponseEntity.ok(new AiChatResponse(result.reply(), result.metadata(), result.intent()));
     }
 
     // --- Admin AI Config Endpoints ---
