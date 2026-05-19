@@ -254,7 +254,7 @@ const ProductDetail: React.FC = () => {
     });
   };
 
-  // Handle delete rating (soft delete by changing status)
+  // Handle delete rating
   const handleDeleteRating = async () => {
     if (!isAuthenticated || !user || !product || !userRating) {
       toast.error('Không thể xóa đánh giá');
@@ -262,8 +262,8 @@ const ProductDetail: React.FC = () => {
     }
 
     try {
-      const response = await ratingService.changeRatingStatus(userRating.ratingId);
-      // Backend returns RatingResponse with updated status
+      const response = await ratingService.deleteRating(userRating.ratingId);
+      // Backend returns RatingResponse after DELETE
       const isSuccess = response && (response as any).ratingId;
 
       if (isSuccess) {

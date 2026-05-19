@@ -202,6 +202,10 @@ public class RatingServiceImpl implements RatingService {
         Rating rating = ratingRepository.findById(ratingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Rating not found with id: " + ratingId));
 
+        if(rating.getStatus() == 0){
+            throw new ResourceNotFoundException("Rating cannot change");
+        }
+
         // Update fields
         if (request.getComment() != null) {
             rating.setComment(request.getComment());
