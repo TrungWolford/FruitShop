@@ -186,25 +186,6 @@ public class OrderServiceImpl implements OrderService {
         savedOrder.getCreatedAt());
     streamBridge.send("orderCreatedSupplier-out-0", event);
 
-    // COD orders: confirm immediately since no online payment needed
-    // This triggers stock deduction in catalog-service
-    Integer paymentMethod = request.getPaymentMethod();
-    if (paymentMethod == null || paymentMethod == 0) {
-      try {
-        OrderConfirmedEvent confirmedEvent = new OrderConfirmedEvent(
-            savedOrder.getOrderId(),
-            savedOrder.getAccountId(),
-            savedOrder.getOrderItems().stream()
-                .map(item -> new OrderConfirmedEvent.OrderItemDto(item.getProductId(), item.getQuantity()))
-                .collect(Collectors.toList()),
-            Instant.now());
-        streamBridge.send("orderConfirmedSupplier-out-0", confirmedEvent);
-        log.info("COD order {} confirmed immediately, stock deduction triggered", savedOrder.getOrderId());
-      } catch (Exception e) {
-        log.error("Failed to publish OrderConfirmedEvent for COD order: {}", savedOrder.getOrderId(), e);
-      }
-    }
-
     return mapToResponse(savedOrder, accountDto);
   }
 
@@ -220,6 +201,23 @@ public class OrderServiceImpl implements OrderService {
 
     // Sync Shipping and Payment status automatically
     handleStatusSync(savedOrder, request.getStatus(), oldStatus);
+
+    // If order status changes to Confirmed (2), publish OrderConfirmedEvent to deduct stock
+    if (request.getStatus() == 2 && oldStatus != 2) {
+      try {
+        OrderConfirmedEvent confirmedEvent = new OrderConfirmedEvent(
+            savedOrder.getOrderId(),
+            savedOrder.getAccountId(),
+            savedOrder.getOrderItems().stream()
+                .map(item -> new OrderConfirmedEvent.OrderItemDto(item.getProductId(), item.getQuantity()))
+                .collect(Collectors.toList()),
+            Instant.now());
+        streamBridge.send("orderConfirmedSupplier-out-0", confirmedEvent);
+        log.info("Order {} confirmed via update, stock deduction triggered", savedOrder.getOrderId());
+      } catch (Exception e) {
+        log.error("Failed to publish OrderConfirmedEvent on update for order: {}", savedOrder.getOrderId(), e);
+      }
+    }
 
     AccountSummaryDto accountDto = null;
     try {

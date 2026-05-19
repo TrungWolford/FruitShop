@@ -214,10 +214,8 @@ public class CartServiceImpl implements CartService {
                 .orElseThrow(() -> new ResourceNotFoundException("Cart not found for account: " + accountId));
         
         checkCartStatus(cart);
-        cartItemRepository.deleteByCartCartId(cart.getCartId());
-        
-        // Refetch to get clean state
-        Cart savedCart = cartRepository.findById(cart.getCartId()).orElse(cart);
+        cart.getItems().clear();
+        Cart savedCart = cartRepository.save(cart);
 
         AccountSummaryDto accountDto = null;
         try {

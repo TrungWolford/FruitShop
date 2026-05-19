@@ -21,7 +21,7 @@ public class RefundController {
 
     // --- Order-scoped endpoints (Backward Compatibility) ---
     
-    @GetMapping("/orders/{orderId}/refunds")
+    @GetMapping(value = {"/orders/{orderId}/refunds", "/refunds/order/{orderId}"})
     public ResponseEntity<List<Refund>> getByOrder(@PathVariable String orderId) {
         return ResponseEntity.ok(refundService.findByOrderId(orderId));
     }
@@ -151,7 +151,7 @@ public class RefundController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/orders/items/{orderItemId}/refunds")
+    @GetMapping(value = {"/orders/items/{orderItemId}/refunds", "/refunds/order-item/{orderItemId}"})
     public ResponseEntity<List<Refund>> getByOrderItem(@PathVariable String orderItemId) {
         return ResponseEntity.ok(refundService.getRefundsByOrderItemId(orderItemId));
     }
