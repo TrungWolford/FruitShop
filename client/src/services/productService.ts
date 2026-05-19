@@ -71,14 +71,14 @@ export const productService = {
 
   // Tìm kiếm sản phẩm
   searchProducts: async (
-    keywords: string,
+    keyword: string,
     page: number = 0,
     size: number = 10,
     minPrice?: number,
     maxPrice?: number,
     status?: number
   ) => {
-    const params: any = { keywords, page, size };
+    const params: any = { keyword, page, size };
     if (minPrice !== undefined) params.minPrice = minPrice;
     if (maxPrice !== undefined) params.maxPrice = maxPrice;
     if (status !== undefined) params.status = status;
@@ -95,8 +95,13 @@ export const productService = {
     page?: number;
     size?: number;
   }) => {
+    const params: any = { ...filters };
+    if (filters.categoryId) {
+      params.categoryIds = filters.categoryId;
+      delete params.categoryId;
+    }
     const response = await axiosInstance.get(`${API.FILTER_PRODUCTS}`, {
-      params: filters
+      params: params
     });
     return response.data;
   }
