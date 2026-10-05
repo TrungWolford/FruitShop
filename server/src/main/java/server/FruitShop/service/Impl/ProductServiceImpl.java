@@ -6,101 +6,122 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import server.FruitShop.dto.request.Product.CreateProductImageRequest;
 import server.FruitShop.dto.request.Product.CreateProductRequest;
 import server.FruitShop.dto.request.Product.UpdateProductRequest;
 import server.FruitShop.dto.response.Product.ProductResponse;
 import server.FruitShop.entity.Category;
 import server.FruitShop.entity.Product;
 import server.FruitShop.entity.ProductImage;
+import server.FruitShop.exception.ResourceNotFoundException;
 import server.FruitShop.repository.CategoryRepository;
 import server.FruitShop.repository.ProductImageRepository;
 import server.FruitShop.repository.ProductRepository;
 import server.FruitShop.service.ProductService;
-import server.FruitShop.exception.ResourceNotFoundException;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
 public class ProductServiceImpl implements ProductService {
+
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ProductImageRepository productImageRepository;
 
     @Autowired
-    public ProductServiceImpl(ProductRepository productRepository, CategoryRepository categoryRepository, ProductImageRepository productImageRepository) {
+    public ProductServiceImpl(ProductRepository productRepository,
+                              CategoryRepository categoryRepository,
+                              ProductImageRepository productImageRepository) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.productImageRepository = productImageRepository;
     }
 
+    // =========================================================================
+    // READ
+    // =========================================================================
+
     @Override
+    @Transactional(readOnly = true)
     public Page<ProductResponse> getAllProduct(Pageable pageable) {
-        try {
-            Page<Product> productsPage = productRepository.findAll(pageable);
-            
-            if (productsPage == null || productsPage.isEmpty()) {
-                return new PageImpl<>(List.of(), pageable, 0); // Return empty page
-            }
+        Page<Product> page = productRepository.findAll(pageable);
+        if (page.isEmpty()) return Page.empty(pageable);
 
-            List<String> productIds = productsPage.getContent().stream()
-                    .map(Product::getProductId)
-                    .toList();
-
-            List<Product> productsWithCategories = productRepository.findByIdsWithCategories(productIds);
-
-            // Tạo map để lookup nhanh
-            Map<String, Product> productMap = productsWithCategories.stream()
-                    .collect(Collectors.toMap(Product::getProductId, Function.identity()));
-
-            // Map page content với categories và đảm bảo collections được load
-            List<ProductResponse> responses = productsPage.getContent().stream()
-                    .map(product -> {
-                        Product productWithCat = productMap.getOrDefault(product.getProductId(), product);
-                        ProductResponse response = ProductResponse.fromEntity(productWithCat);
-                        return response;
-                    })
-                    .collect(Collectors.toList());
-
-            // Tạo lại Page với responses
-            return new PageImpl<>(responses, pageable, productsPage.getTotalElements());
-        } catch (Exception e) {
-            System.err.println("Error fetching all products: " + e.getMessage());
-            e.printStackTrace();
-            return new PageImpl<>(List.of(), pageable, 0); // Return empty page on error
-        }
+        return toResponsePage(page, pageable);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ProductResponse getByProductId(String productId) {
-        // Load product with categories first
-        Product product = productRepository.findByIdWithCategories(productId);
-        if (product == null) {
-            throw new ResourceNotFoundException("Product not found: " + productId);
-        }
+        Product withCategories = productRepository.findByIdWithCategories(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + productId));
 
-        // Then load images separately to avoid MultipleBagFetchException
-        Product productWithImages = productRepository.findByIdWithImages(productId);
-        if (productWithImages != null) {
-            product.setImages(productWithImages.getImages());
-        }
+        Product withImages = productRepository.findByIdWithImages(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + productId));
 
-        if (product.getImages() != null) {
-            // Check for duplicates
-            List<String> imageUrls = product.getImages().stream()
-                    .map(ProductImage::getImageUrl)
-                    .toList();
-            Set<String> uniqueUrls = new HashSet<>(imageUrls);
-            if (imageUrls.size() != uniqueUrls.size()) {
-                System.out.println("WARNING: Duplicate image URLs detected!");
-                System.out.println("  Total images: " + imageUrls.size());
-                System.out.println("  Unique URLs: " + uniqueUrls.size());
-            }
-        }
-
-        return ProductResponse.fromEntity(product);
+        return ProductResponse.fromEntities(withCategories, withImages);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductResponse> filterProduct(List<String> categoryId, Pageable pageable,
+                                               Integer status, long minPrice, long maxPrice) {
+        Page<Product> page;
+
+        if (categoryId != null && !categoryId.isEmpty() && status != null) {
+            page = productRepository.findProductsByCategoryIdsAndStatusAndInRangePrice(
+                    categoryId, status, minPrice, maxPrice, pageable);
+        } else if (status != null) {
+            page = productRepository.findProductsByCategoryStatusAndInRangePrice(
+                    status, minPrice, maxPrice, pageable);
+        } else if (categoryId != null && !categoryId.isEmpty()) {
+            page = productRepository.findProductsByCategoryIdsAndInRangePrice(
+                    categoryId, minPrice, maxPrice, pageable);
+        } else {
+            page = productRepository.findAllByPriceRange(minPrice, maxPrice, pageable);
+        }
+
+        if (page.isEmpty()) return Page.empty(pageable);
+        return toResponsePage(page, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductResponse> searchProduct(String keywords, Double minPrice, Double maxPrice,
+                                               Pageable pageable) {
+        Page<Product> page;
+
+        if (minPrice != null || maxPrice != null) {
+            double lo = minPrice != null ? minPrice : 0;
+            double hi = maxPrice != null ? maxPrice : Double.MAX_VALUE;
+            page = productRepository.findByProductNameAndPriceRange(keywords, lo, hi, pageable);
+        } else {
+            page = productRepository.findByProductName(keywords, pageable);
+        }
+
+        if (page.isEmpty()) return Page.empty(pageable);
+        return toResponsePage(page, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductResponse> getTopSoldProduct() {
+        List<Product> withCategories = productRepository.findTop10WithCategoriesOrderByStockAsc();
+        if (withCategories.isEmpty()) return List.of();
+
+        List<String> ids = withCategories.stream().map(Product::getProductId).toList();
+        Map<String, Product> imagesMap = productRepository.findAllWithImagesByIds(ids).stream()
+                .collect(Collectors.toMap(Product::getProductId, p -> p));
+
+        return withCategories.stream()
+                .map(p -> ProductResponse.fromEntities(p, imagesMap.get(p.getProductId())))
+                .toList();
+    }
+
+    // =========================================================================
+    // WRITE
+    // =========================================================================
 
     @Override
     @Transactional
@@ -114,321 +135,128 @@ public class ProductServiceImpl implements ProductService {
         product.setUpdatedAt(new Date());
         product.setStatus(1);
 
-        // Lưu product trước (không có categories để tránh lỗi constraint)
-        Product savedProduct = productRepository.save(product);
-
-        // Xử lý categories sau khi product đã có ID
         if (request.getCategoryIds() != null && !request.getCategoryIds().isEmpty()) {
-            // Remove duplicates
-            List<String> uniqueCategoryIds = request.getCategoryIds().stream()
-                    .distinct()
-                    .toList();
-            
-            List<Category> categories = categoryRepository.findAllById(uniqueCategoryIds);
-            
-            // Validate all categories exist
-            if (categories.size() != uniqueCategoryIds.size()) {
+            List<String> uniqueIds = request.getCategoryIds().stream().distinct().toList();
+            List<Category> categories = categoryRepository.findAllById(uniqueIds);
+            if (categories.size() != uniqueIds.size()) {
                 throw new ResourceNotFoundException("Some categories were not found");
             }
-            
-            // Set categories và save lại
-            savedProduct.setCategories(categories);
-            savedProduct = productRepository.save(savedProduct);
+            product.setCategories(categories);
         }
 
-        // Xử lý images
+        Product saved = productRepository.save(product);
+
         if (request.getImages() != null && !request.getImages().isEmpty()) {
-            final Product finalProduct = savedProduct; // Make final for lambda
-            List<ProductImage> images = request.getImages().stream()
-                    .map(imageRequest -> {
-                        ProductImage image = new ProductImage();
-                        image.setImageUrl(imageRequest.getImageUrl());
-                        image.setImageOrder(imageRequest.getImageOrder() != null ? imageRequest.getImageOrder() : 0);
-                        image.setIsMain(imageRequest.getIsMain() != null ? imageRequest.getIsMain() : false);
-                        image.setProduct(finalProduct);
-                        return image;
-                    })
-                    .collect(Collectors.toList());
-
+            List<ProductImage> images = buildImages(request.getImages(), saved);
             productImageRepository.saveAll(images);
-            savedProduct.setImages(images);
+            saved.setImages(images);
         }
 
-        return ProductResponse.fromEntity(savedProduct);
+        return ProductResponse.fromEntity(saved);
     }
 
     @Override
     @Transactional
     public ProductResponse updateProduct(UpdateProductRequest request, String productId) {
-        try {
-            System.out.println("🔄 Updating product: " + productId);
-            System.out.println("📦 Request data: " + request);
+        // 1 query với categories, 1 query với images – tổng 2 queries
+        Product product = productRepository.findByIdWithCategories(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + productId));
 
-            // Load product with categories first
-            Product product = productRepository.findByIdWithCategories(productId);
-            if (product == null) {
-                throw new ResourceNotFoundException("Product not found: " + productId);
+        Product productWithImages = productRepository.findByIdWithImages(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + productId));
+        product.setImages(productWithImages.getImages());
+
+        // Cập nhật scalar fields
+        product.setProductName(request.getProductName());
+        product.setPrice(request.getPrice());
+        product.setStock(request.getStock());
+        product.setDescription(request.getDescription());
+        product.setUpdatedAt(new Date());
+        product.setStatus(request.getStatus());
+
+        // Cập nhật categories
+        if (request.getCategoryIds() != null && !request.getCategoryIds().isEmpty()) {
+            List<String> uniqueIds = request.getCategoryIds().stream().distinct().toList();
+            List<Category> categories = categoryRepository.findAllById(uniqueIds);
+            if (categories.size() != uniqueIds.size()) {
+                throw new ResourceNotFoundException("Some categories were not found");
             }
-
-            // Then load images separately to avoid MultipleBagFetchException
-            Product productWithImages = productRepository.findByIdWithImages(productId);
-            if (productWithImages != null) {
-                product.setImages(productWithImages.getImages());
-            }
-
-            product.setProductName(request.getProductName());
-
-            product.setPrice(request.getPrice());
-            product.setStock(request.getStock());
-            product.setDescription(request.getDescription());
-            product.setUpdatedAt(new Date());
-            product.setStatus(request.getStatus());
-
-            // Xử lý categories từ categoryIds
-            if (request.getCategoryIds() != null && !request.getCategoryIds().isEmpty()) {
-                // Remove duplicates by converting to Set
-                List<String> uniqueCategoryIds = request.getCategoryIds().stream()
-                        .distinct()
-                        .toList();
-                
-                List<Category> categories = categoryRepository.findAllById(uniqueCategoryIds);
-                
-                // Validate all categories exist
-                if (categories.size() != uniqueCategoryIds.size()) {
-                    throw new ResourceNotFoundException("Some categories were not found");
-                }
-                
-                // Clear existing categories and add new ones
-                product.getCategories().clear();
-                product.getCategories().addAll(categories);
-            }
-
-            // Xử lý images thông minh - chỉ update khi có thay đổi
-            if (request.getImages() != null) {
-                // Lấy danh sách images hiện tại
-                List<ProductImage> currentImages = product.getImages();
-
-                // So sánh để xem có thay đổi không
-                boolean hasChanges = false;
-                if (currentImages == null || currentImages.size() != request.getImages().size()) {
-                    hasChanges = true;
-                } else {
-                    // Kiểm tra từng image xem có thay đổi không
-                    for (int i = 0; i < request.getImages().size(); i++) {
-                        String newImageUrl = request.getImages().get(i).getImageUrl();
-                        if (!newImageUrl.equals(currentImages.get(i).getImageUrl())) {
-                            hasChanges = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (hasChanges) {
-
-                    // Clear existing images properly to avoid orphan deletion issue
-                    if (currentImages != null) {
-                        currentImages.clear(); // Clear collection instead of setting new one
-                    }
-
-                    // Xóa images cũ từ database
-                    productImageRepository.deleteByProductProductId(productId);
-
-                    // Thêm images mới nếu có
-                    if (!request.getImages().isEmpty()) {
-                        List<ProductImage> newImages = request.getImages().stream()
-                                .map(imageRequest -> {
-                                    ProductImage image = new ProductImage();
-                                    image.setImageUrl(imageRequest.getImageUrl());
-                                    image.setImageOrder(imageRequest.getImageOrder() != null ? imageRequest.getImageOrder() : 0);
-                                    image.setIsMain(imageRequest.getIsMain() != null ? imageRequest.getIsMain() : false);
-                                    image.setProduct(product);
-                                    return image;
-                                })
-                                .collect(Collectors.toList());
-
-                        // Add to existing collection instead of setting new collection
-                        if (product.getImages() != null) {
-                            product.getImages().addAll(newImages);
-                        } else {
-                            product.setImages(newImages);
-                        }
-
-                        productImageRepository.saveAll(newImages);
-                    }
-                }
-            }
-
-            productRepository.saveAndFlush(product);
-            return ProductResponse.fromEntity(product);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Failed to update product: " + e.getMessage(), e);
+            product.getCategories().clear();
+            product.getCategories().addAll(categories);
         }
+
+        // Cập nhật images nếu có thay đổi
+        if (request.getImages() != null && imagesChanged(product.getImages(), request.getImages())) {
+            productImageRepository.deleteByProductProductId(productId);
+            product.getImages().clear();
+
+            if (!request.getImages().isEmpty()) {
+                List<ProductImage> newImages = buildImages(request.getImages(), product);
+                productImageRepository.saveAll(newImages);
+                product.getImages().addAll(newImages);
+            }
+        }
+
+        productRepository.saveAndFlush(product);
+        return ProductResponse.fromEntity(product);
     }
 
     @Override
+    @Transactional
     public void deleteProduct(String productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + productId));
-
-        // Xóa tất cả images trước
         productImageRepository.deleteByProductProductId(productId);
-
         productRepository.delete(product);
     }
 
-    @Override
-    public Page<ProductResponse> filterProduct(List<String> categoryId, Pageable pageable, Integer status, long minPrice, long maxPrice) {
-        try {
-            Page<Product> productsPage;
+    // =========================================================================
+    // PRIVATE HELPERS
+    // =========================================================================
 
-            // Nếu có cả categoryId và status
-            if (categoryId != null && !categoryId.isEmpty() && status != null) {
-                productsPage = productRepository.findProductsByCategoryIdsAndStatusAndInRangePrice(categoryId, status, minPrice, maxPrice, pageable);
-            }
-            // Nếu chỉ có status
-            else if (status != null) {
-                productsPage = productRepository.findProductsByCategoryStatusAndInRangePrice(status, minPrice, maxPrice, pageable);
-            }
-            // Nếu chỉ có categoryId
-            else if (categoryId != null && !categoryId.isEmpty()) {
-                productsPage = productRepository.findProductsByCategoryIdsAndInRangePrice(categoryId, minPrice, maxPrice, pageable);
-            }
-            // Nếu không có gì thì return tất cả với price filter
-            else {
-                productsPage = productRepository.findAllByPriceRange(minPrice, maxPrice, pageable);
-            }
+    /**
+     * Batch-fetch categories + images cho một danh sách products từ một page query,
+     * assemble thành ProductResponse và trả về Page mới.
+     * Tổng số queries: 2 (IN categories) + (IN images) = O(1), không phải O(N).
+     */
+    private Page<ProductResponse> toResponsePage(Page<Product> page, Pageable pageable) {
+        List<String> ids = page.getContent().stream().map(Product::getProductId).toList();
 
-            if (productsPage == null || productsPage.isEmpty()) {
-                return new PageImpl<>(List.of(), pageable, 0);
-            }
+        Map<String, Product> categoriesMap = productRepository.findAllWithCategoriesByIds(ids).stream()
+                .collect(Collectors.toMap(Product::getProductId, p -> p));
 
-            List<String> productIds = productsPage.getContent().stream()
-                    .map(Product::getProductId)
-                    .toList();
+        Map<String, Product> imagesMap = productRepository.findAllWithImagesByIds(ids).stream()
+                .collect(Collectors.toMap(Product::getProductId, p -> p));
 
-            List<Product> productsWithCategories = productRepository.findByIdsWithCategories(productIds);
+        List<ProductResponse> responses = page.getContent().stream()
+                .map(p -> ProductResponse.fromEntities(
+                        categoriesMap.getOrDefault(p.getProductId(), p),
+                        imagesMap.get(p.getProductId())))
+                .toList();
 
-            Map<String, Product> productMap = productsWithCategories.stream()
-                    .collect(Collectors.toMap(Product::getProductId, Function.identity()));
-
-            // Map page content với categories và đảm bảo collections được load
-            List<ProductResponse> responses = productsPage.getContent().stream()
-                    .map(product -> {
-                        Product productWithCat = productMap.getOrDefault(product.getProductId(), product);
-                        return ProductResponse.fromEntity(productWithCat);
-                    })
-                    .collect(Collectors.toList());
-
-            // Tạo lại Page với responses
-            return new PageImpl<>(responses, pageable, productsPage.getTotalElements());
-        } catch (Exception e) {
-            System.err.println("Error filtering products: " + e.getMessage());
-            e.printStackTrace();
-            return new PageImpl<>(List.of(), pageable, 0);
-        }
+        return new PageImpl<>(responses, pageable, page.getTotalElements());
     }
 
-    @Override
-    public Page<ProductResponse> searchProduct(String keywords, Double minPrice, Double maxPrice, Pageable pageable) {
-        try {
-            Page<Product> products = productRepository.findByProductName(keywords, pageable);
-            
-            if (products == null || products.isEmpty()) {
-                return new PageImpl<>(List.of(), pageable, 0);
-            }
-            
-            // Filter by price if provided
-            if (minPrice != null || maxPrice != null) {
-                List<Product> filteredProducts = products.getContent().stream()
-                        .filter(product -> {
-                            boolean matchMin = minPrice == null || product.getPrice() >= minPrice;
-                            boolean matchMax = maxPrice == null || product.getPrice() <= maxPrice;
-                            return matchMin && matchMax;
-                        })
-                        .toList();
-                
-                if (filteredProducts.isEmpty()) {
-                    return new PageImpl<>(List.of(), pageable, 0);
-                }
-                
-                // Create new Page with filtered results
-                int start = (int) pageable.getOffset();
-                int end = Math.min((start + pageable.getPageSize()), filteredProducts.size());
-                List<Product> pageContent = filteredProducts.subList(start, end);
-                
-                return new org.springframework.data.domain.PageImpl<>(
-                        pageContent.stream().map(ProductResponse::fromEntity).toList(),
-                        pageable,
-                        filteredProducts.size()
-                );
-            }
-            
-            return products.map(ProductResponse::fromEntity);
-        } catch (Exception e) {
-            System.err.println("Error searching products with keyword '" + keywords + "': " + e.getMessage());
-            e.printStackTrace();
-            return new PageImpl<>(List.of(), pageable, 0);
+    /** Kiểm tra xem danh sách images từ request có khác với images hiện tại không. */
+    private boolean imagesChanged(List<ProductImage> current,
+                                  List<CreateProductImageRequest> requested) {
+        if (current == null || current.size() != requested.size()) return true;
+        for (int i = 0; i < requested.size(); i++) {
+            if (!requested.get(i).getImageUrl().equals(current.get(i).getImageUrl())) return true;
         }
+        return false;
     }
 
-    @Override
-    public List<ProductResponse> getTopSoldProduct() {
-        try {
-            List<Product> topProducts = productRepository.findTop10ByOrderByStockAsc();
-            if (topProducts == null || topProducts.isEmpty()) {
-                return List.of();
-            }
-            return topProducts.stream()
-                    .map(ProductResponse::fromEntity)
-                    .toList();
-        } catch (Exception e) {
-            System.err.println("Error fetching top sold products: " + e.getMessage());
-            e.printStackTrace();
-            return List.of();
-        }
-    }
-
-    // Method to cleanup duplicate images for a product
-    @Transactional
-    public void cleanupDuplicateImages(String productId) {
-        try {
-            // Load product with images for cleanup
-            Product product = productRepository.findByIdWithImages(productId);
-            if (product == null || product.getImages() == null) {
-                return;
-            }
-
-            System.out.println("🧹 Cleaning up duplicate images for product: " + productId);
-
-            // Group images by URL and keep only the first one for each URL
-            Map<String, List<ProductImage>> imagesByUrl = product.getImages().stream()
-                    .collect(Collectors.groupingBy(ProductImage::getImageUrl));
-
-            List<ProductImage> imagesToKeep = new ArrayList<>();
-            List<ProductImage> imagesToDelete = new ArrayList<>();
-
-            imagesByUrl.forEach((url, images) -> {
-                if (images.size() > 1) {
-                    // Keep the first one, delete the rest
-                    imagesToKeep.add(images.get(0));
-                    imagesToDelete.addAll(images.subList(1, images.size()));
-                } else {
-                    imagesToKeep.add(images.get(0));
-                }
-            });
-
-            if (!imagesToDelete.isEmpty()) {
-                productImageRepository.deleteAll(imagesToDelete);
-
-                // Update product with cleaned images
-                product.setImages(imagesToKeep);
-                productRepository.save(product);
-
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    /** Tạo danh sách ProductImage từ request. */
+    private List<ProductImage> buildImages(List<CreateProductImageRequest> imageRequests,
+                                           Product product) {
+        return imageRequests.stream().map(req -> {
+            ProductImage img = new ProductImage();
+            img.setImageUrl(req.getImageUrl());
+            img.setImageOrder(req.getImageOrder() != null ? req.getImageOrder() : 0);
+            img.setIsMain(req.getIsMain() != null ? req.getIsMain() : false);
+            img.setProduct(product);
+            return img;
+        }).collect(Collectors.toList());
     }
 }
-
