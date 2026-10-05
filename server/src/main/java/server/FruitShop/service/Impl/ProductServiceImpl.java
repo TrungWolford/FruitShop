@@ -259,4 +259,25 @@ public class ProductServiceImpl implements ProductService {
             return img;
         }).collect(Collectors.toList());
     }
+    /** Xoá ảnh trùng lặp cho một sản phẩm – implement ProductService interface. */
+    @Override
+    @Transactional
+    public void cleanupDuplicateImages(String productId) {
+        Product product = productRepository.findByIdWithImages(productId).orElse(null);
+        if (product == null || product.getImages() == null) return;
+
+        Map<String, List<ProductImage>> imagesByUrl = product.getImages().stream()
+                .collect(Collectors.groupingBy(ProductImage::getImageUrl));
+
+        List<ProductImage> toDelete = new ArrayList<>();
+        imagesByUrl.values().forEach(imgs -> {
+            if (imgs.size() > 1) {
+                toDelete.addAll(imgs.subList(1, imgs.size()));
+            }
+        });
+
+        if (!toDelete.isEmpty()) {
+            productImageRepository.deleteAll(toDelete);
+        }
+    }
 }

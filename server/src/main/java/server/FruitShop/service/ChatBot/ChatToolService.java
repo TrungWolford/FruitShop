@@ -107,11 +107,11 @@ public class ChatToolService {
      */
     public String getProductDetail(String productId) {
         try {
-            Product product = productRepository.findByIdWithCategories(productId);
+            Product product = productRepository.findByIdWithCategories(productId).orElse(null);
             if (product == null) return errorJson("Không tìm thấy sản phẩm với ID: " + productId);
 
             // Load thêm images
-            Product withImages = productRepository.findByIdWithImages(productId);
+            Product withImages = productRepository.findByIdWithImages(productId).orElse(null);
 
             Map<String, Object> detail = productToMap(product);
             if (withImages != null && withImages.getImages() != null) {
