@@ -107,9 +107,11 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public List<ProductResponse> getTopSoldProduct() {
+        // categories đã được fetch cùng query qua @EntityGraph
         List<Product> withCategories = productRepository.findTop10WithCategoriesOrderByStockAsc();
         if (withCategories.isEmpty()) return List.of();
 
+        // Batch-fetch images riêng (1 query IN) để tránh MultipleBagFetchException
         List<String> ids = withCategories.stream().map(Product::getProductId).toList();
         Map<String, Product> imagesMap = productRepository.findAllWithImagesByIds(ids).stream()
                 .collect(Collectors.toMap(Product::getProductId, p -> p));
@@ -215,23 +217,19 @@ public class ProductServiceImpl implements ProductService {
     // =========================================================================
 
     /**
-     * Batch-fetch categories + images cho một danh sách products từ một page query,
-     * assemble thành ProductResponse và trả về Page mới.
-     * Tổng số queries: 2 (IN categories) + (IN images) = O(1), không phải O(N).
+     * Assemble Page<ProductResponse> từ một Page<Product> mà categories đã được
+     * fetch sẵn ở tầng repo (qua @EntityGraph). Chỉ cần thêm 1 query batch-fetch images.
+     * Tổng số queries: 1 (page + categories, repo) + 1 (IN images) = O(1).
      */
     private Page<ProductResponse> toResponsePage(Page<Product> page, Pageable pageable) {
         List<String> ids = page.getContent().stream().map(Product::getProductId).toList();
 
-        Map<String, Product> categoriesMap = productRepository.findAllWithCategoriesByIds(ids).stream()
-                .collect(Collectors.toMap(Product::getProductId, p -> p));
-
+        // Batch-fetch images riêng (tránh MultipleBagFetchException)
         Map<String, Product> imagesMap = productRepository.findAllWithImagesByIds(ids).stream()
                 .collect(Collectors.toMap(Product::getProductId, p -> p));
 
         List<ProductResponse> responses = page.getContent().stream()
-                .map(p -> ProductResponse.fromEntities(
-                        categoriesMap.getOrDefault(p.getProductId(), p),
-                        imagesMap.get(p.getProductId())))
+                .map(p -> ProductResponse.fromEntities(p, imagesMap.get(p.getProductId())))
                 .toList();
 
         return new PageImpl<>(responses, pageable, page.getTotalElements());

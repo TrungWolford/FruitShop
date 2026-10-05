@@ -298,10 +298,9 @@ class ProductServiceImplTest {
         List<Product> products = List.of(testProduct);
         Page<Product> productPage = new PageImpl<>(products, pageable, products.size());
 
-        // Mock repository trả về products chứa keyword
+        // Mock repository trả về products chứa keyword (categories đã có qua @EntityGraph)
         when(productRepository.findByProductName(keyword, pageable)).thenReturn(productPage);
-        // Service gọi thêm batch-fetch sau đó
-        when(productRepository.findAllWithCategoriesByIds(anyList())).thenReturn(products);
+        // Batch-fetch images
         when(productRepository.findAllWithImagesByIds(anyList())).thenReturn(products);
 
         // ACT - Tìm kiếm product (không filter theo giá)
@@ -350,9 +349,8 @@ class ProductServiceImplTest {
         List<Product> products = List.of(testProduct);
         Page<Product> productPage = new PageImpl<>(products, pageable, products.size());
 
-        // Mock repository trả về page, load categories và images (tên method mới)
+        // Mock repository trả về page (categories đã có qua @EntityGraph), batch-fetch images
         when(productRepository.findAll(pageable)).thenReturn(productPage);
-        when(productRepository.findAllWithCategoriesByIds(anyList())).thenReturn(products);
         when(productRepository.findAllWithImagesByIds(anyList())).thenReturn(products);
 
         // ACT - Lấy tất cả products
@@ -361,8 +359,7 @@ class ProductServiceImplTest {
         // ASSERT - Verify page result
         assertNotNull(result);
         assertEquals(1, result.getTotalElements());
-        verify(productRepository, times(1)).findAll(pageable); // Lấy page
-        verify(productRepository, times(1)).findAllWithCategoriesByIds(anyList()); // Batch load categories
+        verify(productRepository, times(1)).findAll(pageable); // Lấy page (có categories)
         verify(productRepository, times(1)).findAllWithImagesByIds(anyList()); // Batch load images
     }
 
@@ -385,7 +382,7 @@ class ProductServiceImplTest {
         // Service gọi findByProductNameAndPriceRange khi có minPrice/maxPrice
         when(productRepository.findByProductNameAndPriceRange(keyword, minPrice, maxPrice, pageable))
                 .thenReturn(productPage);
-        when(productRepository.findAllWithCategoriesByIds(anyList())).thenReturn(products);
+        // Batch-fetch images (categories đã có qua @EntityGraph)
         when(productRepository.findAllWithImagesByIds(anyList())).thenReturn(products);
 
         // ACT - Tìm kiếm với price filter
