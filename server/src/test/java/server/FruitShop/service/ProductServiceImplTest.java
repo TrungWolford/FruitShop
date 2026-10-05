@@ -25,6 +25,7 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -88,9 +89,9 @@ class ProductServiceImplTest {
     @Test
     @DisplayName("Test 1: Lấy product theo ID - Thành công")
     void testGetByProductId_Success() {
-        // ARRANGE - Mock repository trả về product với categories và images
-        when(productRepository.findByIdWithCategories("prod-001")).thenReturn(testProduct);
-        when(productRepository.findByIdWithImages("prod-001")).thenReturn(testProduct);
+        // ARRANGE - Mock repository trả về Optional<Product> với categories và images
+        when(productRepository.findByIdWithCategories("prod-001")).thenReturn(Optional.of(testProduct));
+        when(productRepository.findByIdWithImages("prod-001")).thenReturn(Optional.of(testProduct));
 
         // ACT - Gọi service để lấy product
         ProductResponse result = productService.getByProductId("prod-001");
@@ -112,8 +113,8 @@ class ProductServiceImplTest {
     @Test
     @DisplayName("Test 2: Lấy product theo ID - Không tìm thấy")
     void testGetByProductId_NotFound() {
-        // ARRANGE - Mock repository trả về null khi không tìm thấy
-        when(productRepository.findByIdWithCategories("invalid-id")).thenReturn(null);
+        // ARRANGE - Mock repository trả về Optional.empty() khi không tìm thấy
+        when(productRepository.findByIdWithCategories("invalid-id")).thenReturn(Optional.empty());
 
         // ACT & ASSERT - Verify exception được throw
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
@@ -150,7 +151,7 @@ class ProductServiceImplTest {
 
         // ASSERT - Verify product được tạo
         assertNotNull(result);
-        verify(productRepository, times(2)).save(any(Product.class)); // 2 lần: lần đầu và sau khi set categories
+        verify(productRepository, times(1)).save(any(Product.class)); // Lưu 1 lần với categories đã set
         verify(categoryRepository, times(1)).findAllById(anyList()); // Tìm categories
     }
 
@@ -169,7 +170,6 @@ class ProductServiceImplTest {
         request.setStock(50);
         request.setCategoryIds(List.of("cat-001", "cat-002")); // 2 categories
 
-        when(productRepository.save(any(Product.class))).thenReturn(testProduct);
         when(categoryRepository.findAllById(anyList())).thenReturn(List.of(testCategory)); // Chỉ tìm thấy 1
 
         // ACT & ASSERT - Verify exception được throw
@@ -198,9 +198,9 @@ class ProductServiceImplTest {
         request.setStatus(1); // Vẫn đang bán
         request.setCategoryIds(List.of("cat-001"));
 
-        // Mock repository tìm product và categories, sau đó lưu
-        when(productRepository.findByIdWithCategories("prod-001")).thenReturn(testProduct);
-        when(productRepository.findByIdWithImages("prod-001")).thenReturn(testProduct);
+        // Mock repository trả về Optional<Product>
+        when(productRepository.findByIdWithCategories("prod-001")).thenReturn(Optional.of(testProduct));
+        when(productRepository.findByIdWithImages("prod-001")).thenReturn(Optional.of(testProduct));
         when(categoryRepository.findAllById(anyList())).thenReturn(List.of(testCategory));
         when(productRepository.saveAndFlush(any(Product.class))).thenReturn(testProduct);
 
@@ -228,8 +228,8 @@ class ProductServiceImplTest {
         request.setStock(10);
         request.setStatus(1);
 
-        // Mock repository không tìm thấy product
-        when(productRepository.findByIdWithCategories("invalid-id")).thenReturn(null);
+        // Mock repository không tìm thấy product → Optional.empty()
+        when(productRepository.findByIdWithCategories("invalid-id")).thenReturn(Optional.empty());
 
         // ACT & ASSERT - Verify exception được throw
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
@@ -237,8 +237,7 @@ class ProductServiceImplTest {
         });
 
         // Verify exception message
-        assertTrue(exception.getMessage().contains("Product not found") || 
-                   exception.getMessage().contains("Failed to update product"));
+        assertTrue(exception.getMessage().contains("Product not found"));
         verify(productRepository, times(1)).findByIdWithCategories("invalid-id");
     }
 
@@ -301,6 +300,9 @@ class ProductServiceImplTest {
 
         // Mock repository trả về products chứa keyword
         when(productRepository.findByProductName(keyword, pageable)).thenReturn(productPage);
+        // Service gọi thêm batch-fetch sau đó
+        when(productRepository.findAllWithCategoriesByIds(anyList())).thenReturn(products);
+        when(productRepository.findAllWithImagesByIds(anyList())).thenReturn(products);
 
         // ACT - Tìm kiếm product (không filter theo giá)
         Page<ProductResponse> result = productService.searchProduct(keyword, null, null, pageable);
@@ -320,9 +322,10 @@ class ProductServiceImplTest {
     @Test
     @DisplayName("Test 10: Lấy top sold products - Thành công")
     void testGetTopSoldProduct_Success() {
-        // ARRANGE - Mock repository trả về top products
+        // ARRANGE - Mock repository trả về top products (tên method mới)
         List<Product> topProducts = List.of(testProduct);
-        when(productRepository.findTop10ByOrderByStockAsc()).thenReturn(topProducts);
+        when(productRepository.findTop10WithCategoriesOrderByStockAsc()).thenReturn(topProducts);
+        when(productRepository.findAllWithImagesByIds(anyList())).thenReturn(topProducts);
 
         // ACT - Lấy top products bán chạy
         List<ProductResponse> result = productService.getTopSoldProduct();
@@ -331,13 +334,14 @@ class ProductServiceImplTest {
         assertNotNull(result);
         assertEquals(1, result.size()); // 1 product trong top
         assertEquals("Xoài Úc", result.get(0).getProductName());
-        verify(productRepository, times(1)).findTop10ByOrderByStockAsc(); // Sắp xếp theo stock tăng dần
+        verify(productRepository, times(1)).findTop10WithCategoriesOrderByStockAsc();
+        verify(productRepository, times(1)).findAllWithImagesByIds(anyList());
     }
 
     /**
      * Test case 11: Kiểm tra lấy tất cả products với phân trang
-     * Kịch bản: Lấy danh sách tất cả products, load thêm categories cho mỗi product
-     * Kết quả mong đợi: Trả về Page chứa products với đầy đủ categories
+     * Kịch bản: Lấy danh sách tất cả products, load thêm categories và images
+     * Kết quả mong đợi: Trả về Page chứa products với đầy đủ categories và images
      */
     @Test
     @DisplayName("Test 11: Lấy tất cả products - Thành công")
@@ -346,9 +350,10 @@ class ProductServiceImplTest {
         List<Product> products = List.of(testProduct);
         Page<Product> productPage = new PageImpl<>(products, pageable, products.size());
 
-        // Mock repository trả về page và load categories
+        // Mock repository trả về page, load categories và images (tên method mới)
         when(productRepository.findAll(pageable)).thenReturn(productPage);
-        when(productRepository.findByIdsWithCategories(anyList())).thenReturn(products);
+        when(productRepository.findAllWithCategoriesByIds(anyList())).thenReturn(products);
+        when(productRepository.findAllWithImagesByIds(anyList())).thenReturn(products);
 
         // ACT - Lấy tất cả products
         Page<ProductResponse> result = productService.getAllProduct(pageable);
@@ -357,7 +362,8 @@ class ProductServiceImplTest {
         assertNotNull(result);
         assertEquals(1, result.getTotalElements());
         verify(productRepository, times(1)).findAll(pageable); // Lấy page
-        verify(productRepository, times(1)).findByIdsWithCategories(anyList()); // Load categories cho products
+        verify(productRepository, times(1)).findAllWithCategoriesByIds(anyList()); // Batch load categories
+        verify(productRepository, times(1)).findAllWithImagesByIds(anyList()); // Batch load images
     }
 
     /**
@@ -372,12 +378,15 @@ class ProductServiceImplTest {
         String keyword = "Xoài";
         Double minPrice = 40000.0; // Giá tối thiểu 40k
         Double maxPrice = 60000.0; // Giá tối đa 60k
-        
+
         List<Product> products = List.of(testProduct); // testProduct có giá 50k, nằm trong khoảng
         Page<Product> productPage = new PageImpl<>(products, pageable, products.size());
 
-        // Mock repository tìm kiếm theo tên
-        when(productRepository.findByProductName(keyword, pageable)).thenReturn(productPage);
+        // Service gọi findByProductNameAndPriceRange khi có minPrice/maxPrice
+        when(productRepository.findByProductNameAndPriceRange(keyword, minPrice, maxPrice, pageable))
+                .thenReturn(productPage);
+        when(productRepository.findAllWithCategoriesByIds(anyList())).thenReturn(products);
+        when(productRepository.findAllWithImagesByIds(anyList())).thenReturn(products);
 
         // ACT - Tìm kiếm với price filter
         Page<ProductResponse> result = productService.searchProduct(keyword, minPrice, maxPrice, pageable);
@@ -385,6 +394,7 @@ class ProductServiceImplTest {
         // ASSERT - Verify kết quả filter theo giá
         assertNotNull(result);
         assertEquals(1, result.getTotalElements()); // Product có giá 50k thỏa mãn điều kiện
-        verify(productRepository, times(1)).findByProductName(keyword, pageable);
+        verify(productRepository, times(1))
+                .findByProductNameAndPriceRange(keyword, minPrice, maxPrice, pageable);
     }
 }
