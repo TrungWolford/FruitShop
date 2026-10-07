@@ -323,7 +323,7 @@ class ProductServiceImplTest {
     void testGetTopSoldProduct_Success() {
         // ARRANGE - Mock repository trả về top products (tên method mới)
         List<Product> topProducts = List.of(testProduct);
-        when(productRepository.findTop10WithCategoriesOrderByStockAsc()).thenReturn(topProducts);
+        when(productRepository.findTop10BySoldQuantity()).thenReturn(topProducts);
         when(productRepository.findAllWithImagesByIds(anyList())).thenReturn(topProducts);
 
         // ACT - Lấy top products bán chạy
@@ -333,7 +333,7 @@ class ProductServiceImplTest {
         assertNotNull(result);
         assertEquals(1, result.size()); // 1 product trong top
         assertEquals("Xoài Úc", result.get(0).getProductName());
-        verify(productRepository, times(1)).findTop10WithCategoriesOrderByStockAsc();
+        verify(productRepository, times(1)).findTop10BySoldQuantity();
         verify(productRepository, times(1)).findAllWithImagesByIds(anyList());
     }
 

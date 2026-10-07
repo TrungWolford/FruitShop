@@ -1,0 +1,21 @@
+receiverName,receiverPhone,receiverAddress,city,shipperName,shippingFee
+Nguyen Van A,0900111001,123 Le Loi Q1,Ho Chi Minh,GiaoHangNhanh,30000
+Tran Thi B,0900111002,456 Nguyen Hue Q1,Ho Chi Minh,GiaoHangNhanh,30000
+Le Van C,0900111003,789 Dien Bien Phu Q3,Ho Chi Minh,GiaoHangNhanh,30000
+Pham Thi D,0900111004,321 Vo Van Tan Q3,Ho Chi Minh,GiaoHangNhanh,35000
+Hoang Van E,0900111005,654 Nguyen Dinh Chieu Q3,Ho Chi Minh,GHTK,35000
+Nguyen Thi F,0900111006,987 Hai Ba Trung Q1,Ho Chi Minh,GHTK,35000
+Tran Van G,0900111007,147 Tran Hung Dao Q5,Ho Chi Minh,GHTK,30000
+Le Thi H,0900111008,258 Ly Thuong Kiet Q11,Ho Chi Minh,GHTK,30000
+Pham Van I,0900111009,369 Mac Dinh Chi Q1,Ho Chi Minh,GiaoHangNhanh,30000
+Do Thi J,0900111010,741 Nguyen Van Cu Q5,Ho Chi Minh,GiaoHangNhanh,30000
+Vu Van K,0900111011,852 Hoang Van Thu Phu Nhuan,Ho Chi Minh,GHTK,35000
+Mai Thi L,0900111012,963 Cach Mang Thang 8 Q10,Ho Chi Minh,GHTK,35000
+Bui Van M,0900111013,159 Le Dai Hanh Q11,Ho Chi Minh,GiaoHangNhanh,30000
+Duong Thi N,0900111014,357 Nguyen Trai Q5,Ho Chi Minh,GiaoHangNhanh,30000
+Dang Van O,0900111015,753 Binh Thanh Q.Binh Thanh,Ho Chi Minh,GHTK,40000
+Ngo Thi P,0900111016,951 Xo Viet Nghe Tinh Q.BT,Ho Chi Minh,GHTK,40000
+Ha Van Q,0900111017,246 Nguyen Oanh Q.Binh Thanh,Ho Chi Minh,GiaoHangNhanh,40000
+Vo Thi R,0900111018,468 Bach Dang Q.BinhThanh,Ho Chi Minh,GiaoHangNhanh,40000
+Ly Van S,0900111019,135 Quang Trung Go Vap,Ho Chi Minh,GHTK,40000
+Cao Thi T,0900111020,579 Nguyen Oanh Go Vap,Ho Chi Minh,GHTK,40000

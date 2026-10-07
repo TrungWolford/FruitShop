@@ -1,8 +1,10 @@
 package server.FruitShop.service.Impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import server.FruitShop.dto.request.Cart.CreateCartItemRequest;
@@ -20,13 +22,34 @@ import server.FruitShop.repository.ProductRepository;
 import server.FruitShop.service.CartService;
 import server.FruitShop.exception.ResourceNotFoundException;
 
+import java.time.Duration;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * CartServiceImpl — cache strategy: Redis only (L2).
+ *
+ * Lý do không dùng Caffeine cho Cart:
+ *   - Giỏ hàng là dữ liệu per-user, thay đổi thường xuyên (thêm/bớt/xóa item).
+ *   - Nếu dùng Caffeine (in-process), dữ liệu không đồng bộ giữa nhiều instance
+ *     khi scale horizontal.
+ *   - Redis đảm bảo consistency across instances.
+ *
+ * Cache key convention:
+ *   getCartByAccountId:  "fruitshop:cart:account:{accountId}"   TTL 30 phút
+ *   getCartItemsByAccountId: "fruitshop:cart:items:{accountId}" TTL 30 phút
+ *
+ * Eviction: mọi write operation sẽ xóa cache của accountId liên quan.
+ */
+@Slf4j
 @Service
 public class CartServiceImpl implements CartService {
+
+    private static final String CART_KEY_PREFIX  = "fruitshop:cart:account:";
+    private static final String ITEMS_KEY_PREFIX = "fruitshop:cart:items:";
+    private static final Duration CART_TTL       = Duration.ofMinutes(30);
 
     @Autowired
     private CartRepository cartRepository;
@@ -40,6 +63,13 @@ public class CartServiceImpl implements CartService {
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
+    // =========================================================================
+    // READ
+    // =========================================================================
+
     @Override
     public Page<CartResponse> getAllCart(Pageable pageable) {
         Page<Cart> cartPage = cartRepository.findAll(pageable);
@@ -52,23 +82,88 @@ public class CartServiceImpl implements CartService {
             Optional<Cart> cartOptional = cartRepository.findById(cartId);
             return cartOptional.map(CartResponse::fromEntity).orElse(null);
         } catch (Exception e) {
-            System.err.println("Error fetching cart for cartId " + cartId + ": " + e.getMessage());
-            e.printStackTrace();
+            log.error("Error fetching cart for cartId {}: {}", cartId, e.getMessage(), e);
             return null;
         }
     }
 
+    /**
+     * Lấy cart theo accountId — Redis cache.
+     * Key: "fruitshop:cart:account:{accountId}"
+     */
     @Override
+    @SuppressWarnings("unchecked")
     public CartResponse getCartByAccountId(String accountId) {
+        String key = CART_KEY_PREFIX + accountId;
+
+        // L2: Redis
+        Object raw = redisTemplate.opsForValue().get(key);
+        if (raw instanceof CartResponse cached) {
+            log.debug("[Cart Cache HIT] account:{}", accountId);
+            return cached;
+        }
+
+        // DB
+        log.debug("[Cart Cache MISS] account:{} → query DB", accountId);
         try {
             Optional<Cart> cartOptional = cartRepository.findByAccountAccountId(accountId);
-            return cartOptional.map(cart -> CartResponse.fromEntity(cart)).orElse(null);
+            CartResponse response = cartOptional.map(CartResponse::fromEntity).orElse(null);
+
+            if (response != null) {
+                redisTemplate.opsForValue().set(key, response, CART_TTL);
+                log.debug("[Cart Cache PUT] account:{}", accountId);
+            }
+
+            return response;
         } catch (Exception e) {
-            System.err.println("Error fetching cart for accountId " + accountId + ": " + e.getMessage());
-            e.printStackTrace();
+            log.error("Error fetching cart for accountId {}: {}", accountId, e.getMessage(), e);
             return null;
         }
     }
+
+    /**
+     * Lấy cart items theo accountId — Redis cache.
+     * Key: "fruitshop:cart:items:{accountId}"
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<CartItemResponse> getCartItemsByAccountId(String accountId) {
+        String key = ITEMS_KEY_PREFIX + accountId;
+
+        // L2: Redis
+        Object raw = redisTemplate.opsForValue().get(key);
+        if (raw instanceof List<?> list) {
+            log.debug("[CartItems Cache HIT] account:{} items={}", accountId, list.size());
+            return (List<CartItemResponse>) list;
+        }
+
+        // DB
+        log.debug("[CartItems Cache MISS] account:{} → query DB", accountId);
+        try {
+            List<CartItemResponse> items = cartRepository.findByAccountAccountId(accountId)
+                    .map(cart -> {
+                        List<CartItem> cartItems = cartItemRepository.findByCartCartId(cart.getCartId());
+                        return cartItems.stream()
+                                .map(CartItemResponse::fromEntity)
+                                .collect(Collectors.toList());
+                    })
+                    .orElse(List.of());
+
+            if (!items.isEmpty()) {
+                redisTemplate.opsForValue().set(key, items, CART_TTL);
+                log.debug("[CartItems Cache PUT] account:{} items={}", accountId, items.size());
+            }
+
+            return items;
+        } catch (Exception e) {
+            log.error("Error fetching cart items for accountId {}: {}", accountId, e.getMessage(), e);
+            return List.of();
+        }
+    }
+
+    // =========================================================================
+    // WRITE — evict Redis cache sau mỗi thao tác ghi
+    // =========================================================================
 
     @Override
     public CartResponse createCart(String accountId) {
@@ -77,7 +172,6 @@ public class CartServiceImpl implements CartService {
             throw new ResourceNotFoundException("Account not found with id: " + accountId);
         }
 
-        // Check if cart already exists
         Optional<Cart> existingCart = cartRepository.findByAccountAccountId(accountId);
         if (existingCart.isPresent()) {
             return CartResponse.fromEntity(existingCart.get());
@@ -88,6 +182,8 @@ public class CartServiceImpl implements CartService {
         cart.setCreatedAt(new Date());
         cart.setStatus(1);
         Cart savedCart = cartRepository.save(cart);
+
+        evictCartCache(accountId);
         return CartResponse.fromEntity(savedCart);
     }
 
@@ -95,25 +191,25 @@ public class CartServiceImpl implements CartService {
     public void deleteCart(String cartId) {
         Optional<Cart> cartOptional = cartRepository.findById(cartId);
         if (cartOptional.isPresent()) {
-            // Delete all cart items first
-            List<CartItem> items = cartOptional.get().getItems();
+            Cart cart = cartOptional.get();
+            String accountId = cart.getAccount() != null ? cart.getAccount().getAccountId() : null;
+
+            List<CartItem> items = cart.getItems();
             cartItemRepository.deleteAll(items);
-            // Then delete the cart
             cartRepository.deleteById(cartId);
+
+            if (accountId != null) evictCartCache(accountId);
         }
     }
 
     @Override
     public CartItemResponse addCartItem(String accountId, CreateCartItemRequest request) {
-        // Get or create cart for account
         Cart cart = getOrCreateCart(accountId);
 
-        // Check if cart is disabled
         if (cart.getStatus() != 1) {
             throw new RuntimeException("Giỏ hàng đã bị vô hiệu hóa do vi phạm chính sách, vui lòng liên hệ VuaTraiCay để biết thêm chi tiết");
         }
 
-        // Check if product exists
         Optional<Product> productOptional = productRepository.findById(request.getProductId());
         if (productOptional.isEmpty()) {
             throw new ResourceNotFoundException("Product not found with id: " + request.getProductId());
@@ -121,23 +217,22 @@ public class CartServiceImpl implements CartService {
 
         Product product = productOptional.get();
 
-        // Check if item already exists in cart
         Optional<CartItem> existingItem = cartItemRepository.findByCartAndProduct(cart, product);
+        CartItem savedItem;
         if (existingItem.isPresent()) {
-            // Update quantity
             CartItem item = existingItem.get();
             item.setQuantity(item.getQuantity() + request.getQuantity());
-            CartItem savedItem = cartItemRepository.save(item);
-            return CartItemResponse.fromEntity(savedItem);
+            savedItem = cartItemRepository.save(item);
+        } else {
+            CartItem cartItem = new CartItem();
+            cartItem.setCart(cart);
+            cartItem.setProduct(product);
+            cartItem.setQuantity(request.getQuantity());
+            savedItem = cartItemRepository.save(cartItem);
         }
 
-        // Create new cart item
-        CartItem cartItem = new CartItem();
-        cartItem.setCart(cart);
-        cartItem.setProduct(product);
-        cartItem.setQuantity(request.getQuantity());
-
-        CartItem savedItem = cartItemRepository.save(cartItem);
+        // Evict cache vì cart đã thay đổi
+        evictCartCache(accountId);
         return CartItemResponse.fromEntity(savedItem);
     }
 
@@ -149,16 +244,20 @@ public class CartServiceImpl implements CartService {
         }
 
         CartItem cartItem = cartItemOptional.get();
-        
-        // Check if cart is disabled
+
         Cart cart = cartItem.getCart();
         if (cart != null && cart.getStatus() != 1) {
             throw new RuntimeException("Giỏ hàng đã bị vô hiệu hóa do vi phạm chính sách, vui lòng liên hệ VuaTraiCay để biết thêm chi tiết");
         }
-        
-        cartItem.setQuantity(request.getQuantity());
 
+        cartItem.setQuantity(request.getQuantity());
         CartItem savedItem = cartItemRepository.save(cartItem);
+
+        // Evict cache
+        if (cart != null && cart.getAccount() != null) {
+            evictCartCache(cart.getAccount().getAccountId());
+        }
+
         return CartItemResponse.fromEntity(savedItem);
     }
 
@@ -167,120 +266,66 @@ public class CartServiceImpl implements CartService {
         Optional<CartItem> cartItemOptional = cartItemRepository.findById(cartItemId);
         if (cartItemOptional.isPresent()) {
             CartItem cartItem = cartItemOptional.get();
-            
-            // Check if cart is disabled
+
             Cart cart = cartItem.getCart();
             if (cart != null && cart.getStatus() != 1) {
                 throw new RuntimeException("Giỏ hàng đã bị vô hiệu hóa do vi phạm chính sách, vui lòng liên hệ VuaTraiCay để biết thêm chi tiết");
             }
-            
-            cartItemRepository.deleteById(cartItemId);
-        }
-    }
 
-    @Override
-    public List<CartItemResponse> getCartItemsByAccountId(String accountId) {
-        try {
-            System.out.println("📦 GetCartItemsByAccountId called for: " + accountId);
-            return cartRepository.findByAccountAccountId(accountId)
-                    .map(cart -> {
-                        List<CartItem> items = cartItemRepository.findByCartCartId(cart.getCartId());
-                        if (items.isEmpty()) {
-                            System.out.println("📦 Cart found but no items");
-                            return List.<CartItemResponse>of();
-                        }
-                        System.out.println("📦 Found cart with " + items.size() + " items");
-                        for (CartItem item : items) {
-                            System.out.println("📦 Cart item: " + item.getCartItemId() + " - Product: " + item.getProduct().getProductId() + " - Quantity: " + item.getQuantity());
-                        }
-                        return items.stream()
-                                .map(CartItemResponse::fromEntity)
-                                .collect(Collectors.toList());
-                    })
-                    .orElseGet(() -> {
-                        System.out.println("📦 No cart found for accountId: " + accountId);
-                        return List.of();
-                    });
-        } catch (Exception e) {
-            System.err.println("Error fetching cart items for accountId " + accountId + ": " + e.getMessage());
-            e.printStackTrace();
-            return List.of();
+            cartItemRepository.deleteById(cartItemId);
+
+            // Evict cache
+            if (cart != null && cart.getAccount() != null) {
+                evictCartCache(cart.getAccount().getAccountId());
+            }
         }
     }
 
     @Override
     @Transactional
     public void clearCart(String accountId) {
-        System.out.println("🧹 ClearCart called for accountId: " + accountId);
+        log.debug("clearCart accountId:{}", accountId);
         Optional<Cart> cartOptional = cartRepository.findByAccountAccountId(accountId);
         if (cartOptional.isPresent()) {
-            Cart cart = cartOptional.get();
-            String cartId = cart.getCartId();
-            System.out.println("🧹 Found cart with ID: " + cartId);
-
-            // Delete all cart items for this cart using direct repository query
-            List<CartItem> itemsToDelete = cartItemRepository.findByCartCartId(cartId);
-            System.out.println("🧹 Found " + itemsToDelete.size() + " items to delete using repository query");
-
-            // Log each item before deletion
-            for (CartItem item : itemsToDelete) {
-                System.out.println("🧹 Deleting cart item: " + item.getCartItemId() + " - Product: " + item.getProduct().getProductId());
-            }
-
-            // Try JPQL delete first (more efficient)
-            cartItemRepository.deleteByCartId(cartId);
-
-            // Alternative: Delete using repository
-            // cartItemRepository.deleteAll(itemsToDelete);
-
-            System.out.println("🧹 Cart cleared successfully for accountId: " + accountId);
-
-            // Verify deletion
-            List<CartItem> remainingItems = cartItemRepository.findByCartCartId(cartId);
-            System.out.println("🧹 Verification: " + remainingItems.size() + " items remaining after deletion");
-        } else {
-            System.out.println("🧹 No cart found for accountId: " + accountId);
+            cartItemRepository.deleteByCartId(cartOptional.get().getCartId());
+            evictCartCache(accountId);
+            log.debug("Cart cleared for accountId:{}", accountId);
         }
     }
 
     @Override
     public CartResponse disableCart(String cartId) {
-        Optional<Cart> cartOptional = cartRepository.findById(cartId);
-        if (cartOptional.isEmpty()) {
-            throw new ResourceNotFoundException("Cart not found with id: " + cartId);
-        }
-        
-        Cart cart = cartOptional.get();
-        cart.setStatus(0); // 0 = Disabled
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cart not found with id: " + cartId));
+        cart.setStatus(0);
         Cart savedCart = cartRepository.save(cart);
+        if (cart.getAccount() != null) evictCartCache(cart.getAccount().getAccountId());
         return CartResponse.fromEntity(savedCart);
     }
 
     @Override
     public CartResponse enableCart(String cartId) {
-        Optional<Cart> cartOptional = cartRepository.findById(cartId);
-        if (cartOptional.isEmpty()) {
-            throw new ResourceNotFoundException("Cart not found with id: " + cartId);
-        }
-        
-        Cart cart = cartOptional.get();
-        cart.setStatus(1); // 1 = Active
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cart not found with id: " + cartId));
+        cart.setStatus(1);
         Cart savedCart = cartRepository.save(cart);
+        if (cart.getAccount() != null) evictCartCache(cart.getAccount().getAccountId());
         return CartResponse.fromEntity(savedCart);
     }
 
     @Override
     public CartResponse updateCartStatus(String cartId, int status) {
-        Optional<Cart> cartOptional = cartRepository.findById(cartId);
-        if (cartOptional.isEmpty()) {
-            throw new ResourceNotFoundException("Cart not found with id: " + cartId);
-        }
-        
-        Cart cart = cartOptional.get();
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cart not found with id: " + cartId));
         cart.setStatus(status);
         Cart savedCart = cartRepository.save(cart);
+        if (cart.getAccount() != null) evictCartCache(cart.getAccount().getAccountId());
         return CartResponse.fromEntity(savedCart);
     }
+
+    // =========================================================================
+    // PRIVATE HELPERS
+    // =========================================================================
 
     private Cart getOrCreateCart(String accountId) {
         Optional<Cart> cartOptional = cartRepository.findByAccountAccountId(accountId);
@@ -288,7 +333,6 @@ public class CartServiceImpl implements CartService {
             return cartOptional.get();
         }
 
-        // Create new cart
         Optional<Account> accountOptional = accountRepository.findById(accountId);
         if (accountOptional.isEmpty()) {
             throw new ResourceNotFoundException("Account not found with id: " + accountId);
@@ -299,5 +343,14 @@ public class CartServiceImpl implements CartService {
         cart.setCreatedAt(new Date());
         cart.setStatus(1);
         return cartRepository.save(cart);
+    }
+
+    /**
+     * Xóa cả cart và cart-items cache của một accountId trên Redis.
+     */
+    private void evictCartCache(String accountId) {
+        redisTemplate.delete(CART_KEY_PREFIX + accountId);
+        redisTemplate.delete(ITEMS_KEY_PREFIX + accountId);
+        log.debug("[Cart Cache EVICT] account:{}", accountId);
     }
 }

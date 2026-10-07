@@ -1,6 +1,10 @@
 package server.FruitShop.service.Impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +27,17 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * AccountServiceImpl — cache strategy: Caffeine only (L1).
+ *
+ * getUserProfile (getAccountById) → @Cacheable("user-profile")
+ *   - Dữ liệu nhạy cảm (password hash, roles) — chỉ cache in-process, KHÔNG đẩy lên Redis
+ *     để tránh nguy cơ lộ thông tin qua distributed cache.
+ *   - TTL 10 phút (khai báo trong CaffeineCacheManager spec)
+ *
+ * Write ops → @CacheEvict("user-profile") theo accountId
+ */
+@Slf4j
 @Service
 @Transactional
 public class AccountServiceImpl implements AccountService {
@@ -35,12 +50,14 @@ public class AccountServiceImpl implements AccountService {
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
+    // =========================================================================
+    // READ
+    // =========================================================================
+
     @Override
     public Page<AccountResponse> getAllAccounts(Pageable pageable) {
-        // Get all accounts with roles loaded
         List<Account> allAccounts = accountRepository.findAllWithRoles();
 
-        // Apply pagination manually
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), allAccounts.size());
 
@@ -52,8 +69,14 @@ public class AccountServiceImpl implements AccountService {
         return new PageImpl<>(responses, pageable, allAccounts.size());
     }
 
+    /**
+     * getUserProfile — Caffeine L1 only cache.
+     * Cache name: "user-profile", key = accountId
+     */
     @Override
+    @Cacheable(cacheNames = "user-profile", key = "#accountId")
     public AccountResponse getAccountById(String accountId) {
+        log.debug("[Cache MISS] getUserProfile:{} → query DB", accountId);
         Account account = accountRepository.findByIdWithRoles(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account not found with id: " + accountId));
         return AccountResponse.fromEntity(account);
@@ -61,19 +84,16 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public AccountResponse createAccount(CreateAccountRequest request) {
-        // Kiểm tra phone đã tồn tại chưa
         if (accountRepository.findByAccountPhone(request.getAccountPhone()).isPresent()) {
             throw new DuplicateResourceException("Phone number already exists");
         }
-        
+
         Account account = new Account();
         account.setAccountName(request.getAccountName());
         account.setAccountPhone(request.getAccountPhone());
-        // Hash password trước khi lưu
         account.setPassword(passwordEncoder.encode(request.getPassword()));
         account.setStatus(1);
 
-        // Set roles if provided
         if (request.getRoleIds() != null && !request.getRoleIds().isEmpty()) {
             Set<Role> roles = new HashSet<>();
             for (String roleId : request.getRoleIds()) {
@@ -88,28 +108,29 @@ public class AccountServiceImpl implements AccountService {
         return AccountResponse.fromEntity(savedAccount);
     }
 
+    /**
+     * updateAccount — evict cache của account đó sau khi update.
+     */
     @Override
+    @CacheEvict(cacheNames = "user-profile", key = "#accountId")
     public AccountResponse updateAccount(String accountId, UpdateAccountRequest request) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account not found with id: " + accountId));
 
-        // Partial update: chỉ cập nhật các trường được gửi lên (không null/rỗng)
         if (request.getAccountName() != null && !request.getAccountName().trim().isEmpty()) {
             account.setAccountName(request.getAccountName());
         }
-        
+
         if (request.getAccountPhone() != null && !request.getAccountPhone().trim().isEmpty()) {
             account.setAccountPhone(request.getAccountPhone());
         }
-        
+
         if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
             account.setPassword(passwordEncoder.encode(request.getPassword()));
         }
 
-        // Status: luôn cập nhật (bắt buộc)
         account.setStatus(request.getStatus());
 
-        // Update roles if provided
         if (request.getRoleIds() != null) {
             Set<Role> roles = new HashSet<>();
             for (String roleId : request.getRoleIds()) {
@@ -121,23 +142,24 @@ public class AccountServiceImpl implements AccountService {
         }
 
         Account updatedAccount = accountRepository.save(account);
+        log.debug("[Cache EVICT] after updateAccount:{}", accountId);
         return AccountResponse.fromEntity(updatedAccount);
     }
 
     @Override
+    @CacheEvict(cacheNames = "user-profile", key = "#accountId")
     public void deleteAccount(String accountId) {
         if (!accountRepository.existsById(accountId)) {
             throw new ResourceNotFoundException("Account not found with id: " + accountId);
         }
         accountRepository.deleteById(accountId);
+        log.debug("[Cache EVICT] after deleteAccount:{}", accountId);
     }
 
     @Override
     public Page<AccountResponse> getAccountsByStatus(int status, Pageable pageable) {
-        // Get accounts by status with roles loaded
         List<Account> accountsByStatus = accountRepository.findByStatusWithRoles(status);
 
-        // Apply pagination manually
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), accountsByStatus.size());
 
@@ -158,29 +180,24 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public AccountResponse authenticateAccount(String accountPhone, String password) {
-        // Tìm account theo phone
         Account account = accountRepository.findByAccountPhone(accountPhone)
                 .orElseThrow(() -> new ResourceNotFoundException("Invalid phone or password"));
-        
-        // Kiểm tra password hash
+
         if (!passwordEncoder.matches(password, account.getPassword())) {
             throw new ResourceNotFoundException("Invalid phone or password");
         }
-        
-        // Kiểm tra trạng thái active
+
         if (account.getStatus() != 1) {
             throw new ResourceNotFoundException("Account is deactivated");
         }
-        
+
         return AccountResponse.fromEntity(account);
     }
 
     @Override
     public Page<AccountResponse> searchAccountsByName(String accountName, Pageable pageable) {
-        // Get accounts by name with roles loaded
         List<Account> accountsByName = accountRepository.findByAccountNameContainingIgnoreCaseWithRoles(accountName);
 
-        // Apply pagination manually
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), accountsByName.size());
 

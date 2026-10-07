@@ -1,0 +1,19 @@
+content,senderRole,intent
+Tư vấn giúp tôi hoa quả bổ dưỡng nhất,CUSTOMER,PRODUCT_ADVICE
+Loại hoa quả nào tốt cho trẻ em?,CUSTOMER,PRODUCT_ADVICE
+Hoa quả nào giàu vitamin C?,CUSTOMER,PRODUCT_ADVICE
+Táo và lê loại nào ngon hơn?,CUSTOMER,PRODUCT_COMPARE
+So sánh xoài và chuối cho tôi,CUSTOMER,PRODUCT_COMPARE
+Tôi muốn đặt táo đỏ loại ngon,CUSTOMER,PRODUCT_SUGGEST
+Gợi ý hoa quả nhập khẩu cho tôi,CUSTOMER,PRODUCT_SUGGEST
+Giúp tôi chọn hoa quả mùa này,CUSTOMER,PRODUCT_SUGGEST
+Đơn hàng của tôi đang ở đâu?,CUSTOMER,ORDER_LOOKUP
+Trạng thái đơn hàng như thế nào?,CUSTOMER,ORDER_LOOKUP
+Tôi muốn mua 2 kg táo,CUSTOMER,ORDER_PLACE
+Đặt hàng xoài cho tôi,CUSTOMER,ORDER_PLACE
+Hỏi về phương thức thanh toán MoMo,CUSTOMER,PAYMENT
+Shop nhận thanh toán COD không?,CUSTOMER,PAYMENT
+Chính sách đổi trả hàng như thế nào?,CUSTOMER,GENERAL
+Thời gian giao hàng mất bao lâu?,CUSTOMER,GENERAL
+Shop có freeship không?,CUSTOMER,GENERAL
+Hoa quả có đảm bảo tươi không?,CUSTOMER,GENERAL

@@ -1,0 +1,6 @@
+minPrice,maxPrice,label
+0,100000,budget
+50000,200000,mid_range
+100000,500000,premium
+0,999999999,all
+200000,1000000,high_end

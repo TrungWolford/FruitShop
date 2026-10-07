@@ -27,7 +27,7 @@
 		<url/>
 	</scm>
 	<properties>
-		<java.version>21</java.version>
+		<java.version>22</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	</properties>
@@ -82,6 +82,49 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- ============================
+                     REDIS CACHE
+             ============================ -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+
+		<!-- ============================
+		     FLYWAY — Database Migration
+		     ============================ -->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-database-postgresql</artifactId>
+		</dependency>
+
+		<!-- ============================
+                     CAFFEINE CACHE
+             ============================ -->
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-cache</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.github.ben-manes.caffeine</groupId>
+			<artifactId>caffeine</artifactId>
+		</dependency>
+
+		<!-- ============================
+		     Gatling — Performance Testing
+		     ============================ -->
+		<dependency>
+			<groupId>io.gatling.highcharts</groupId>
+			<artifactId>gatling-charts-highcharts</artifactId>
+			<version>3.11.5</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -145,9 +188,9 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.13.0</version>
 				<configuration>
-					<source>21</source>
-					<target>21</target>
-					<release>21</release>
+					<source>22</source>
+					<target>22</target>
+					<release>22</release>
 					<compilerArgs>
 						<arg>-parameters</arg>
 					</compilerArgs>
@@ -160,6 +203,16 @@
 					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
+			<!-- ============================
+			     Gatling Maven Plugin
+			     Run: mvn gatling:test -Dgatling.simulationClass=simulations.GatlingSmokeSimulation
+			     ============================ -->
+			<plugin>
+				<groupId>io.gatling</groupId>
+				<artifactId>gatling-maven-plugin</artifactId>
+				<version>4.9.6</version>
+			</plugin>
+
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>

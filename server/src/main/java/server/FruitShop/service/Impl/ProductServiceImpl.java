@@ -1,9 +1,15 @@
 package server.FruitShop.service.Impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import server.FruitShop.dto.request.Product.CreateProductImageRequest;
@@ -18,24 +24,52 @@ import server.FruitShop.repository.CategoryRepository;
 import server.FruitShop.repository.ProductImageRepository;
 import server.FruitShop.repository.ProductRepository;
 import server.FruitShop.service.ProductService;
+import server.FruitShop.service.TwoLevelCacheService;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * ProductServiceImpl — cache strategy:
+ *
+ * getByProductId  → Two-level (L1 Caffeine + L2 Redis) thủ công qua ProductCacheService
+ *                   Lý do: cần full control (warm L1 từ L2, evict cả hai layer khi update/delete)
+ *
+ * getTopSoldProduct → @Cacheable("top-products") — Caffeine L1 + Redis L2 thủ công
+ *                     Lý do: list thay đổi ít, chịu được stale 5 phút
+ *
+ * Write ops (create/update/delete) → evict cache liên quan
+ */
+@Slf4j
 @Service
 public class ProductServiceImpl implements ProductService {
+
+    private static final String TOP_PRODUCTS_REDIS_KEY = "fruitshop:top-products";
+    private static final Duration TOP_PRODUCTS_TTL     = Duration.ofMinutes(5);
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ProductImageRepository productImageRepository;
 
+    /** Two-level cache cho single product detail */
+    private final TwoLevelCacheService<ProductResponse> productCacheService;
+
+    /** RedisTemplate để cache top-products list */
+    private final RedisTemplate<String, Object> redisTemplate;
+
     @Autowired
     public ProductServiceImpl(ProductRepository productRepository,
                               CategoryRepository categoryRepository,
-                              ProductImageRepository productImageRepository) {
+                              ProductImageRepository productImageRepository,
+                              @Qualifier("productCacheService")
+                              TwoLevelCacheService<ProductResponse> productCacheService,
+                              RedisTemplate<String, Object> redisTemplate) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.productImageRepository = productImageRepository;
+        this.productCacheService = productCacheService;
+        this.redisTemplate = redisTemplate;
     }
 
     // =========================================================================
@@ -47,20 +81,40 @@ public class ProductServiceImpl implements ProductService {
     public Page<ProductResponse> getAllProduct(Pageable pageable) {
         Page<Product> page = productRepository.findAll(pageable);
         if (page.isEmpty()) return Page.empty(pageable);
-
         return toResponsePage(page, pageable);
     }
 
+    /**
+     * getByProductId — Two-level cache (L1 Caffeine + L2 Redis).
+     *
+     * Flow:
+     *   1. Tìm L1 (Caffeine) → hit → return
+     *   2. Tìm L2 (Redis)    → hit → warm L1 → return
+     *   3. DB query          → put vào cả L1 + L2
+     */
     @Override
     @Transactional(readOnly = true)
     public ProductResponse getByProductId(String productId) {
+        // Bước 1 & 2: L1 → L2
+        ProductResponse cached = productCacheService.get(productId);
+        if (cached != null) {
+            return cached;
+        }
+
+        // Bước 3: DB
+        log.debug("[Cache MISS] getByProductId:{} → query DB", productId);
         Product withCategories = productRepository.findByIdWithCategories(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + productId));
 
         Product withImages = productRepository.findByIdWithImages(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + productId));
 
-        return ProductResponse.fromEntities(withCategories, withImages);
+        ProductResponse response = ProductResponse.fromEntities(withCategories, withImages);
+
+        // Nạp vào cả L1 và L2
+        productCacheService.put(productId, response);
+
+        return response;
     }
 
     @Override
@@ -104,25 +158,63 @@ public class ProductServiceImpl implements ProductService {
         return toResponsePage(page, pageable);
     }
 
+    /**
+     * getTopSoldProduct — Two-level cache (L1 @Cacheable Caffeine + L2 Redis thủ công).
+     *
+     * @Cacheable("top-products") xử lý L1 (Caffeine via CaffeineCacheManager).
+     * Redis L2 được kiểm tra trước khi xuống DB khi L1 miss.
+     */
     @Override
+    @Cacheable("top-products")
     @Transactional(readOnly = true)
+    @SuppressWarnings("unchecked")
     public List<ProductResponse> getTopSoldProduct() {
-        // categories đã được fetch cùng query qua @EntityGraph
-        List<Product> withCategories = productRepository.findTop10WithCategoriesOrderByStockAsc();
-        if (withCategories.isEmpty()) return List.of();
+        // L1: Spring @Cacheable sẽ intercept nếu đã có trong Caffeine — xử lý bên ngoài
+        // L2: thủ công check Redis
+        Object raw = redisTemplate.opsForValue().get(TOP_PRODUCTS_REDIS_KEY);
+        if (raw instanceof List<?> list && !list.isEmpty()) {
+            log.debug("[Cache L2 HIT] top-products");
+            return (List<ProductResponse>) list;
+        }
 
-        // Batch-fetch images riêng (1 query IN) để tránh MultipleBagFetchException
-        List<String> ids = withCategories.stream().map(Product::getProductId).toList();
+        log.debug("[Cache MISS] top-products → query DB");
+
+        // Native query trả về Product không fetch lazy collections (categories, images)
+        // → cần second-pass batch fetch cả categories lẫn images
+        List<Product> rawProducts = productRepository.findTop10BySoldQuantity();
+        if (rawProducts.isEmpty()) return List.of();
+
+        List<String> ids = rawProducts.stream().map(Product::getProductId).toList();
+
+        // Second-pass: batch load categories
+        Map<String, Product> categoriesMap = productRepository.findAllWithCategoriesByIds(ids).stream()
+                .collect(Collectors.toMap(Product::getProductId, p -> p));
+
+        // Second-pass: batch load images
         Map<String, Product> imagesMap = productRepository.findAllWithImagesByIds(ids).stream()
                 .collect(Collectors.toMap(Product::getProductId, p -> p));
 
-        return withCategories.stream()
-                .map(p -> ProductResponse.fromEntities(p, imagesMap.get(p.getProductId())))
+        List<ProductResponse> result = rawProducts.stream()
+                .map(p -> {
+                    Product withCat   = categoriesMap.get(p.getProductId());
+                    Product withImg   = imagesMap.get(p.getProductId());
+                    // Dùng withCat làm base (có categories), merge images từ withImg
+                    return ProductResponse.fromEntities(
+                            withCat != null ? withCat : p,
+                            withImg
+                    );
+                })
                 .toList();
+
+        // Nạp vào L2 Redis
+        redisTemplate.opsForValue().set(TOP_PRODUCTS_REDIS_KEY, result, TOP_PRODUCTS_TTL);
+        log.debug("[Cache PUT] top-products → Redis TTL={}", TOP_PRODUCTS_TTL);
+
+        return result;
     }
 
     // =========================================================================
-    // WRITE
+    // WRITE — evict cache sau mỗi thao tác ghi
     // =========================================================================
 
     @Override
@@ -154,13 +246,15 @@ public class ProductServiceImpl implements ProductService {
             saved.setImages(images);
         }
 
+        // top-products list đã thay đổi → evict L2
+        evictTopProductsCache();
+
         return ProductResponse.fromEntity(saved);
     }
 
     @Override
     @Transactional
     public ProductResponse updateProduct(UpdateProductRequest request, String productId) {
-        // 1 query với categories, 1 query với images – tổng 2 queries
         Product product = productRepository.findByIdWithCategories(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + productId));
 
@@ -168,7 +262,6 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + productId));
         product.setImages(productWithImages.getImages());
 
-        // Cập nhật scalar fields
         product.setProductName(request.getProductName());
         product.setPrice(request.getPrice());
         product.setStock(request.getStock());
@@ -176,7 +269,6 @@ public class ProductServiceImpl implements ProductService {
         product.setUpdatedAt(new Date());
         product.setStatus(request.getStatus());
 
-        // Cập nhật categories
         if (request.getCategoryIds() != null && !request.getCategoryIds().isEmpty()) {
             List<String> uniqueIds = request.getCategoryIds().stream().distinct().toList();
             List<Category> categories = categoryRepository.findAllById(uniqueIds);
@@ -187,11 +279,9 @@ public class ProductServiceImpl implements ProductService {
             product.getCategories().addAll(categories);
         }
 
-        // Cập nhật images nếu có thay đổi
         if (request.getImages() != null && imagesChanged(product.getImages(), request.getImages())) {
             productImageRepository.deleteByProductProductId(productId);
             product.getImages().clear();
-
             if (!request.getImages().isEmpty()) {
                 List<ProductImage> newImages = buildImages(request.getImages(), product);
                 productImageRepository.saveAll(newImages);
@@ -200,6 +290,12 @@ public class ProductServiceImpl implements ProductService {
         }
 
         productRepository.saveAndFlush(product);
+
+        // Evict cache của product này + top-products
+        productCacheService.evict(productId);
+        evictTopProductsCache();
+        log.debug("[Cache EVICT] after updateProduct:{}", productId);
+
         return ProductResponse.fromEntity(product);
     }
 
@@ -210,6 +306,11 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + productId));
         productImageRepository.deleteByProductProductId(productId);
         productRepository.delete(product);
+
+        // Evict cache
+        productCacheService.evict(productId);
+        evictTopProductsCache();
+        log.debug("[Cache EVICT] after deleteProduct:{}", productId);
     }
 
     // =========================================================================
@@ -217,14 +318,12 @@ public class ProductServiceImpl implements ProductService {
     // =========================================================================
 
     /**
-     * Assemble Page<ProductResponse> từ một Page<Product> mà categories đã được
-     * fetch sẵn ở tầng repo (qua @EntityGraph). Chỉ cần thêm 1 query batch-fetch images.
-     * Tổng số queries: 1 (page + categories, repo) + 1 (IN images) = O(1).
+     * Assemble Page<ProductResponse> từ Page<Product> (categories đã fetch sẵn).
+     * Batch-fetch images: tổng 2 queries O(1).
      */
     private Page<ProductResponse> toResponsePage(Page<Product> page, Pageable pageable) {
         List<String> ids = page.getContent().stream().map(Product::getProductId).toList();
 
-        // Batch-fetch images riêng (tránh MultipleBagFetchException)
         Map<String, Product> imagesMap = productRepository.findAllWithImagesByIds(ids).stream()
                 .collect(Collectors.toMap(Product::getProductId, p -> p));
 
@@ -235,7 +334,6 @@ public class ProductServiceImpl implements ProductService {
         return new PageImpl<>(responses, pageable, page.getTotalElements());
     }
 
-    /** Kiểm tra xem danh sách images từ request có khác với images hiện tại không. */
     private boolean imagesChanged(List<ProductImage> current,
                                   List<CreateProductImageRequest> requested) {
         if (current == null || current.size() != requested.size()) return true;
@@ -245,7 +343,6 @@ public class ProductServiceImpl implements ProductService {
         return false;
     }
 
-    /** Tạo danh sách ProductImage từ request. */
     private List<ProductImage> buildImages(List<CreateProductImageRequest> imageRequests,
                                            Product product) {
         return imageRequests.stream().map(req -> {
@@ -257,7 +354,7 @@ public class ProductServiceImpl implements ProductService {
             return img;
         }).collect(Collectors.toList());
     }
-    /** Xoá ảnh trùng lặp cho một sản phẩm – implement ProductService interface. */
+
     @Override
     @Transactional
     public void cleanupDuplicateImages(String productId) {
@@ -276,6 +373,13 @@ public class ProductServiceImpl implements ProductService {
 
         if (!toDelete.isEmpty()) {
             productImageRepository.deleteAll(toDelete);
+            productCacheService.evict(productId); // cache stale sau cleanup
         }
+    }
+
+    /** Xóa top-products khỏi Redis L2. */
+    private void evictTopProductsCache() {
+        redisTemplate.delete(TOP_PRODUCTS_REDIS_KEY);
+        log.debug("[Cache EVICT] top-products Redis key");
     }
 }

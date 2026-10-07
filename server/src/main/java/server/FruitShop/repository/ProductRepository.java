@@ -12,6 +12,7 @@ import server.FruitShop.entity.Product;
 import java.util.List;
 import java.util.Optional;
 
+
 @Repository
 public interface ProductRepository extends JpaRepository<Product, String> {
 
@@ -40,6 +41,16 @@ public interface ProductRepository extends JpaRepository<Product, String> {
     @EntityGraph(attributePaths = "images")
     @Query("SELECT DISTINCT p FROM Product p WHERE p.productId IN :ids")
     List<Product> findAllWithImagesByIds(@Param("ids") List<String> ids);
+
+    /**
+     * Batch-fetch categories cho một tập IDs.
+     * Chỉ fetch categories (không images) để tránh MultipleBagFetchException.
+     * Dùng sau native query (findTop10BySoldQuantity) vì native query không load lazy collections.
+     */
+    @EntityGraph(attributePaths = "categories")
+    @Query("SELECT DISTINCT p FROM Product p WHERE p.productId IN :ids")
+    List<Product> findAllWithCategoriesByIds(@Param("ids") List<String> ids);
+
 
     // =========================================================================
     // Paginated queries – categories được fetch trực tiếp qua @EntityGraph
@@ -125,8 +136,22 @@ public interface ProductRepository extends JpaRepository<Product, String> {
     // Top-sold – trả List vì cố định 10 bản ghi, không cần phân trang
     // =========================================================================
 
-    /** Lấy top-10 sản phẩm stock thấp nhất, kèm categories. */
-    @EntityGraph(attributePaths = "categories")
-    @Query("SELECT p FROM Product p ORDER BY p.stock ASC LIMIT 10")
-    List<Product> findTop10WithCategoriesOrderByStockAsc();
+    /**
+     * Lấy top-10 sản phẩm bán chạy nhất (tổng quantity trong orderitems).
+     * Chỉ tính sản phẩm đang hoạt động (status = 1).
+     *
+     * Dùng native query vì:
+     *  - JPQL không hỗ trợ LIMIT
+     *  - @EntityGraph không tương thích với GROUP BY
+     * Categories + images được load riêng trong service (second-pass batch fetch).
+     */
+    @Query(value = """
+            SELECT p.* FROM products p
+            JOIN orderitems oi ON oi.productid = p.product_id
+            WHERE p.status = 1
+            GROUP BY p.product_id
+            ORDER BY SUM(oi.quantity) DESC
+            LIMIT 10
+            """, nativeQuery = true)
+    List<Product> findTop10BySoldQuantity();
 }
