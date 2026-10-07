@@ -150,12 +150,11 @@ public class Flow4CODCheckoutSimulation extends Simulation {
     // ─────────────────────────────────────────────────────────
     {
         setUp(
-                flow4CODCheckout.injectOpen(
-                        // Giai đoạn 1: Tăng dần 20 users trong 10 giây
-                        rampUsers(20).during(Duration.ofSeconds(10)),
-                        // Giai đoạn 2: Bơm đều 14 users/giây trong 20 giây (14 * 20 = 280 users)
-                        constantUsersPerSec(14).during(Duration.ofSeconds(20))
-                )
-        ).protocols(httpProtocol);
+                flow4CODCheckout.injectClosed(
+                        // Giai đoạn 1: Tăng dần lên 300 concurrent users trong 15 giây
+                        rampConcurrentUsers(0).to(300).during(Duration.ofSeconds(15)),
+                        // Giai đoạn 2: Duy trì đúng 300 concurrent users trong 30 giây
+                        constantConcurrentUsers(300).during(Duration.ofSeconds(30))))
+                .protocols(httpProtocol);
     }
 }

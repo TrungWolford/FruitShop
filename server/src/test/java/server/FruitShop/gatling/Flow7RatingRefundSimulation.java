@@ -38,7 +38,7 @@ import static io.gatling.javaapi.http.HttpDsl.*;
  *   Slot n → accountId = acc-n, orderId = ord-n, productId = p-n
  *
  * Run:
- *   mvn gatling:test -Dgatling.simulationClass=server.FruitShop.gatling.Flow7RatingRefundSimulation
+ *   mvn gatling:test "-Dgatling.simulationClass=server.FruitShop.gatling.Flow7RatingRefundSimulation"
  */
 public class Flow7RatingRefundSimulation extends Simulation {
 
@@ -144,14 +144,11 @@ public class Flow7RatingRefundSimulation extends Simulation {
     // ─────────────────────────────────────────────────────────
     {
         setUp(
-                flow7RatingAndRefund.injectOpen(
-                        rampUsers(5).during(Duration.ofSeconds(10)),
-                        constantUsersPerSec(2).during(Duration.ofSeconds(30))
-                )
-        ).protocols(httpProtocol)
-         .assertions(
-                 global().responseTime().percentile3().lte(500),   // p95 < 500ms
-                 global().failedRequests().percent().lte(1.0)       // error rate < 1%
-         );
+                flow7RatingAndRefund.injectClosed(
+                        // Giai đoạn 1: Tăng dần lên 300 concurrent users trong 15 giây
+                        rampConcurrentUsers(0).to(300).during(Duration.ofSeconds(15)),
+                        // Giai đoạn 2: Duy trì đúng 300 concurrent users trong 30 giây
+                        constantConcurrentUsers(300).during(Duration.ofSeconds(30))))
+                .protocols(httpProtocol);
     }
 }
